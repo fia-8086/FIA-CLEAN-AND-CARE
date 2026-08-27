@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FIA CLEAN & CARE - Inventory, Billing & Accounts App</title>
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0b6335">
-    <link rel="apple-touch-icon" href="icon.png">
-
     <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -76,17 +71,13 @@
 </head>
 <body class="bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 min-h-screen text-slate-100 p-3 sm:p-6">
 
-    <!-- Offline Status Alert Banner -->
-    <div id="offlineAlertBanner" class="hidden bg-rose-950/90 border border-rose-700 text-rose-200 text-center py-2 px-3 text-xs font-bold rounded-2xl mb-3 shadow-lg flex items-center justify-center gap-2">
-        <span>⚠️</span> <span>ഇന്റർനെറ്റ് കണക്ഷൻ നഷ്ടമായി! ആപ്പ് ഇപ്പോൾ ഓഫ്ലൈൻ മോഡിലാണ്.</span>
-    </div>
-
     <!-- ================= LOGIN OVERLAY ================= -->
     <div id="loginOverlay" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
         <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl text-center">
             <div class="text-3xl">🔐</div>
             <h2 class="text-lg font-bold text-emerald-400">FIA CLEAN & CARE</h2>
             
+            <!-- ലോഗിൻ ബോക്സിൽ 'Enter PIN' എന്ന് മാത്രം മാറ്റിയിരിക്കുന്നു -->
             <input type="password" id="loginPinInput" placeholder="Enter PIN" class="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-center tracking-widest text-lg text-white focus:outline-none focus:border-emerald-500" maxlength="10">
             <button onclick="verifyLoginPin()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/30">Login</button>
             
@@ -431,7 +422,7 @@
 
                     <div id="currentBillItemsPreview" class="space-y-1.5 text-xs"></div>
 
-                    <!-- Previous Balance Section -->
+                    <!-- Previous Balance Section (Display only if due exists) -->
                     <div id="previousBalanceContainer" class="hidden bg-slate-900 p-3 rounded-xl border border-rose-900/50 space-y-1">
                         <div class="flex justify-between text-xs font-bold text-rose-400">
                             <span>Previous Balance (Due):</span>
@@ -899,6 +890,7 @@
         </div>
     </div>
 
+    <!-- Clean Master Key Reset Modal (No Extra Descriptions) -->
     <div id="resetPinModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 text-center">
             <h3 class="font-bold text-amber-400 text-sm">🔑 Reset Security PIN</h3>
@@ -945,6 +937,7 @@
         let scannerTargetMode = 'stock';
         let salesHistoryFilter = 'all';
 
+        // Google Drive Auth Variables
         let tokenClient;
         let accessToken = null;
         const CLIENT_ID = '64795058382-kdguglk3j6pfj5dcgbf9qnt50lbs8a3o.apps.googleusercontent.com';
@@ -1017,54 +1010,6 @@
             }
         }
 
-        function getLocalUpdatedAt() {
-            return Number(localStorage.getItem('fia_local_updated_at') || 0);
-        }
-
-        function markLocalChange() {
-            const now = Date.now();
-            localStorage.setItem('fia_local_updated_at', String(now));
-            localStorage.setItem('fia_pending_cloud_sync', '1');
-        }
-
-        function buildLocalPayload() {
-            return {
-                products,
-                cosProducts,
-                customers,
-                purchases,
-                expenses,
-                cosPurchases,
-                cosSales,
-                clearedDayBookEntries,
-                appPin,
-                _meta: { updatedAt: getLocalUpdatedAt() }
-            };
-        }
-
-        function mergeById(localArr, cloudArr) {
-            const map = new Map();
-            [...(cloudArr || []), ...(localArr || [])].forEach(item => {
-                if (!item) return;
-                const key = item.id ?? item.billNo ?? item.invoiceNo ?? item.code ?? item.name;
-                if (key != null) map.set(String(key), item);
-            });
-            return Array.from(map.values());
-        }
-
-        function mergeLocalWithCloud(data) {
-            products = mergeById(products, Array.isArray(data.products) ? data.products : Object.values(data.products || {}));
-            cosProducts = mergeById(cosProducts, Array.isArray(data.cosProducts) ? data.cosProducts : Object.values(data.cosProducts || {}));
-            customers = mergeById(customers, Array.isArray(data.customers) ? data.customers : Object.values(data.customers || {}));
-            purchases = mergeById(purchases, Array.isArray(data.purchases) ? data.purchases : Object.values(data.purchases || {}));
-            expenses = mergeById(expenses, Array.isArray(data.expenses) ? data.expenses : Object.values(data.expenses || {}));
-            cosPurchases = mergeById(cosPurchases, Array.isArray(data.cosPurchases) ? data.cosPurchases : Object.values(data.cosPurchases || {}));
-            cosSales = mergeById(cosSales, Array.isArray(data.cosSales) ? data.cosSales : Object.values(data.cosSales || {}));
-            clearedDayBookEntries = mergeById(clearedDayBookEntries, Array.isArray(data.clearedDayBookEntries) ? data.clearedDayBookEntries : Object.values(data.clearedDayBookEntries || {}));
-            if (!appPin && data.appPin) appPin = data.appPin;
-            saveLocalStateSafely();
-        }
-
         function startRealtimeSync() {
             if (!window.FB_DB) {
                 updateSyncStatus(false, 'Local Offline Mode');
@@ -1072,40 +1017,31 @@
             }
             updateSyncStatus(null, 'Connecting to Cloud...');
 
-            window.FB_DB.ref('fia_data').once('value').then(function(snapshot) {
+            window.FB_DB.ref('fia_data').on('value', function(snapshot) {
                 const data = snapshot.val();
                 if (data) {
-                    const pending = localStorage.getItem('fia_pending_cloud_sync') === '1';
-                    if (pending) {
-                        mergeLocalWithCloud(data);
-                        syncToFirebase();
-                    } else {
-                        products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
-                        cosProducts = Array.isArray(data.cosProducts) ? data.cosProducts : Object.values(data.cosProducts || {});
-                        customers = Array.isArray(data.customers) ? data.customers : Object.values(data.customers || {});
-                        purchases = Array.isArray(data.purchases) ? data.purchases : Object.values(data.purchases || {});
-                        expenses = Array.isArray(data.expenses) ? data.expenses : Object.values(data.expenses || {});
-                        cosPurchases = Array.isArray(data.cosPurchases) ? data.cosPurchases : Object.values(data.cosPurchases || {});
-                        cosSales = Array.isArray(data.cosSales) ? data.cosSales : Object.values(data.cosSales || {});
-                        clearedDayBookEntries = Array.isArray(data.clearedDayBookEntries) ? data.clearedDayBookEntries : Object.values(data.clearedDayBookEntries || {});
-                        appPin = data.appPin || appPin || '';
-                        suppressLocalChangeTracking = true;
-                        saveLocalStateSafely();
-                        suppressLocalChangeTracking = false;
-                        localStorage.removeItem('fia_pending_cloud_sync');
-                        isFirebaseConnected = true;
-                        updateSyncStatus(true, 'Cloud Data Synchronized');
-                        renderAll();
-                    }
-                } else if (products.length || customers.length || cosProducts.length || purchases.length) {
-                    markLocalChange();
-                    syncToFirebase();
-                } else {
+                    products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
+                    cosProducts = Array.isArray(data.cosProducts) ? data.cosProducts : Object.values(data.cosProducts || {});
+                    customers = Array.isArray(data.customers) ? data.customers : Object.values(data.customers || {});
+                    purchases = Array.isArray(data.purchases) ? data.purchases : Object.values(data.purchases || {});
+                    expenses = Array.isArray(data.expenses) ? data.expenses : Object.values(data.expenses || {});
+                    cosPurchases = Array.isArray(data.cosPurchases) ? data.cosPurchases : Object.values(data.cosPurchases || {});
+                    cosSales = Array.isArray(data.cosSales) ? data.cosSales : Object.values(data.cosSales || {});
+                    clearedDayBookEntries = Array.isArray(data.clearedDayBookEntries) ? data.clearedDayBookEntries : Object.values(data.clearedDayBookEntries || {});
+                    appPin = data.appPin || "";
+
+                    saveLocalStateSafely();
                     isFirebaseConnected = true;
                     updateSyncStatus(true, 'Cloud Data Synchronized');
+                    renderAll();
+                } else {
+                    loadFromLocalStorage();
+                    if (products.length || customers.length || cosProducts.length || purchases.length) {
+                        syncToFirebase();
+                    }
                 }
-            }).catch(function(error) {
-                console.error('Firebase Read Error:', error);
+            }, function(error) {
+                console.error("Firebase Read Error:", error);
                 isFirebaseConnected = false;
                 updateSyncStatus(false, 'Check Firebase Database Rules');
                 loadFromLocalStorage();
@@ -1214,11 +1150,8 @@
             appPin = localStorage.getItem('fia_app_pin') || "";
         }
 
-        let suppressLocalChangeTracking = false;
-
         function saveLocalStateSafely() {
             try {
-                if (!suppressLocalChangeTracking) markLocalChange();
                 localStorage.setItem('fia_products', JSON.stringify(products));
                 localStorage.setItem('fia_cosproducts', JSON.stringify(cosProducts));
                 localStorage.setItem('fia_customers', JSON.stringify(customers));
@@ -1234,23 +1167,21 @@
         function syncToFirebase() {
             saveLocalStateSafely();
             if (!window.FB_DB) {
-                markLocalChange();
                 updateSyncStatus(false, 'Local Offline Mode');
                 return Promise.resolve(false);
             }
 
-            const payload = buildLocalPayload();
+            const payload = { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, clearedDayBookEntries, appPin };
+            
             return window.FB_DB.ref('fia_data').update(payload)
                 .then(() => {
-                    localStorage.removeItem('fia_pending_cloud_sync');
                     isFirebaseConnected = true;
                     updateSyncStatus(true, 'Cloud Data Synchronized');
                     return true;
                 })
                 .catch((err) => {
                     console.error('Firebase write error:', err);
-                    markLocalChange();
-                    updateSyncStatus(false, 'Saved Locally - Sync Pending');
+                    updateSyncStatus(false, 'Check Database Rules');
                     return false;
                 });
         }
@@ -1592,7 +1523,7 @@
 
             source.innerHTML = `<div style="font-family:Arial,Helvetica,sans-serif;background:#fff;color:#000;padding:8px"><div style="text-align:center;border-bottom:2px solid #333;padding-bottom:7px;margin-bottom:12px"><div style="font-size:20px;font-weight:700;color:#065f46">FIA CLEAN & CARE</div><div style="font-size:11px;color:#000">Wholesale and Retail<br>Edathanattukara<br>Mob: 8086452106</div></div><div style="font-size:12px;margin-bottom:10px;color:#000"><strong>Customer:</strong> ${c.name||''} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}</div><table style="width:100%;border-collapse:collapse;font-size:11px;color:#000"><thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #d1d5db;color:#000">#</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Product</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Qty</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Rate</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Total</th></tr></thead><tbody>${rows}</tbody></table><div style="text-align:right;font-size:12px;line-height:1.7;margin-top:10px;color:#000">${summaryHtml}</div><div style="text-align:center;border-top:1px solid #ddd;margin-top:15px;padding-top:7px;font-size:9px;color:#555">Thank you for your business.</div></div>`;
             document.body.appendChild(source);
-            const opt = {margin:8,filename:`bill_${String(c.name||'fia').replace(/[^a-z0-9_-]+/gi, '_')}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#fff',scrollX:0,scrollY:0},pagebreak:{mode:['avoid-all','css','legacy']},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
+            const opt = {margin:8,filename:`bill_${String(c.name||'fia').replace(/[^a-z0-9_-]+/gi,'_')}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#fff',scrollX:0,scrollY:0},pagebreak:{mode:['avoid-all','css','legacy']},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
             html2pdf().set(opt).from(source).save().then(()=>source.remove()).catch(err=>{console.error('PDF error:',err);source.remove();alert('PDF error. Please use Print option.');});
         }
 
@@ -2109,13 +2040,7 @@
             const qty = parseFloat(document.getElementById('cosSQty').value) || 0;
             const rate = parseFloat(document.getElementById('cosSUnitPrice').value) || 0;
             const unitType = document.getElementById('cosSUnit').value;
-            // ML / Gram കാൽക്കുലേഷൻ പിഴവില്ലാതെ വരാൻ 1000 കൊണ്ട് ഹരിക്കുന്നു
-            let total = 0;
-            if (unitType === 'Gram' || unitType === 'ml' || unitType === 'Milli') {
-                total = (rate / 1000) * qty;
-            } else {
-                total = rate * qty;
-            }
+            const total = (unitType === 'Gram' || unitType === 'ml') ? (rate / 1000) * qty : rate * qty;
             document.getElementById('cosSAmount').value = total ? total.toFixed(2) : '';
             calculateCosSalesBalance();
         }
@@ -2131,7 +2056,7 @@
                 alert('Please select product, quantity, and rate.');
                 return;
             }
-            const stockDeductionQty = (unitType === 'Gram' || unitType === 'ml' || unitType === 'Milli') ? qty / 1000 : qty;
+            const stockDeductionQty = (unitType === 'Gram' || unitType === 'ml') ? qty / 1000 : qty;
             const already = currentCosBillItems
                 .filter(i => i.stockId === productId)
                 .reduce((s, i) => s + Number(i.stockDeductionQty || 0), 0);
@@ -2215,15 +2140,7 @@
             const qty = parseFloat(document.getElementById('billQty').value) || 0;
             const rate = parseFloat(document.getElementById('billRate').value) || 0;
             const unitType = document.getElementById('billUnitType').value;
-            
-            // ഇവിടെ മില്ലി ലിറ്റർ (ml/Milli) അല്ലെങ്കിൽ ഗ്രാം (Gram) ആണെങ്കിൽ 1000 കൊണ്ട് ഹരിക്കുന്നു
-            let total = 0;
-            if (unitType === 'Gram' || unitType === 'ml' || unitType === 'Milli') {
-                total = (rate / 1000) * qty;
-            } else {
-                total = rate * qty;
-            }
-            
+            let total = (unitType === 'Gram' || unitType === 'ml') ? (rate / 1000) * qty : rate * qty;
             document.getElementById('billCalculatedTotal').value = total.toFixed(2);
         }
 
@@ -2235,7 +2152,7 @@
             const total = parseFloat(document.getElementById('billCalculatedTotal').value);
 
             if(!productName || isNaN(qty) || isNaN(rate)) { alert("Please select product, quantity, and rate."); return; }
-            let stockDeductionQty = (unitType === 'Gram' || unitType === 'ml' || unitType === 'Milli') ? qty / 1000 : qty;
+            let stockDeductionQty = (unitType === 'Gram' || unitType === 'ml') ? qty / 1000 : qty;
 
             currentBillItems.push({ productName, qty, unitType, rate, total, stockDeductionQty });
             document.getElementById('billQty').value = "";
@@ -2744,7 +2661,7 @@
                 unitType: s.unit || 'Standard',
                 rate: Number(s.qty || 0) ? Number(s.amount || 0) / Number(s.qty || 1) : 0,
                 total: Number(s.amount || 0),
-                stockDeductionQty: (s.unit === 'Gram' || s.unit === 'ml' || s.unit === 'Milli') ? Number(s.qty || 0) / 1000 : Number(s.qty || 0)
+                stockDeductionQty: (s.unit === 'Gram' || s.unit === 'ml') ? Number(s.qty || 0) / 1000 : Number(s.qty || 0)
             };
             return {
                 items: [item],
@@ -3300,6 +3217,7 @@
             try { renderSalesHistory(); } catch (e) { console.warn('Initial render:', e); }
         });
 
+        // Keep user-entered alphabetic text in CAPITAL LETTERS across the app.
         document.addEventListener('input', function(e) {
             const el = e.target;
             if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA')) return;
@@ -3308,38 +3226,6 @@
             const upper = el.value.toUpperCase();
             if (el.value !== upper) { el.value = upper; try { el.setSelectionRange(pos, pos); } catch(err) {} }
         });
-    </script>
-
-    <!-- PWA Service Worker & Online/Offline Auto-Sync Monitor -->
-    <script>
-        window.addEventListener('online', () => {
-            setTimeout(() => { if (window.FB_DB) syncToFirebase(); }, 1000);
-            const banner = document.getElementById('offlineAlertBanner');
-            if (banner) banner.classList.add('hidden');
-            console.log("Network online. Syncing data...");
-            if (typeof syncToFirebase === 'function') {
-                syncToFirebase();
-            }
-        });
-
-        window.addEventListener('offline', () => {
-            const banner = document.getElementById('offlineAlertBanner');
-            if (banner) banner.classList.remove('hidden');
-            console.log("Network offline. Working in offline mode.");
-        });
-
-        if (!navigator.onLine) {
-            const banner = document.getElementById('offlineAlertBanner');
-            if (banner) banner.classList.remove('hidden');
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('ServiceWorker registration successful:', reg.scope))
-                    .catch(err => console.log('ServiceWorker registration failed:', err));
-            });
-        }
     </script>
 </body>
 </html>
