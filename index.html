@@ -13,6 +13,9 @@
     <!-- ZXing Library for Barcode / QR Scanning -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
 
+    <!-- Google Identity Services Library for Google Drive Backup -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
     <!-- Firebase SDKs: Core App & Realtime Database Only -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -43,7 +46,6 @@
                     window.FB_AUTH = null;
                 }
                 window.FB_READY = true;
-                console.log("Firebase DB initialized successfully.");
             } catch (error) {
                 console.error("Firebase init failed:", error);
                 window.FB_READY = false;
@@ -75,7 +77,8 @@
             <div class="text-3xl">🔐</div>
             <h2 class="text-lg font-bold text-emerald-400">FIA CLEAN & CARE</h2>
             
-            <input type="password" id="loginPinInput" placeholder="Enter PIN" class="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-center tracking-widest text-lg text-white focus:outline-none focus:border-emerald-500" maxlength="6">
+            <!-- ലോഗിൻ ബോക്സിൽ 'Enter PIN' എന്ന് മാത്രം മാറ്റിയിരിക്കുന്നു -->
+            <input type="password" id="loginPinInput" placeholder="Enter PIN" class="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-center tracking-widest text-lg text-white focus:outline-none focus:border-emerald-500" maxlength="10">
             <button onclick="verifyLoginPin()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/30">Login</button>
             
             <div class="flex justify-between text-xs pt-2 border-t border-slate-800">
@@ -91,6 +94,7 @@
         <div class="flex gap-3">
             <button onclick="openSettingsModal()" class="hover:text-emerald-400 transition underline">Settings</button>
             <button onclick="manualCloudSync()" class="hover:text-emerald-400 transition underline">Force Sync</button>
+            <button onclick="backupToGoogleDrive()" class="hover:text-emerald-400 transition underline text-blue-400 font-bold">☁️ Drive Backup</button>
             <button type="button" onclick="logoutApp()" aria-label="Logout" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-rose-800 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 transition font-bold"><span>🚪</span><span>Logout</span></button>
         </div>
     </div>
@@ -203,7 +207,7 @@
             </div>
 
             <div class="text-center text-[10px] text-slate-500 pt-2">
-                <span class="font-semibold text-emerald-500">Fia Clean & Care</span> • Edathanattukara
+                <span class="font-semibold text-emerald-500">FIA Clean & Care</span> • Edathanattukara
             </div>
         </div>
 
@@ -403,7 +407,7 @@
                                 <option value="Standard">Standard Unit</option>
                                 <option value="Kg">Kilogram (Kg)</option>
                                 <option value="Gram">Gram (g)</option>
-                                <option value="Litre">Litre (L)</option>
+                                <option value="Ltr">Litre (L)</option>
                                 <option value="Milli">Millilitre (ml)</option>
                                 <option value="Pcs">Pieces (Pcs)</option>
                                 <option value="Bottle">Bottle</option>
@@ -417,6 +421,14 @@
                     </div>
 
                     <div id="currentBillItemsPreview" class="space-y-1.5 text-xs"></div>
+
+                    <!-- Previous Balance Section (Display only if due exists) -->
+                    <div id="previousBalanceContainer" class="hidden bg-slate-900 p-3 rounded-xl border border-rose-900/50 space-y-1">
+                        <div class="flex justify-between text-xs font-bold text-rose-400">
+                            <span>Previous Balance (Due):</span>
+                            <span id="displayPreviousBalanceVal">₹0.00</span>
+                        </div>
+                    </div>
 
                     <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
                         <div>
@@ -686,6 +698,14 @@
 
                         <div id="cosCurrentBillItemsPreview" class="space-y-1.5 text-xs"></div>
 
+                        <!-- Cosmetics Previous Balance Section -->
+                        <div id="cosPreviousBalanceContainer" class="hidden bg-slate-900 p-3 rounded-xl border border-rose-900/50 space-y-1">
+                            <div class="flex justify-between text-xs font-bold text-rose-400">
+                                <span>Previous Balance (Due):</span>
+                                <span id="cosDisplayPreviousBalanceVal">₹0.00</span>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
                             <div>
                                 <label class="text-[10px] text-slate-400 block mb-1">Paid Amount (₹):</label>
@@ -726,7 +746,7 @@
         <!-- ================= SECTION 7: DAY BOOK ================= -->
         <div id="sectionAccounts" class="space-y-4 hidden">
             <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner space-y-3">
-                <div class="flex justify-between items-center">
+                <div class="flex flex-wrap justify-between items-center gap-2">
                     <h2 class="font-bold text-purple-400 text-sm">Day Book & Date-wise Reports</h2>
                     <div class="flex gap-1.5 flex-wrap justify-end">
                         <button onclick="exportDayBookToExcel()" class="text-[10px] bg-emerald-900/60 text-emerald-300 border border-emerald-700/50 px-2.5 py-1 rounded-lg hover:bg-emerald-800 transition font-bold">📥 Excel Export</button>
@@ -832,6 +852,7 @@
                     <div class="font-bold text-slate-200 text-xs">💾 Data Backup & Restore</div>
                     <p class="text-[10px] text-slate-500">Backup is downloaded as a JSON file to your device.</p>
                     <button type="button" onclick="downloadFullBackup()" class="w-full bg-blue-700 text-white py-2.5 rounded-bold hover:bg-blue-600">📥 Download Full Backup</button>
+                    <button type="button" onclick="backupToGoogleDrive()" class="w-full bg-emerald-700 text-white py-2.5 rounded-bold hover:bg-emerald-600">☁️ Backup to Google Drive</button>
                     <button type="button" onclick="openBackupFilePicker('backupFileInput')" class="block w-full bg-slate-800 text-slate-200 py-2.5 rounded-xl font-bold text-center cursor-pointer border border-slate-700 hover:bg-slate-700">📤 Restore Backup</button>
                     <input type="file" id="backupFileInput" accept=".json,application/json,text/json,text/plain,*/*" class="hidden" onchange="restoreFullBackup(event)">
                 </div>
@@ -848,6 +869,7 @@
             <div class="space-y-3 text-xs">
                 <p class="text-[10px] text-slate-500">Backup and restore your application data from this Day Book menu.</p>
                 <button type="button" onclick="downloadFullBackup()" class="w-full bg-blue-700 text-white py-2.5 rounded-xl font-bold hover:bg-blue-600">📥 Download Full Backup</button>
+                <button type="button" onclick="backupToGoogleDrive()" class="w-full bg-emerald-700 text-white py-2.5 rounded-xl font-bold hover:bg-emerald-600">☁️ Backup to Google Drive</button>
                 <button type="button" onclick="openBackupFilePicker('dayBookBackupFileInput')" class="block w-full bg-slate-800 text-slate-200 py-2.5 rounded-xl font-bold text-center cursor-pointer border border-slate-700 hover:bg-slate-700">📤 Restore Backup</button>
                 <input type="file" id="dayBookBackupFileInput" accept=".json,application/json,text/json,text/plain,*/*" class="hidden" onchange="restoreFullBackup(event)">
             </div>
@@ -902,7 +924,7 @@
         let cosPurchases = [];
         let cosSales = [];
         let clearedDayBookEntries = [];
-        let appPin = "1234";
+        let appPin = ""; 
         const MASTER_RECOVERY_KEY = "FIA786";
         let isLoggedIn = false;
 
@@ -914,6 +936,79 @@
         let codeReader = null;
         let scannerTargetMode = 'stock';
         let salesHistoryFilter = 'all';
+
+        // Google Drive Auth Variables
+        let tokenClient;
+        let accessToken = null;
+        const CLIENT_ID = '64795058382-kdguglk3j6pfj5dcgbf9qnt50lbs8a3o.apps.googleusercontent.com';
+
+        function initGoogleDriveAuth() {
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/drive.file',
+                    callback: (response) => {
+                        if (response.access_token) {
+                            accessToken = response.access_token;
+                            uploadDatabaseToDrive();
+                        }
+                    },
+                });
+            }
+        }
+
+        function backupToGoogleDrive() {
+            if (!accessToken) {
+                if (tokenClient) {
+                    tokenClient.requestAccessToken({prompt: 'consent'});
+                } else {
+                    initGoogleDriveAuth();
+                    if (tokenClient) {
+                        tokenClient.requestAccessToken({prompt: 'consent'});
+                    } else {
+                        alert('Google Identity service not loaded yet. Please try again in a moment.');
+                    }
+                }
+            } else {
+                uploadDatabaseToDrive();
+            }
+        }
+
+        async function uploadDatabaseToDrive() {
+            const backupData = {
+                backupVersion: 1,
+                app: 'FIA CLEAN & CARE',
+                createdAt: new Date().toISOString(),
+                data: { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, clearedDayBookEntries, appPin }
+            };
+            const dbData = JSON.stringify(backupData, null, 2);
+            
+            const fileMetadata = {
+                name: 'FIA_Clean_Care_Backup_' + new Date().toISOString().slice(0,10) + '.json',
+                mimeType: 'application/json'
+            };
+
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
+            form.append('file', new Blob([dbData], { type: 'application/json' }));
+
+            try {
+                let res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+                    body: form
+                });
+                let result = await res.json();
+                if(result.id) {
+                    alert('ഗൂഗിൾ ഡ്രൈവിലേക്ക് ബാക്കപ്പ് വിജയകരമായി സേവ് ചെയ്തു!');
+                } else {
+                    alert('ബാക്കപ്പ് ചെയ്യുന്നതിൽ ചെറിയൊരു തടസ്സം നേരിട്ടു.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('എർർ വന്നു: ' + error.message);
+            }
+        }
 
         function startRealtimeSync() {
             if (!window.FB_DB) {
@@ -933,7 +1028,7 @@
                     cosPurchases = Array.isArray(data.cosPurchases) ? data.cosPurchases : Object.values(data.cosPurchases || {});
                     cosSales = Array.isArray(data.cosSales) ? data.cosSales : Object.values(data.cosSales || {});
                     clearedDayBookEntries = Array.isArray(data.clearedDayBookEntries) ? data.clearedDayBookEntries : Object.values(data.clearedDayBookEntries || {});
-                    appPin = data.appPin || "1234";
+                    appPin = data.appPin || "";
 
                     saveLocalStateSafely();
                     isFirebaseConnected = true;
@@ -969,13 +1064,13 @@
         }
 
         function verifyLoginPin() {
-            const entered = document.getElementById('loginPinInput').value;
-            if(entered === appPin) {
+            const entered = document.getElementById('loginPinInput').value.trim();
+            if(entered === appPin && appPin !== "") {
                 isLoggedIn = true;
                 document.getElementById('loginOverlay').classList.add('hidden');
                 history.replaceState({ loggedIn: true, tab: 'home' }, "", "#home");
             } else {
-                alert("Incorrect PIN! Default PIN is 1234.");
+                alert("Incorrect PIN! If you haven't set a PIN yet, please use 'Forgot PIN?' to set one using your Master Key.");
             }
         }
 
@@ -984,7 +1079,7 @@
         function submitChangePin() {
             const current = document.getElementById('cpCurrent').value;
             const newP = document.getElementById('cpNew').value;
-            if(current !== appPin) { alert("Current PIN is incorrect!"); return; }
+            if(appPin && current !== appPin) { alert("Current PIN is incorrect!"); return; }
             if(newP.length < 3) { alert("New PIN must be at least 3 digits."); return; }
             appPin = newP;
             syncToFirebase();
@@ -1052,7 +1147,7 @@
             cosPurchases = JSON.parse(localStorage.getItem('fia_cospurchases')) || [];
             cosSales = JSON.parse(localStorage.getItem('fia_cossales')) || [];
             clearedDayBookEntries = JSON.parse(localStorage.getItem('fia_cleared_daybook')) || [];
-            appPin = localStorage.getItem('fia_app_pin') || "1234";
+            appPin = localStorage.getItem('fia_app_pin') || "";
         }
 
         function saveLocalStateSafely() {
@@ -1280,6 +1375,7 @@
         window.onload = function() {
             loadFromLocalStorage();
             setupDateFields();
+            initGoogleDriveAuth();
             history.replaceState({ loggedIn: false, tab: 'home' }, "", window.location.href);
             
             const expDateEl = document.getElementById('expDate');
@@ -1416,7 +1512,16 @@
             source.id = 'fiaPdfExportSource'; source.style.cssText = 'position:absolute;left:0;top:0;width:190mm;min-height:20mm;background:#fff;color:#000;padding:8mm;z-index:999999;display:block;visibility:visible;opacity:1;box-sizing:border-box;';
             const rows = (c.items||[]).map((item,i)=>`<tr><td style="padding:6px;border:1px solid #d1d5db">${i+1}</td><td style="padding:6px;border:1px solid #d1d5db">${item.productName}</td><td style="padding:6px;border:1px solid #d1d5db;text-align:center">${item.qty} ${item.unitType!=='Standard'?item.unitType:''}</td><td style="padding:6px;border:1px solid #d1d5db;text-align:right">₹${Number(item.rate||0).toFixed(2)}</td><td style="padding:6px;border:1px solid #d1d5db;text-align:right">₹${Number(item.total||0).toFixed(2)}</td></tr>`).join('');
             const paid = c.paidAmount!==undefined?Number(c.paidAmount):Number(c.grandTotal||0), due = c.pendingAmount!==undefined?Number(c.pendingAmount):0;
-            source.innerHTML = `<div style="font-family:Arial,Helvetica,sans-serif;background:#fff;color:#000;padding:8px"><div style="text-align:center;border-bottom:2px solid #333;padding-bottom:7px;margin-bottom:12px"><div style="font-size:20px;font-weight:700;color:#065f46">FIA CLEAN & CARE</div><div style="font-size:11px;color:#000">Fia Clean & Care, Edathanattukara | Mob: 8086452106</div></div><div style="font-size:12px;margin-bottom:10px;color:#000"><strong>Customer:</strong> ${c.name||''} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}</div><table style="width:100%;border-collapse:collapse;font-size:11px;color:#000"><thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #d1d5db;color:#000">#</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Product</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Qty</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Rate</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Total</th></tr></thead><tbody>${rows}</tbody></table><div style="text-align:right;font-size:12px;line-height:1.7;margin-top:10px;color:#000"><div><strong>Grand Total: ₹${Number(c.grandTotal||0).toFixed(2)}</strong></div><div style="color:#047857"><strong>Paid: ₹${paid.toFixed(2)}</strong></div><div><strong>Payment Mode: ${c.paymentMode || 'Cash'}</strong></div><div style="color:#b91c1c"><strong>Balance Due: ₹${due.toFixed(2)}</strong></div></div><div style="text-align:center;border-top:1px solid #ddd;margin-top:15px;padding-top:7px;font-size:9px;color:#555">Thank you for your business.</div></div>`;
+            const excess = c.excessAmount!==undefined?Number(c.excessAmount):0;
+            const prevDueVal = Number(c.previousDue || 0);
+
+            let summaryHtml = `<div><strong>Grand Total: ₹${Number(c.grandTotal||0).toFixed(2)}</strong></div>`;
+            if(prevDueVal > 0) summaryHtml += `<div style="color:#b91c1c"><strong>Previous Due: ₹${prevDueVal.toFixed(2)}</strong></div>`;
+            summaryHtml += `<div style="color:#047857"><strong>Paid: ₹${paid.toFixed(2)}</strong></div>`;
+            if(due > 0) summaryHtml += `<div style="color:#b91c1c"><strong>Balance Due: ₹${due.toFixed(2)}</strong></div>`;
+            if(excess > 0) summaryHtml += `<div style="color:#b45309"><strong>Return: ₹${excess.toFixed(2)}</strong></div>`;
+
+            source.innerHTML = `<div style="font-family:Arial,Helvetica,sans-serif;background:#fff;color:#000;padding:8px"><div style="text-align:center;border-bottom:2px solid #333;padding-bottom:7px;margin-bottom:12px"><div style="font-size:20px;font-weight:700;color:#065f46">FIA CLEAN & CARE</div><div style="font-size:11px;color:#000">Wholesale and Retail<br>Edathanattukara<br>Mob: 8086452106</div></div><div style="font-size:12px;margin-bottom:10px;color:#000"><strong>Customer:</strong> ${c.name||''} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}</div><table style="width:100%;border-collapse:collapse;font-size:11px;color:#000"><thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #d1d5db;color:#000">#</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Product</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Qty</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Rate</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Total</th></tr></thead><tbody>${rows}</tbody></table><div style="text-align:right;font-size:12px;line-height:1.7;margin-top:10px;color:#000">${summaryHtml}</div><div style="text-align:center;border-top:1px solid #ddd;margin-top:15px;padding-top:7px;font-size:9px;color:#555">Thank you for your business.</div></div>`;
             document.body.appendChild(source);
             const opt = {margin:8,filename:`bill_${String(c.name||'fia').replace(/[^a-z0-9_-]+/gi,'_')}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#fff',scrollX:0,scrollY:0},pagebreak:{mode:['avoid-all','css','legacy']},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
             html2pdf().set(opt).from(source).save().then(()=>source.remove()).catch(err=>{console.error('PDF error:',err);source.remove();alert('PDF error. Please use Print option.');});
@@ -1653,9 +1758,27 @@
             if(name) {
                 document.getElementById('custName').value = name;
                 document.getElementById('custPhone').value = select.options[select.selectedIndex].getAttribute('data-phone') || '';
+                
+                let previousDue = 0;
+                customers.forEach(c => {
+                    if (c.name === name && c.pendingAmount) {
+                        previousDue += Number(c.pendingAmount);
+                    }
+                });
+                
+                const prevBalContainer = document.getElementById('previousBalanceContainer');
+                const prevBalVal = document.getElementById('displayPreviousBalanceVal');
+                if (previousDue > 0) {
+                    if(prevBalContainer) prevBalContainer.classList.remove('hidden');
+                    if(prevBalVal) prevBalVal.textContent = '₹' + previousDue.toFixed(2);
+                } else {
+                    if(prevBalContainer) prevBalContainer.classList.add('hidden');
+                }
             } else {
                 document.getElementById('custName').value = '';
                 document.getElementById('custPhone').value = '';
+                const prevBalContainer = document.getElementById('previousBalanceContainer');
+                if(prevBalContainer) prevBalContainer.classList.add('hidden');
             }
         }
 
@@ -1682,10 +1805,28 @@
                 document.getElementById('cosSCustomer').value = name;
                 const phoneEl = document.getElementById('cosSPhone');
                 if (phoneEl) phoneEl.value = found?.phone || '';
+                
+                let previousDue = 0;
+                customers.forEach(c => {
+                    if (c.name === name && c.pendingAmount) {
+                        previousDue += Number(c.pendingAmount);
+                    }
+                });
+
+                const cosPrevBalContainer = document.getElementById('cosPreviousBalanceContainer');
+                const cosPrevBalVal = document.getElementById('cosDisplayPreviousBalanceVal');
+                if (previousDue > 0) {
+                    if(cosPrevBalContainer) cosPrevBalContainer.classList.remove('hidden');
+                    if(cosPrevBalVal) cosPrevBalVal.textContent = '₹' + previousDue.toFixed(2);
+                } else {
+                    if(cosPrevBalContainer) cosPrevBalContainer.classList.add('hidden');
+                }
             } else {
                 document.getElementById('cosSCustomer').value = '';
                 const phoneEl = document.getElementById('cosSPhone');
                 if (phoneEl) phoneEl.value = '';
+                const cosPrevBalContainer = document.getElementById('cosPreviousBalanceContainer');
+                if(cosPrevBalContainer) cosPrevBalContainer.classList.add('hidden');
             }
         }
 
@@ -1959,7 +2100,19 @@
         function calculateCosSalesBalance() {
             const grandTotal = currentCosBillItems.reduce((sum, i) => sum + Number(i.total || 0), 0);
             const paid = parseFloat(document.getElementById('cosSPaid')?.value) || 0;
-            const difference = grandTotal - paid;
+            
+            let previousDue = 0;
+            const selectedCustName = document.getElementById('cosSCustomer')?.value || '';
+            if (selectedCustName) {
+                customers.forEach(c => {
+                    if (c.name === selectedCustName && c.pendingAmount) {
+                        previousDue += Number(c.pendingAmount);
+                    }
+                });
+            }
+
+            const totalWithPrevious = grandTotal + previousDue;
+            const difference = totalWithPrevious - paid;
             const due = Math.max(0, difference);
             const excess = Math.max(0, -difference);
             const el = document.getElementById('cosSBalance');
@@ -1967,8 +2120,8 @@
             if (el) el.value = due.toFixed(2);
             if (status) {
                 if (difference > 0) { status.textContent = 'BALANCE DUE: ₹' + due.toFixed(2); status.className = 'text-[10px] font-bold mt-1 text-right text-rose-400'; }
-                else if (difference < 0) { status.textContent = 'EXCESS / RETURN: ₹' + excess.toFixed(2); status.className = 'text-[10px] font-bold mt-1 text-right text-amber-300'; }
-                else { status.textContent = 'PAID IN FULL — BALANCE: ₹0.00'; status.className = 'text-[10px] font-bold mt-1 text-right text-emerald-400'; }
+                else if (difference < 0) { status.textContent = 'RETURN: ₹' + excess.toFixed(2); status.className = 'text-[10px] font-bold mt-1 text-right text-amber-300'; }
+                else { status.textContent = 'PAID IN FULL'; status.className = 'text-[10px] font-bold mt-1 text-right text-emerald-400'; }
             }
         }
 
@@ -2047,7 +2200,19 @@
         function calculateBalance() {
             const grandTotal = currentBillItems.reduce((sum, i) => sum + Number(i.total || 0), 0);
             const paidInput = parseFloat(document.getElementById('billPaidAmt').value) || 0;
-            const balance = grandTotal - paidInput;
+            
+            let previousDue = 0;
+            const selectedCustName = document.getElementById('custName')?.value || '';
+            if (selectedCustName) {
+                customers.forEach(c => {
+                    if (c.name === selectedCustName && c.pendingAmount) {
+                        previousDue += Number(c.pendingAmount);
+                    }
+                });
+            }
+
+            const totalWithPrevious = grandTotal + previousDue;
+            const balance = totalWithPrevious - paidInput;
             const due = Math.max(0, balance);
             const excess = Math.max(0, -balance);
             const field = document.getElementById('billPendingAmt');
@@ -2055,8 +2220,8 @@
             if (field) field.value = due.toFixed(2);
             if (status) {
                 if (balance > 0) { status.textContent = 'BALANCE DUE: ₹' + due.toFixed(2); status.className = 'text-[10px] font-bold mt-1 text-right text-rose-400'; }
-                else if (balance < 0) { status.textContent = 'EXCESS / RETURN: ₹' + excess.toFixed(2); status.className = 'text-[10px] font-bold mt-1 text-right text-amber-300'; }
-                else { status.textContent = 'PAID IN FULL — BALANCE: ₹0.00'; status.className = 'text-[10px] font-bold mt-1 text-right text-emerald-400'; }
+                else if (balance < 0) { status.textContent = 'RETURN: ₹' + excess.toFixed(2); status.className = 'text-[10px] font-bold mt-1 text-right text-amber-300'; }
+                else { status.textContent = 'PAID IN FULL'; status.className = 'text-[10px] font-bold mt-1 text-right text-emerald-400'; }
             }
         }
 
@@ -2087,11 +2252,19 @@
             const grandTotal = currentBillItems.reduce((sum, i) => sum + Number(i.total || 0), 0);
             const paidAmount = parseFloat(document.getElementById('billPaidAmt').value);
             const safePaidAmount = Number.isFinite(paidAmount) ? Math.max(0, paidAmount) : grandTotal;
-            const pendingAmount = Math.max(0, grandTotal - safePaidAmount);
-            const excessAmount = Math.max(0, safePaidAmount - grandTotal);
+            
+            let previousDue = 0;
+            customers.forEach(c => {
+                if (c.name === name && c.pendingAmount) {
+                    previousDue += Number(c.pendingAmount);
+                }
+            });
+
+            const pendingAmount = Math.max(0, (grandTotal + previousDue) - safePaidAmount);
+            const excessAmount = Math.max(0, safePaidAmount - (grandTotal + previousDue));
             const paymentMode = document.getElementById('billPaymentMode')?.value || 'Cash';
             let billNo = (index >= 0 && customers[index]?.billNo) || getNextBillNumber();
-            const customerData = { billNo, name, phone, saleType, paymentMode, items: [...currentBillItems], grandTotal, paidAmount: safePaidAmount, pendingAmount, excessAmount, date: (index >= 0 && customers[index]?.date) || new Date().toISOString().split('T')[0] };
+            const customerData = { billNo, name, phone, saleType, paymentMode, items: [...currentBillItems], grandTotal, paidAmount: safePaidAmount, pendingAmount, excessAmount, previousDue, date: (index >= 0 && customers[index]?.date) || new Date().toISOString().split('T')[0] };
 
             let savedIndex = index === -1 ? customers.push(customerData) - 1 : (customers[index] = customerData, index);
 
@@ -2106,6 +2279,64 @@
             updateCleaningAddStockDropdown();
             renderProducts();
             renderAccounts();
+            renderSalesHistory();
+        }
+
+        function saveCosSales(e) {
+            e.preventDefault();
+            const customer = document.getElementById('cosSCustomer').value.trim();
+            const phone = document.getElementById('cosSPhone')?.value.trim() || '';
+            const saleType = document.querySelector('input[name="cosSaleType"]:checked')?.value || 'Retail';
+            const paymentMode = document.getElementById('cosSPaymentMode')?.value || 'Cash';
+            const idx = parseInt(document.getElementById('cosSIndex').value);
+
+            if (!customer) { alert('Please enter customer name.'); return; }
+            if (currentCosBillItems.length === 0) { alert('Please add at least one item.'); return; }
+
+            if (idx >= 0 && cosSales[idx]) restoreCosSaleStock(cosSales[idx]);
+
+            const deduction = deductCosSaleStock(currentCosBillItems);
+            if (!deduction.ok) {
+                if (idx >= 0 && cosSales[idx]) {
+                    deductCosSaleStock(normalizeCosSale(cosSales[idx]).items);
+                }
+                alert(`Insufficient stock for ${deduction.product.name}. Available: ${deduction.available} ${deduction.product.unit}`);
+                return;
+            }
+
+            const grandTotal = currentCosBillItems.reduce((sum, i) => sum + Number(i.total || 0), 0);
+            const paidAmount = Math.max(0, parseFloat(document.getElementById('cosSPaid').value) || 0);
+            
+            let previousDue = 0;
+            customers.forEach(c => {
+                if (c.name === customer && c.pendingAmount) {
+                    previousDue += Number(c.pendingAmount);
+                }
+            });
+
+            const pendingAmount = Math.max(0, (grandTotal + previousDue) - paidAmount);
+            const excessAmount = Math.max(0, paidAmount - (grandTotal + previousDue));
+            const billNo = (idx >= 0 && cosSales[idx]?.billNo) || getNextCosBillNumber();
+            const bill = {
+                billNo,
+                name: 'Cosmetics',
+                customer, phone, saleType, paymentMode,
+                items: currentCosBillItems.map(i => ({...i})),
+                grandTotal, paidAmount, pendingAmount, excessAmount, previousDue,
+                date: (idx >= 0 && cosSales[idx]?.date) || new Date().toISOString().split('T')[0]
+            };
+
+            const savedIndex = idx >= 0 ? (cosSales[idx] = {...(cosSales[idx] || {}), ...bill}, idx) : (cosSales.push(bill) - 1);
+
+            syncToFirebase();
+            previewCosSaleBill(cosSales[savedIndex]);
+            resetCosSalesForm();
+            renderCosSales();
+            renderCosProductStock();
+            updateCosProductDropdowns();
+            renderCosmeticsSummary();
+            renderAccounts();
+            updateDashboard();
             renderSalesHistory();
         }
 
@@ -2189,12 +2420,19 @@
             const paidVal = c.paidAmount !== undefined ? Number(c.paidAmount) : grandVal;
             const pendingVal = c.pendingAmount !== undefined ? Number(c.pendingAmount) : Math.max(0, grandVal - paidVal);
             const excessVal = c.excessAmount !== undefined ? Number(c.excessAmount) : Math.max(0, paidVal - grandVal);
+            const prevDueVal = Number(c.previousDue || 0);
+
+            let summaryHtml = `<div style="color: #000000 !important;"><strong>Grand Total: ₹${grandVal.toFixed(2)}</strong></div>`;
+            if (prevDueVal > 0) summaryHtml += `<div style="color:#b91c1c !important;"><strong>Previous Due: ₹${prevDueVal.toFixed(2)}</strong></div>`;
+            summaryHtml += `<div style="color:#047857 !important;"><strong>Paid: ₹${paidVal.toFixed(2)}</strong></div>`;
+            if (pendingVal > 0) summaryHtml += `<div style="color:#b91c1c !important;"><strong>Balance Due: ₹${pendingVal.toFixed(2)}</strong></div>`;
+            if (excessVal > 0) summaryHtml += `<div style="color:#b45309 !important;"><strong>Return: ₹${excessVal.toFixed(2)}</strong></div>`;
 
             const billHTML = `
                 <div style="font-family: Arial; color: #000000 !important; background-color: #ffffff !important; padding: 10px;">
                     <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px;">
                         <h2 style="margin:0; color: #065f46; font-size: 16px;">FIA CLEAN & CARE</h2>
-                        <p style="margin:2px 0; font-size: 11px; color: #000000 !important;">Fia Clean & Care, Edathanattukara | Mob: 8086452106</p>
+                        <p style="margin:2px 0; font-size: 11px; color: #000000 !important;">Wholesale and Retail<br>Edathanattukara<br>Mob: 8086452106</p>
                     </div>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Bill No:</strong> ${c.billNo || '—'} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}</p><p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Customer:</strong> ${c.name}</p>
                     <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin: 10px 0; color: #000000 !important;">
@@ -2202,10 +2440,7 @@
                         <tbody>${itemsRows}</tbody>
                     </table>
                     <div style="text-align: right; font-size: 11px; line-height: 1.5; margin-top: 5px; color: #000000 !important;">
-                        <div style="color: #000000 !important;"><strong>Grand Total: ₹${grandVal.toFixed(2)}</strong></div>
-                        <div style="color:#047857 !important;"><strong>Paid: ₹${paidVal.toFixed(2)}</strong></div>
-                        <div style="color:#b91c1c !important;"><strong>${pendingVal > 0 ? 'Balance Due' : 'Balance'}: ₹${pendingVal.toFixed(2)}</strong></div>
-                        ${excessVal > 0 ? `<div style="color:#b45309 !important;"><strong>Excess / Return: ₹${excessVal.toFixed(2)}</strong></div>` : ''}
+                        ${summaryHtml}
                     </div>
                 </div>`;
             document.getElementById('billPreviewContent').innerHTML = billHTML;
@@ -2220,8 +2455,10 @@
             let itemsText = (c.items || []).map((i, idx) => `${idx + 1}. *${i.productName}* - ${i.qty} ${i.unitType !== 'Standard' ? i.unitType : ''} x ₹${i.rate} = ₹${Number(i.total).toFixed(2)}`).join('\n');
             const paidVal = c.paidAmount !== undefined ? c.paidAmount : c.grandTotal;
             const pendingVal = c.pendingAmount !== undefined ? c.pendingAmount : 0;
+            const excessVal = c.excessAmount !== undefined ? c.excessAmount : 0;
+            const prevDueVal = Number(c.previousDue || 0);
             
-            let msg = `*--- FIA CLEAN & CARE ---*\n*Fia Clean & Care, Edathanattukara | Mob: 8086452106*\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n*Balance Due:* ₹${Number(pendingVal).toFixed(2)}\n*Excess / Return:* ₹${Number(c.excessAmount||0).toFixed(2)}\n\n_Thank you for your business!_`;
+            let msg = `*FIA CLEAN & CARE*\nWholesale and Retail\nEdathanattukara\nMob: 8086452106\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n${prevDueVal > 0 ? `*Previous Due:* ₹${prevDueVal.toFixed(2)}\n` : ''}*Paid:* ₹${Number(paidVal).toFixed(2)}\n${pendingVal > 0 ? `*Balance Due:* ₹${Number(pendingVal).toFixed(2)}\n` : ''}${excessVal > 0 ? `*Return:* ₹${Number(excessVal).toFixed(2)}\n` : ''}\n_Thank you for your business!_`;
             
             history.pushState({ loggedIn: true, tab: 'billing' }, "", "#billing");
             
@@ -2239,7 +2476,8 @@
             document.getElementById('custIndex').value = "-1";
             const billNoEl = document.getElementById('billNumberDisplay'); if (billNoEl) billNoEl.textContent = getNextBillNumber();
             const balanceField = document.getElementById('billPendingAmt'); if (balanceField) balanceField.value = '0.00';
-            const balanceStatus = document.getElementById('billBalanceStatus'); if (balanceStatus) balanceStatus.textContent = 'BALANCE: ₹0.00';
+            const balanceStatus = document.getElementById('billBalanceStatus'); if (balanceStatus) balanceStatus.textContent = '';
+            const prevBalContainer = document.getElementById('previousBalanceContainer'); if (prevBalContainer) prevBalContainer.classList.add('hidden');
             currentBillItems = [];
             const editBadge = document.getElementById('billingEditMode');
             if(editBadge) editBadge.classList.add('hidden');
@@ -2466,56 +2704,6 @@
             return { ok: true };
         }
 
-        function saveCosSales(e) {
-            e.preventDefault();
-            const customer = document.getElementById('cosSCustomer').value.trim();
-            const phone = document.getElementById('cosSPhone')?.value.trim() || '';
-            const saleType = document.querySelector('input[name="cosSaleType"]:checked')?.value || 'Retail';
-            const paymentMode = document.getElementById('cosSPaymentMode')?.value || 'Cash';
-            const idx = parseInt(document.getElementById('cosSIndex').value);
-
-            if (!customer) { alert('Please enter customer name.'); return; }
-            if (currentCosBillItems.length === 0) { alert('Please add at least one item.'); return; }
-
-            if (idx >= 0 && cosSales[idx]) restoreCosSaleStock(cosSales[idx]);
-
-            const deduction = deductCosSaleStock(currentCosBillItems);
-            if (!deduction.ok) {
-                if (idx >= 0 && cosSales[idx]) {
-                    deductCosSaleStock(normalizeCosSale(cosSales[idx]).items);
-                }
-                alert(`Insufficient stock for ${deduction.product.name}. Available: ${deduction.available} ${deduction.product.unit}`);
-                return;
-            }
-
-            const grandTotal = currentCosBillItems.reduce((sum, i) => sum + Number(i.total || 0), 0);
-            const paidAmount = Math.max(0, parseFloat(document.getElementById('cosSPaid').value) || 0);
-            const pendingAmount = Math.max(0, grandTotal - paidAmount);
-            const excessAmount = Math.max(0, paidAmount - grandTotal);
-            const billNo = (idx >= 0 && cosSales[idx]?.billNo) || getNextCosBillNumber();
-            const bill = {
-                billNo,
-                name: 'Cosmetics',
-                customer, phone, saleType, paymentMode,
-                items: currentCosBillItems.map(i => ({...i})),
-                grandTotal, paidAmount, pendingAmount, excessAmount,
-                date: (idx >= 0 && cosSales[idx]?.date) || new Date().toISOString().split('T')[0]
-            };
-
-            const savedIndex = idx >= 0 ? (cosSales[idx] = {...(cosSales[idx] || {}), ...bill}, idx) : (cosSales.push(bill) - 1);
-
-            syncToFirebase();
-            previewCosSaleBill(cosSales[savedIndex]);
-            resetCosSalesForm();
-            renderCosSales();
-            renderCosProductStock();
-            updateCosProductDropdowns();
-            renderCosmeticsSummary();
-            renderAccounts();
-            updateDashboard();
-            renderSalesHistory();
-        }
-
         function previewCosSaleBill(sale) {
             const norm = normalizeCosSale(sale);
             activePreviewCustomer = {
@@ -2532,18 +2720,30 @@
                 grandTotal: norm.grandTotal,
                 paidAmount: norm.paidAmount,
                 pendingAmount: norm.pendingAmount,
-                paymentMode: norm.paymentMode
+                excessAmount: sale.excessAmount || 0,
+                paymentMode: norm.paymentMode,
+                previousDue: sale.previousDue || 0
             };
 
             const itemsRows = norm.items.map((item, i) =>
                 `<tr><td style="padding:6px;border-bottom:1px solid #ddd">${i+1}</td><td style="padding:6px;border-bottom:1px solid #ddd">${item.productName}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:center">${item.qty} ${item.unitType !== 'Standard' ? item.unitType : ''}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:right">₹${Number(item.rate||0).toFixed(2)}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:right">₹${Number(item.total||0).toFixed(2)}</td></tr>`
             ).join('');
 
+            const prevDueVal = Number(sale.previousDue || 0);
+            const dueVal = Number(norm.pendingAmount || 0);
+            const excessVal = Number(sale.excessAmount || 0);
+
+            let summaryHtml = `<div style="color: #000000 !important;"><strong>Grand Total: ₹${norm.grandTotal.toFixed(2)}</strong></div>`;
+            if (prevDueVal > 0) summaryHtml += `<div style="color:#b91c1c !important;"><strong>Previous Due: ₹${prevDueVal.toFixed(2)}</strong></div>`;
+            summaryHtml += `<div style="color:#047857 !important;"><strong>Paid: ₹${norm.paidAmount.toFixed(2)}</strong></div>`;
+            if (dueVal > 0) summaryHtml += `<div style="color:#b91c1c !important;"><strong>Balance Due: ₹${dueVal.toFixed(2)}</strong></div>`;
+            if (excessVal > 0) summaryHtml += `<div style="color:#b45309 !important;"><strong>Return: ₹${excessVal.toFixed(2)}</strong></div>`;
+
             const billHTML = `
                 <div style="font-family: Arial; color: #000000 !important; background-color: #ffffff !important; padding: 10px;">
                     <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px;">
                         <h2 style="margin:0; color: #db2777; font-size: 16px;">FIA CLEAN & CARE (COSMETICS)</h2>
-                        <p style="margin:2px 0; font-size: 11px; color: #000000 !important;">Fia Clean & Care, Edathanattukara | Mob: 8086452106</p>
+                        <p style="margin:2px 0; font-size: 11px; color: #000000 !important;">Wholesale and Retail<br>Edathanattukara<br>Mob: 8086452106</p>
                     </div>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Bill No:</strong> ${sale.billNo || 'COS-0001'} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(sale.date)}</p>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Customer:</strong> ${sale.customer || ''}</p>
@@ -2553,10 +2753,7 @@
                         <tbody>${itemsRows}</tbody>
                     </table>
                     <div style="text-align: right; font-size: 11px; line-height: 1.5; margin-top: 5px; color: #000000 !important;">
-                        <div><strong>Grand Total: ₹${norm.grandTotal.toFixed(2)}</strong></div>
-                        <div style="color:#047857 !important;"><strong>Paid: ₹${norm.paidAmount.toFixed(2)}</strong></div>
-                        <div style="color:#b91c1c !important;"><strong>Balance Due: ₹${norm.pendingAmount.toFixed(2)}</strong></div>
-                        ${Math.max(0, Number(norm.paidAmount || 0) - Number(norm.grandTotal || 0)) > 0 ? `<div style="color:#b45309 !important;"><strong>Excess / Return: ₹${Math.max(0, Number(norm.paidAmount || 0) - Number(norm.grandTotal || 0)).toFixed(2)}</strong></div>` : ''}
+                        ${summaryHtml}
                     </div>
                 </div>`;
             document.getElementById('billPreviewContent').innerHTML = billHTML;
@@ -2577,6 +2774,8 @@
             document.getElementById('cosSSubmitBtn').innerText='Save Bill & Folder';
             currentCosBillItems = [];
             renderCosBillPreviewInput();
+            const cosPrevBalContainer = document.getElementById('cosPreviousBalanceContainer');
+            if(cosPrevBalContainer) cosPrevBalContainer.classList.add('hidden');
             const cosAdjBox = document.getElementById('cosmeticsPaymentEditMode');
             if(cosAdjBox) cosAdjBox.classList.add('hidden');
             const cosAdj = document.getElementById('cosmeticsPaymentAdjustmentAmt');
@@ -2829,7 +3028,7 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-1.5 mt-2.5">
-                        <button type="button" onclick="previewBill(${index}); closeDueAmountList();" class="bg-blue-900 text-blue-200 px-2.5 py-1.5 rounded-lg border border-blue-800 text-[10px] font-bold">View</button>
+                        <button type="button" onclick="previewBill(${index}); closeDueAmountList();" class="bg-blue-900 text-blue-200 px-2 py-1.5 rounded-lg border border-blue-800 text-[10px] font-bold">View</button>
                         <button type="button" onclick="closeDueAmountList(); editCustomerBill(${index});" class="bg-slate-800 text-emerald-400 px-2.5 py-1.5 rounded-lg border border-slate-700 text-[10px] font-bold">Edit</button>
                         <button type="button" onclick="deleteDueBillFromList(${index})" class="bg-slate-800 text-red-400 px-2.5 py-1.5 rounded-lg border border-slate-700 text-[10px] font-bold">Delete</button>
                     </div>
