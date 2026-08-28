@@ -935,7 +935,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         <div class="space-y-3 text-xs"> 
             <p class="text-[10px] text-slate-500">Backup and restore your application data from this Day Book menu.</p> 
             <button type="button" onclick="downloadFullBackup()" class="w-full bg-blue-700 text-white py-2.5 rounded-xl font-bold hover:bg-blue-600">📥 Download Full Backup</button> 
-            <button type="button" onclick="backupToGoogleDrive()" class="w-full bg-emerald-700 text-white py-2.5 rounded-bold hover:bg-emerald-600">☁️ Backup to Google Drive</button> 
+            <button type="button" onclick="backupToGoogleDrive()" class="w-full bg-emerald-700 text-white py-2.5 rounded-xl font-bold hover:bg-emerald-600">☁️ Backup to Google Drive</button> 
             <button type="button" onclick="openBackupFilePicker('dayBookBackupFileInput')" class="block w-full bg-slate-800 text-slate-200 py-2.5 rounded-xl font-bold text-center cursor-pointer border border-slate-700 hover:bg-slate-700">📤 Restore Backup</button> 
             <input type="file" id="dayBookBackupFileInput" accept=".json,application/json,text/json,text/plain,*/*" class="hidden" onchange="restoreFullBackup(event)"> 
         </div> 
@@ -2467,7 +2467,7 @@ function previewBill(index) {
     
     document.getElementById('billPreviewContent').innerHTML = billHTML; 
     
-    // Print container matching the exact professional design of PDF
+    // Updated print section to include the exact professional boxed layout
     const printContainer = document.getElementById('printSection');
     printContainer.innerHTML = `
         <div style="font-family: Arial, sans-serif; background: #ffffff; color: #000000; padding: 15mm; width: 190mm; margin: 0 auto; box-sizing: border-box; border: 2px solid #065f46; border-radius: 8px;">
@@ -2960,61 +2960,19 @@ function updateDashboard() {
 
 function getSalesHistoryRows() { 
     const rows = []; 
-    customers.forEach((c, i) => { if (c?.items?.length) rows.push({ type:'cleaning', index:i, date:c.date, name:c.name, phone:c.phone || '', total:Number(c.grandTotal||0), paid:Number(c.paidAmount||0), due:Number(c.pendingAmount||0), items:c.items, saleType:c.saleType || 'Retail', paymentMode:c.paymentMode || 'Cash' }); }); 
-    cosSales.forEach((s, i) => { const n = normalizeCosSale(s); rows.push({ type:'cosmetics', index:i, date:s.date, name:s.customer, phone:s.phone || '', total:n.grandTotal, paid:n.paidAmount, due:n.pendingAmount, items:n.items, saleType:n.saleType || 'Retail', paymentMode:n.paymentMode || 'Cash' }); }); 
-    return rows.sort((a,b)=>{ const d = dateSortValue(b.date) - dateSortValue(a.date); return d !== 0 ? d : (b.index - a.index); }); 
+    customers.forEach((c, i) => { if (c?.items?.length) rows.push({ type:'cleaning', index:i, date:c.date, name:c.name, total:Number(c.grandTotal||0), paid:Number(c.paidAmount||0), due:Number(c.pendingAmount||0), items:c.items }); }); 
+    cosSales.forEach((s, i) => { const n = normalizeCosSale(s); rows.push({ type:'cosmetics', index:i, date:s.date, name:s.customer, total:n.grandTotal, paid:n.paidAmount, due:n.pendingAmount, items:n.items }); }); 
+    return rows.sort((a,b)=> dateSortValue(b.date) - dateSortValue(a.date)); 
 } 
 
 function renderSalesHistory() { 
     const container = document.getElementById('salesHistoryContainer'); 
     if (!container) return; 
-    const allRows = getSalesHistoryRows(); 
-    const filter = window.__fiaSalesHistoryFilter || 'all'; 
-    const rows = filter === 'all' ? allRows : allRows.filter(r => r.type === filter); 
-    const label = r => r.type === 'cleaning' ? '🧹 Cleaning' : '💄 Cosmetics'; 
-    container.innerHTML = rows.map(r => { 
-        const safeItems = Array.isArray(r.items) ? r.items : []; 
-        const itemText = safeItems.map(i => i && (i.productName || i.item || 'Item')).join(', '); 
-        const viewFn = r.type === 'cleaning' ? `previewBill(${r.index})` : `previewCosSaleBill(cosSales[${r.index}])`; 
-        const editFn = r.type === 'cleaning' ? `editCustomerBill(${r.index})` : `editCosSale(${r.index})`; 
-        const deleteFn = r.type === 'cleaning' ? `deleteCustomerBill(${r.index})` : `deleteCosSale(${r.index})`; 
-        return `<div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800 text-xs"> <div class="flex justify-between items-start gap-2"> <div class="min-w-0"> <div class="font-bold ${r.type==='cleaning'?'text-amber-300':'text-pink-300'}">${label(r)} — ${r.name}</div> <div class="text-slate-400 mt-0.5">${formatDateDDMMYYYY(r.date)} | ${r.saleType} | ${r.paymentMode}</div> ${r.phone ? `<div class="text-slate-500 mt-0.5">📞 ${r.phone}</div>` : ''} <div class="text-slate-300 mt-1">${itemText || 'No item details'}</div> <div class="mt-1"><span>Total: ₹${r.total.toFixed(2)}</span> · <span class="text-emerald-300">Paid: ₹${r.paid.toFixed(2)}</span> · <span class="text-rose-300">Due: ₹${r.due.toFixed(2)}</span></div> </div> <div class="flex flex-wrap gap-1 justify-end shrink-0"> <button type="button" onclick="${viewFn}" class="bg-blue-900 text-blue-200 px-2 py-1.5 rounded-lg">View</button> <button type="button" onclick="${editFn}" class="bg-slate-800 text-amber-400 px-2 py-1.5 rounded-lg">Edit</button> <button type="button" onclick="${deleteFn}" class="bg-red-900 text-red-200 px-2 py-1.5 rounded-lg">Delete</button> </div> </div> </div>`; 
-    }).join('') || `<p class="text-xs text-slate-500 text-center py-4">No sales history found.</p>`; 
+    const rows = getSalesHistoryRows().filter(r => window.__fiaSalesHistoryFilter === 'all' || r.type === window.__fiaSalesHistoryFilter); 
+    container.innerHTML = rows.map(r => `<div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800 text-xs"><div class="flex justify-between items-center"><div><div class="font-bold">${r.name}</div><div class="text-slate-400">₹${r.total}</div></div><button onclick="${r.type==='cleaning'?`previewBill(${r.index})`:`previewCosSaleBill(cosSales[${r.index}])`}" class="bg-blue-900 text-blue-200 px-2 py-1.5 rounded-lg">View</button></div></div>`).join('') || '<p class="text-xs text-slate-500 text-center py-4">No sales history.</p>'; 
 } 
 
-function renderCustomerSalesHistory() { 
-    const box = document.getElementById('salesHistoryContainer'); 
-    if(!box) return; 
-    const q = (document.getElementById('salesHistoryCustomerQuery')?.value||'').trim().toLowerCase(); 
-    if(!q){ 
-        box.innerHTML='<div class="text-center py-8 text-slate-500 text-xs">Search by customer name or phone number.</div>'; 
-        return; 
-    } 
-    const allRows = getSalesHistoryRows(); 
-    const data = allRows.filter(r => String(r.name).toLowerCase().includes(q) || String(r.phone).toLowerCase().includes(q)); 
-    const label = r => r.type === 'cleaning' ? '🧹 Cleaning' : '💄 Cosmetics'; 
-    box.innerHTML = data.length ? data.map(r => { 
-        const safeItems = Array.isArray(r.items) ? r.items : []; 
-        const itemText = safeItems.map(i => i && (i.productName || i.item || 'Item')).join(', '); 
-        const viewFn = r.type === 'cleaning' ? `previewBill(${r.index})` : `previewCosSaleBill(cosSales[${r.index}])`; 
-        return `<div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800 text-xs"><div class="flex justify-between gap-2"><div><div class="font-bold ${r.type==='cleaning'?'text-amber-300':'text-pink-300'}">${label(r)} — ${r.name}</div><div class="text-slate-400">${formatDateDDMMYYYY(r.date)} | ${r.saleType} | ${r.paymentMode}</div>${r.phone?`<div class="text-slate-500">📞 ${r.phone}</div>`:''}<div class="text-slate-300 mt-1">${itemText}</div><div class="mt-1">Total ₹${r.total.toFixed(2)} · <span class="text-emerald-300">Paid ₹${r.paid.toFixed(2)}</span> · <span class="text-rose-300">Due ₹${r.due.toFixed(2)}</span></div></div><button type="button" onclick="${viewFn}" class="bg-blue-900 text-blue-200 px-2 py-1.5 rounded-lg h-fit">View</button></div></div>`; 
-    }).join('') : '<div class="text-center py-8 text-slate-500 text-xs">No sales found for this customer.</div>'; 
-} 
-
-window.setSalesHistoryFilter = function(f) { 
-    window.__fiaSalesHistoryFilter = f; 
-    ['All','Cleaning','Cosmetics','Customer'].forEach(x=>{ 
-        const b = document.getElementById('salesHistoryTab'+x); 
-        if(b) b.className = 'py-2 rounded-lg bg-slate-900 text-slate-300 border border-slate-700 text-[10px] font-bold'; 
-    }); 
-    const activeBtn = document.getElementById('salesHistoryTab'+f.charAt(0).toUpperCase()+f.slice(1)); 
-    if(activeBtn) activeBtn.className = 'py-2 rounded-lg bg-slate-700 text-white text-[10px] font-bold'; 
-    const q = document.getElementById('salesHistoryCustomerSearch'); 
-    if(q) q.classList.toggle('hidden', f !== 'customer'); 
-    if(f === 'customer') renderCustomerSalesHistory(); 
-    else renderSalesHistory(); 
-}; 
-
+window.setSalesHistoryFilter = function(f) { window.__fiaSalesHistoryFilter = f; renderSalesHistory(); }; 
 window.refreshSalesHistoryFromCloud = function() { renderSalesHistory(); }; 
 
 function renderAll() { 
