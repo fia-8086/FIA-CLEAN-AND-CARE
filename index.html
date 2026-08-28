@@ -63,29 +63,15 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         overflow: hidden !important; 
     }
     body * { visibility: hidden !important; } 
-    #billPreviewModal, #billPreviewModal * { visibility: visible !important; } 
-    #billPreviewModal { 
+    #printSection, #printSection * { visibility: visible !important; } 
+    #printSection { 
         position: absolute !important; 
         left: 0 !important; 
         top: 0 !important; 
         width: 100% !important; 
-        height: 100% !important; 
         background: #ffffff !important; 
-        z-index: 999999 !important; 
-        display: flex !important; 
-        align-items: flex-start !important; 
-        justify-content: center !important; 
-    }
-    #billPreviewModal .bg-slate-900 { 
-        background: #ffffff !important; 
-        border: none !important; 
-        box-shadow: none !important; 
-        padding: 0 !important; 
-        width: 100% !important; 
-        max-width: 100% !important; 
-    }
-    #billPreviewModal button, #billPreviewModal .border-b { 
-        display: none !important; 
+        color: #000000 !important; 
+        display: block !important; 
     } 
 } 
 </style> 
@@ -949,7 +935,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         <div class="space-y-3 text-xs"> 
             <p class="text-[10px] text-slate-500">Backup and restore your application data from this Day Book menu.</p> 
             <button type="button" onclick="downloadFullBackup()" class="w-full bg-blue-700 text-white py-2.5 rounded-xl font-bold hover:bg-blue-600">📥 Download Full Backup</button> 
-            <button type="button" onclick="backupToGoogleDrive()" class="w-full bg-emerald-700 text-white py-2.5 rounded-xl font-bold hover:bg-emerald-600">☁️ Backup to Google Drive</button> 
+            <button type="button" onclick="backupToGoogleDrive()" class="w-full bg-emerald-700 text-white py-2.5 rounded-bold hover:bg-emerald-600">☁️ Backup to Google Drive</button> 
             <button type="button" onclick="openBackupFilePicker('dayBookBackupFileInput')" class="block w-full bg-slate-800 text-slate-200 py-2.5 rounded-xl font-bold text-center cursor-pointer border border-slate-700 hover:bg-slate-700">📤 Restore Backup</button> 
             <input type="file" id="dayBookBackupFileInput" accept=".json,application/json,text/json,text/plain,*/*" class="hidden" onchange="restoreFullBackup(event)"> 
         </div> 
@@ -1693,7 +1679,7 @@ function downloadBillPDF() {
     const printContainer = document.getElementById('printSection');
     printContainer.style.display = 'block';
     printContainer.innerHTML = `
-        <div style="font-family: Arial, sans-serif; background: #ffffff; color: #000000; padding: 15mm; width: 190mm; margin: 0 auto; box-sizing: border-box;">
+        <div style="font-family: Arial, sans-serif; background: #ffffff; color: #000000; padding: 15mm; width: 190mm; margin: 0 auto; box-sizing: border-box; border: 2px solid #065f46; border-radius: 8px;">
             <div style="text-align:center;border-bottom:2px solid #065f46;padding-bottom:10px;margin-bottom:15px;">
                 <div style="font-size:22px;font-weight:bold;color:#065f46;">FIA CLEAN & CARE</div>
                 <div style="font-size:12px;color:#333;margin-top:3px;">Wholesale and Retail | Edathanattukara<br>Mob: 8086452106</div>
@@ -1800,6 +1786,7 @@ function addCleaningStock() {
     renderProducts(); 
     updateProductDropdown(); 
     updateCleaningAddStockDropdown(); 
+    switchStockCleaningView('view');
 } 
 
 function sortByNameAsc(list, field = 'name') { 
@@ -2479,7 +2466,47 @@ function previewBill(index) {
         </div>`;
     
     document.getElementById('billPreviewContent').innerHTML = billHTML; 
-    document.getElementById('printSection').innerHTML = billHTML; 
+    
+    // Print container matching the exact professional design of PDF
+    const printContainer = document.getElementById('printSection');
+    printContainer.innerHTML = `
+        <div style="font-family: Arial, sans-serif; background: #ffffff; color: #000000; padding: 15mm; width: 190mm; margin: 0 auto; box-sizing: border-box; border: 2px solid #065f46; border-radius: 8px;">
+            <div style="text-align:center;border-bottom:2px solid #065f46;padding-bottom:10px;margin-bottom:15px;">
+                <div style="font-size:22px;font-weight:bold;color:#065f46;">FIA CLEAN & CARE</div>
+                <div style="font-size:12px;color:#333;margin-top:3px;">Wholesale and Retail | Edathanattukara<br>Mob: 8086452106</div>
+            </div>
+            <div style="font-size:13px;margin-bottom:12px;color:#000;display:flex;justify-content:space-between;">
+                <div><strong>Bill No:</strong> ${c.billNo || '—'}</div>
+                <div><strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}</div>
+            </div>
+            <div style="font-size:13px;margin-bottom:15px;color:#000;">
+                <strong>Customer:</strong> ${c.name||''}
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:15px;">
+                <thead>
+                    <tr style="background:#f3f4f6;">
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:left;">#</th>
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:left;">Product</th>
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:center;">Qty</th>
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:right;">Rate</th>
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>${itemsRows}</tbody>
+            </table>
+            <div style="text-align:right;font-size:13px;line-height:1.6;color:#000;">
+                <div><strong>Grand Total: ₹${Number(c.grandTotal||0).toFixed(2)}</strong></div>
+                ${prevDueVal > 0 ? `<div style="color:#b91c1c;"><strong>Previous Due: ₹${prevDueVal.toFixed(2)}</strong></div>` : ''}
+                <div style="color:#047857;"><strong>Paid: ₹${paidVal.toFixed(2)}</strong></div>
+                ${pendingVal > 0 ? `<div style="color:#b91c1c;"><strong>Balance Due: ₹${pendingVal.toFixed(2)}</strong></div>` : ''}
+                ${excessVal > 0 ? `<div style="color:#b45309;"><strong>Return: ₹${excessVal.toFixed(2)}</strong></div>` : ''}
+            </div>
+            <div style="text-align:center;border-top:1px solid #ddd;margin-top:25px;padding-top:10px;font-size:10px;color:#666;">
+                Thank you for your business!
+            </div>
+        </div>
+    `;
+
     isPreviewOpen = true; 
     document.getElementById('billPreviewModal').classList.remove('hidden'); 
 } 
@@ -2774,7 +2801,43 @@ function previewCosSaleBill(sale) {
         </div>`;
 
     document.getElementById('billPreviewContent').innerHTML = billHTML; 
-    document.getElementById('printSection').innerHTML = billHTML; 
+    document.getElementById('printSection').innerHTML = `
+        <div style="font-family: Arial, sans-serif; background: #ffffff; color: #000000; padding: 15mm; width: 190mm; margin: 0 auto; box-sizing: border-box; border: 2px solid #065f46; border-radius: 8px;">
+            <div style="text-align:center;border-bottom:2px solid #065f46;padding-bottom:10px;margin-bottom:15px;">
+                <div style="font-size:22px;font-weight:bold;color:#db2777;">FIA CLEAN & CARE (COSMETICS)</div>
+                <div style="font-size:12px;color:#333;margin-top:3px;">Wholesale and Retail | Edathanattukara<br>Mob: 8086452106</div>
+            </div>
+            <div style="font-size:13px;margin-bottom:12px;color:#000;display:flex;justify-content:space-between;">
+                <div><strong>Bill No:</strong> ${sale.billNo || 'COS-0001'}</div>
+                <div><strong>Date:</strong> ${formatDateDDMMYYYY(sale.date)}</div>
+            </div>
+            <div style="font-size:13px;margin-bottom:15px;color:#000;">
+                <strong>Customer:</strong> ${sale.customer||''}
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:15px;">
+                <thead>
+                    <tr style="background:#f3f4f6;">
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:left;">#</th>
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:left;">Product</th>
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:center;">Qty</th>
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:right;">Rate</th>
+                        <th style="padding:8px;border:1px solid #d1d5db;color:#000;text-align:right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>${itemsRows}</tbody>
+            </table>
+            <div style="text-align:right;font-size:13px;line-height:1.6;color:#000;">
+                <div><strong>Grand Total: ₹${grandVal.toFixed(2)}</strong></div>
+                ${prevDueVal > 0 ? `<div style="color:#b91c1c;"><strong>Previous Due: ₹${prevDueVal.toFixed(2)}</strong></div>` : ''}
+                <div style="color:#047857;"><strong>Paid: ₹${paidVal.toFixed(2)}</strong></div>
+                ${pendingVal > 0 ? `<div style="color:#b91c1c;"><strong>Balance Due: ₹${pendingVal.toFixed(2)}</strong></div>` : ''}
+                ${excessVal > 0 ? `<div style="color:#b45309;"><strong>Return: ₹${excessVal.toFixed(2)}</strong></div>` : ''}
+            </div>
+            <div style="text-align:center;border-top:1px solid #ddd;margin-top:25px;padding-top:10px;font-size:10px;color:#666;">
+                Thank you for your business!
+            </div>
+        </div>
+    `;
     isPreviewOpen = true; 
     document.getElementById('billPreviewModal').classList.remove('hidden'); 
 } 
@@ -2897,19 +2960,61 @@ function updateDashboard() {
 
 function getSalesHistoryRows() { 
     const rows = []; 
-    customers.forEach((c, i) => { if (c?.items?.length) rows.push({ type:'cleaning', index:i, date:c.date, name:c.name, total:Number(c.grandTotal||0), paid:Number(c.paidAmount||0), due:Number(c.pendingAmount||0), items:c.items }); }); 
-    cosSales.forEach((s, i) => { const n = normalizeCosSale(s); rows.push({ type:'cosmetics', index:i, date:s.date, name:s.customer, total:n.grandTotal, paid:n.paidAmount, due:n.pendingAmount, items:n.items }); }); 
-    return rows.sort((a,b)=> dateSortValue(b.date) - dateSortValue(a.date)); 
+    customers.forEach((c, i) => { if (c?.items?.length) rows.push({ type:'cleaning', index:i, date:c.date, name:c.name, phone:c.phone || '', total:Number(c.grandTotal||0), paid:Number(c.paidAmount||0), due:Number(c.pendingAmount||0), items:c.items, saleType:c.saleType || 'Retail', paymentMode:c.paymentMode || 'Cash' }); }); 
+    cosSales.forEach((s, i) => { const n = normalizeCosSale(s); rows.push({ type:'cosmetics', index:i, date:s.date, name:s.customer, phone:s.phone || '', total:n.grandTotal, paid:n.paidAmount, due:n.pendingAmount, items:n.items, saleType:n.saleType || 'Retail', paymentMode:n.paymentMode || 'Cash' }); }); 
+    return rows.sort((a,b)=>{ const d = dateSortValue(b.date) - dateSortValue(a.date); return d !== 0 ? d : (b.index - a.index); }); 
 } 
 
 function renderSalesHistory() { 
     const container = document.getElementById('salesHistoryContainer'); 
     if (!container) return; 
-    const rows = getSalesHistoryRows().filter(r => window.__fiaSalesHistoryFilter === 'all' || r.type === window.__fiaSalesHistoryFilter); 
-    container.innerHTML = rows.map(r => `<div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800 text-xs"><div class="flex justify-between items-center"><div><div class="font-bold">${r.name}</div><div class="text-slate-400">₹${r.total}</div></div><button onclick="${r.type==='cleaning'?`previewBill(${r.index})`:`previewCosSaleBill(cosSales[${r.index}])`}" class="bg-blue-900 text-blue-200 px-2 py-1.5 rounded-lg">View</button></div></div>`).join('') || '<p class="text-xs text-slate-500 text-center py-4">No sales history.</p>'; 
+    const allRows = getSalesHistoryRows(); 
+    const filter = window.__fiaSalesHistoryFilter || 'all'; 
+    const rows = filter === 'all' ? allRows : allRows.filter(r => r.type === filter); 
+    const label = r => r.type === 'cleaning' ? '🧹 Cleaning' : '💄 Cosmetics'; 
+    container.innerHTML = rows.map(r => { 
+        const safeItems = Array.isArray(r.items) ? r.items : []; 
+        const itemText = safeItems.map(i => i && (i.productName || i.item || 'Item')).join(', '); 
+        const viewFn = r.type === 'cleaning' ? `previewBill(${r.index})` : `previewCosSaleBill(cosSales[${r.index}])`; 
+        const editFn = r.type === 'cleaning' ? `editCustomerBill(${r.index})` : `editCosSale(${r.index})`; 
+        const deleteFn = r.type === 'cleaning' ? `deleteCustomerBill(${r.index})` : `deleteCosSale(${r.index})`; 
+        return `<div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800 text-xs"> <div class="flex justify-between items-start gap-2"> <div class="min-w-0"> <div class="font-bold ${r.type==='cleaning'?'text-amber-300':'text-pink-300'}">${label(r)} — ${r.name}</div> <div class="text-slate-400 mt-0.5">${formatDateDDMMYYYY(r.date)} | ${r.saleType} | ${r.paymentMode}</div> ${r.phone ? `<div class="text-slate-500 mt-0.5">📞 ${r.phone}</div>` : ''} <div class="text-slate-300 mt-1">${itemText || 'No item details'}</div> <div class="mt-1"><span>Total: ₹${r.total.toFixed(2)}</span> · <span class="text-emerald-300">Paid: ₹${r.paid.toFixed(2)}</span> · <span class="text-rose-300">Due: ₹${r.due.toFixed(2)}</span></div> </div> <div class="flex flex-wrap gap-1 justify-end shrink-0"> <button type="button" onclick="${viewFn}" class="bg-blue-900 text-blue-200 px-2 py-1.5 rounded-lg">View</button> <button type="button" onclick="${editFn}" class="bg-slate-800 text-amber-400 px-2 py-1.5 rounded-lg">Edit</button> <button type="button" onclick="${deleteFn}" class="bg-red-900 text-red-200 px-2 py-1.5 rounded-lg">Delete</button> </div> </div> </div>`; 
+    }).join('') || `<p class="text-xs text-slate-500 text-center py-4">No sales history found.</p>`; 
 } 
 
-window.setSalesHistoryFilter = function(f) { window.__fiaSalesHistoryFilter = f; renderSalesHistory(); }; 
+function renderCustomerSalesHistory() { 
+    const box = document.getElementById('salesHistoryContainer'); 
+    if(!box) return; 
+    const q = (document.getElementById('salesHistoryCustomerQuery')?.value||'').trim().toLowerCase(); 
+    if(!q){ 
+        box.innerHTML='<div class="text-center py-8 text-slate-500 text-xs">Search by customer name or phone number.</div>'; 
+        return; 
+    } 
+    const allRows = getSalesHistoryRows(); 
+    const data = allRows.filter(r => String(r.name).toLowerCase().includes(q) || String(r.phone).toLowerCase().includes(q)); 
+    const label = r => r.type === 'cleaning' ? '🧹 Cleaning' : '💄 Cosmetics'; 
+    box.innerHTML = data.length ? data.map(r => { 
+        const safeItems = Array.isArray(r.items) ? r.items : []; 
+        const itemText = safeItems.map(i => i && (i.productName || i.item || 'Item')).join(', '); 
+        const viewFn = r.type === 'cleaning' ? `previewBill(${r.index})` : `previewCosSaleBill(cosSales[${r.index}])`; 
+        return `<div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800 text-xs"><div class="flex justify-between gap-2"><div><div class="font-bold ${r.type==='cleaning'?'text-amber-300':'text-pink-300'}">${label(r)} — ${r.name}</div><div class="text-slate-400">${formatDateDDMMYYYY(r.date)} | ${r.saleType} | ${r.paymentMode}</div>${r.phone?`<div class="text-slate-500">📞 ${r.phone}</div>`:''}<div class="text-slate-300 mt-1">${itemText}</div><div class="mt-1">Total ₹${r.total.toFixed(2)} · <span class="text-emerald-300">Paid ₹${r.paid.toFixed(2)}</span> · <span class="text-rose-300">Due ₹${r.due.toFixed(2)}</span></div></div><button type="button" onclick="${viewFn}" class="bg-blue-900 text-blue-200 px-2 py-1.5 rounded-lg h-fit">View</button></div></div>`; 
+    }).join('') : '<div class="text-center py-8 text-slate-500 text-xs">No sales found for this customer.</div>'; 
+} 
+
+window.setSalesHistoryFilter = function(f) { 
+    window.__fiaSalesHistoryFilter = f; 
+    ['All','Cleaning','Cosmetics','Customer'].forEach(x=>{ 
+        const b = document.getElementById('salesHistoryTab'+x); 
+        if(b) b.className = 'py-2 rounded-lg bg-slate-900 text-slate-300 border border-slate-700 text-[10px] font-bold'; 
+    }); 
+    const activeBtn = document.getElementById('salesHistoryTab'+f.charAt(0).toUpperCase()+f.slice(1)); 
+    if(activeBtn) activeBtn.className = 'py-2 rounded-lg bg-slate-700 text-white text-[10px] font-bold'; 
+    const q = document.getElementById('salesHistoryCustomerSearch'); 
+    if(q) q.classList.toggle('hidden', f !== 'customer'); 
+    if(f === 'customer') renderCustomerSalesHistory(); 
+    else renderSalesHistory(); 
+}; 
+
 window.refreshSalesHistoryFromCloud = function() { renderSalesHistory(); }; 
 
 function renderAll() { 
