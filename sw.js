@@ -1,9 +1,9 @@
-const CACHE_NAME = 'fia-clean-care-v1';
+const CACHE_NAME = 'fia-clean-care-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon.png',
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.png',
   'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
   'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
@@ -17,6 +17,7 @@ self.addEventListener('install', event => {
       .then(cache => {
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -25,12 +26,12 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache hit - return response, else fetch from network
+        // Return cached version if found, else fetch from network
         if (response) {
           return response;
         }
         return fetch(event.request).catch(() => {
-          // If both fail, you can return a fallback offline page if needed
+          // Fallback if offline and resource not cached
         });
       })
   );
@@ -48,6 +49,6 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
