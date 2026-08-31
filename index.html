@@ -46,7 +46,6 @@
                     window.FB_AUTH = null;
                 }
                 window.FB_READY = true;
-                console.log("Firebase DB initialized successfully.");
             } catch (error) {
                 console.error("Firebase init failed:", error);
                 window.FB_READY = false;
@@ -64,9 +63,10 @@
         }
         .tab-scroll::-webkit-scrollbar { display: none; }
         @media print {
-            body * { visibility: hidden; }
-            #printSection, #printSection * { visibility: visible; }
-            #printSection { position: absolute; left: 0; top: 0; width: 100%; }
+            body * { visibility: hidden !important; }
+            #billPreviewModal, #billPreviewModal * { visibility: visible !important; }
+            #billPreviewModal { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: auto !important; background: white !important; z-index: 999999 !important; }
+            .fixed, header, nav, button { display: none !important; }
         }
     </style>
 </head>
@@ -304,29 +304,50 @@
             </div>
         </div>
 
-        <!-- ================= SECTION 2: CUSTOMERS ================= -->
+        <!-- ================= SECTION 2: CUSTOMERS (WITH 2 TABS) ================= -->
         <div id="sectionCustomers" class="space-y-4 hidden">
-            <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner">
-                <h2 id="custMgrTitle" class="font-bold text-amber-400 mb-3 text-sm">Add Customer</h2>
-                <form id="directCustomerForm" class="space-y-3" onsubmit="saveDirectCustomer(event)">
-                    <input type="hidden" id="directCustOriginalIndex" value="-1">
-                    <input type="text" id="directCustName" placeholder="Customer Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-amber-500">
-                    <input type="text" id="directCustPhone" placeholder="Phone Number" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-amber-500">
-                    <div class="flex gap-2 pt-1">
-                        <button type="submit" id="directCustSubmitBtn" class="flex-1 bg-amber-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-amber-500 transition shadow-lg shadow-amber-900/30">Save Customer</button>
-                        <button type="button" onclick="resetDirectCustomerForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm hover:bg-slate-700 transition border border-slate-700">Clear</button>
-                    </div>
-                </form>
+            <!-- Sub-tab Navigation for Customer Section -->
+            <div class="flex justify-between items-center bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1">
+                <button type="button" onclick="switchCustomerSubTab('list')" id="subTabCustList" class="flex-1 py-2 text-center text-xs font-bold bg-amber-600 text-white rounded-xl shadow-md transition">👥 Add Customer</button>
+                <button type="button" onclick="switchCustomerSubTab('report')" id="subTabCustReport" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">📊 Consolidated Report</button>
             </div>
 
-            <div class="flex justify-between items-center px-1">
-                <h3 class="font-bold text-slate-300 text-sm">Customer Directory</h3>
-                <span class="text-[10px] text-slate-400" id="customerCountBadge">0 Customers</span>
+            <!-- Sub-tab 1: Add Customer & Directory -->
+            <div id="customerListSubContent" class="space-y-4">
+                <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                    <h2 id="custMgrTitle" class="font-bold text-amber-400 mb-3 text-sm">Add Customer</h2>
+                    <form id="directCustomerForm" class="space-y-3" onsubmit="saveDirectCustomer(event)">
+                        <input type="hidden" id="directCustOriginalIndex" value="-1">
+                        <input type="text" id="directCustName" placeholder="Customer Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-amber-500">
+                        <input type="text" id="directCustPhone" placeholder="Phone Number" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-amber-500">
+                        <div class="flex gap-2 pt-1">
+                            <button type="submit" id="directCustSubmitBtn" class="flex-1 bg-amber-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-amber-500 transition shadow-lg shadow-amber-900/30">Save Customer</button>
+                            <button type="button" onclick="resetDirectCustomerForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm hover:bg-slate-700 transition border border-slate-700">Clear</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="flex justify-between items-center px-1">
+                    <h3 class="font-bold text-slate-300 text-sm">Customer Directory</h3>
+                    <span class="text-[10px] text-slate-400" id="customerCountBadge">0 Customers</span>
+                </div>
+                <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                    <input id="customerDirectorySearch" type="search" oninput="renderDirectCustomerList()" placeholder="Search customer name or mobile number..." class="w-full p-3 border border-slate-700 rounded-xl text-xs bg-slate-900 text-slate-200 focus:outline-none focus:border-amber-500">
+                </div>
+                <div id="directCustomerListContainer" class="space-y-2.5"></div>
             </div>
-            <div class="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-                <input id="customerDirectorySearch" type="search" oninput="renderDirectCustomerList()" placeholder="Search customer name or mobile number..." class="w-full p-3 border border-slate-700 rounded-xl text-xs bg-slate-900 text-slate-200 focus:outline-none focus:border-amber-500">
+
+            <!-- Sub-tab 2: Customer Consolidation Report -->
+            <div id="customerReportSubContent" class="space-y-4 hidden">
+                <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-amber-400 text-sm">Customer Consolidation Summary</h3>
+                        <input id="consolidationSearchInput" type="search" oninput="renderCustomerConsolidationReport()" placeholder="Search customer..." class="p-2 border border-slate-700 rounded-lg text-xs bg-slate-900 text-slate-200 focus:outline-none focus:border-amber-500 w-44">
+                    </div>
+                    <p class="text-[11px] text-slate-400">Total purchases, payments, and pending dues consolidated across all bills.</p>
+                </div>
+                <div id="customerConsolidationContainer" class="space-y-2.5"></div>
             </div>
-            <div id="directCustomerListContainer" class="space-y-2.5"></div>
         </div>
 
         <!-- ================= SECTION 3: BILLING ================= -->
@@ -874,7 +895,7 @@
         </div>
     </div>
 
-    <!-- Clean Master Key Reset Modal (No Extra Descriptions) -->
+    <!-- Clean Master Key Reset Modal -->
     <div id="resetPinModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 text-center">
             <h3 class="font-bold text-amber-400 text-sm">🔑 Reset Security PIN</h3>
@@ -921,7 +942,6 @@
         let scannerTargetMode = 'stock';
         let salesHistoryFilter = 'all';
 
-        // Google Drive Auth Variables
         let tokenClient;
         let accessToken = null;
         const CLIENT_ID = '64795058382-kdguglk3j6pfj5dcgbf9qnt50lbs8a3o.apps.googleusercontent.com';
@@ -1391,6 +1411,287 @@
             else { cleaning?.classList.remove('hidden'); b1?.classList.add('bg-blue-700','text-white','shadow-md'); b1?.classList.remove('text-slate-400'); renderPurchases(); }
         }
 
+        // --- CUSTOMER SUB-TAB SWITCHING & CONSOLIDATION REPORT FUNCTIONS ---
+        function switchCustomerSubTab(tab) {
+            const listContent = document.getElementById('customerListSubContent');
+            const reportContent = document.getElementById('customerReportSubContent');
+            const btnList = document.getElementById('subTabCustList');
+            const btnReport = document.getElementById('subTabCustReport');
+
+            [listContent, reportContent].forEach(el => el && el.classList.add('hidden'));
+            [btnList, btnReport].forEach(btn => {
+                if (btn) {
+                    btn.classList.remove('bg-amber-600', 'text-white', 'shadow-md');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+
+            if (tab === 'report') {
+                reportContent?.classList.remove('hidden');
+                btnReport?.classList.add('bg-amber-600', 'text-white', 'shadow-md');
+                btnReport?.classList.remove('text-slate-400');
+                renderCustomerConsolidationReport();
+            } else {
+                listContent?.classList.remove('hidden');
+                btnList?.classList.add('bg-amber-600', 'text-white', 'shadow-md');
+                btnList?.classList.remove('text-slate-400');
+                renderDirectCustomerList();
+            }
+        }
+
+        function renderCustomerConsolidationReport() {
+            const container = document.getElementById('customerConsolidationContainer');
+            if (!container) return;
+
+            // Customer ID is display-only and deterministic. Existing database records
+            // are not modified, so this feature remains backward compatible.
+            function consolidationCustomerId(name, phone) {
+                const source = String(name || '').trim().toLowerCase() + '|' + String(phone || '').trim();
+                let hash = 0;
+                for (let i = 0; i < source.length; i++) {
+                    hash = ((hash << 5) - hash) + source.charCodeAt(i);
+                    hash |= 0;
+                }
+                return 'CUS-' + String(Math.abs(hash)).padStart(8, '0');
+            }
+
+            const rows = [];
+            const customerPhones = {};
+
+            // Cleaning sales
+            customers.forEach((c, index) => {
+                if (!c || !c.name) return;
+                const name = String(c.name).trim();
+                const phone = String(c.phone || '').trim();
+                if (!customerPhones[name] && phone) customerPhones[name] = phone;
+
+                const items = Array.isArray(c.items) ? c.items : [];
+                const total = Number(c.grandTotal || 0);
+                const paid = Number(c.paidAmount || 0);
+                const due = c.pendingAmount !== undefined
+                    ? Number(c.pendingAmount || 0)
+                    : Math.max(0, total - paid);
+
+                if (items.length) {
+                    rows.push({
+                        type: 'cleaning',
+                        index,
+                        customerId: consolidationCustomerId(name, phone),
+                        name,
+                        phone,
+                        billNo: c.billNo || '—',
+                        date: c.date,
+                        saleType: c.saleType || 'Retail',
+                        paymentMode: c.paymentMode || 'Cash',
+                        total,
+                        paid,
+                        due,
+                        items
+                    });
+                }
+            });
+
+            // Cosmetics sales
+            if (typeof cosSales !== 'undefined' && Array.isArray(cosSales)) {
+                cosSales.forEach((s, index) => {
+                    if (!s || !s.customer) return;
+                    const name = String(s.customer).trim();
+                    const phone = String(s.phone || '').trim();
+                    if (!customerPhones[name] && phone) customerPhones[name] = phone;
+
+                    const n = normalizeCosSale(s);
+                    rows.push({
+                        type: 'cosmetics',
+                        index,
+                        customerId: consolidationCustomerId(name, phone),
+                        name,
+                        phone,
+                        billNo: s.billNo || '—',
+                        date: s.date,
+                        saleType: n.saleType || s.saleType || 'Retail',
+                        paymentMode: n.paymentMode || s.paymentMode || 'Cash',
+                        total: Number(n.grandTotal || 0),
+                        paid: Number(n.paidAmount || 0),
+                        due: Number(n.pendingAmount || 0),
+                        items: Array.isArray(n.items) ? n.items : []
+                    });
+                });
+            }
+
+            const query = (document.getElementById('consolidationSearchInput')?.value || '')
+                .trim().toLowerCase();
+
+            let filteredRows = rows.filter(r =>
+                !query ||
+                r.name.toLowerCase().includes(query) ||
+                r.phone.toLowerCase().includes(query) ||
+                r.customerId.toLowerCase().includes(query) ||
+                String(r.billNo).toLowerCase().includes(query)
+            );
+
+            filteredRows.sort((a, b) => {
+                const d = dateSortValue(b.date) - dateSortValue(a.date);
+                return d !== 0 ? d : (b.index - a.index);
+            });
+
+            if (!filteredRows.length) {
+                container.innerHTML = '<div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-6 text-center text-xs text-slate-500">No customer data found for consolidated report.</div>';
+                return;
+            }
+
+            // Group bill rows by customer.
+            const grouped = {};
+            filteredRows.forEach(r => {
+                const key = r.name.toLowerCase();
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        name: r.name,
+                        phone: r.phone,
+                        customerId: r.customerId,
+                        rows: [],
+                        total: 0,
+                        paid: 0,
+                        due: 0
+                    };
+                }
+                grouped[key].rows.push(r);
+                grouped[key].total += r.total;
+                grouped[key].paid += r.paid;
+                grouped[key].due += r.due;
+                if (!grouped[key].phone && r.phone) grouped[key].phone = r.phone;
+            });
+
+            const customersForReport = Object.values(grouped).sort((a, b) =>
+                b.total - a.total || a.name.localeCompare(b.name)
+            );
+
+            const overallTotal = filteredRows.reduce((s, r) => s + r.total, 0);
+            const overallPaid = filteredRows.reduce((s, r) => s + r.paid, 0);
+            const overallDue = filteredRows.reduce((s, r) => s + r.due, 0);
+
+            const esc = (value) => String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+
+            const moneySafe = value => '₹' + Number(value || 0).toFixed(2);
+
+            const itemText = items => {
+                if (!Array.isArray(items) || !items.length) return '—';
+                return items.map(item => {
+                    const product = item?.productName || item?.item || 'Item';
+                    const qty = item?.qty !== undefined && item?.qty !== '' ? ` × ${item.qty}` : '';
+                    const unit = item?.unitType && item.unitType !== 'Standard' ? ` ${item.unitType}` : '';
+                    return `${esc(product)}${qty}${unit}`;
+                }).join('<br>');
+            };
+
+            container.innerHTML = `
+                <div class="bg-slate-950/60 border border-amber-800/50 rounded-2xl p-3.5 shadow-inner">
+                    <div class="text-[10px] uppercase tracking-wider text-amber-400 font-bold mb-2">CONSOLIDATED REPORT</div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+                            <div class="text-[9px] text-slate-500 uppercase">Total Purchase</div>
+                            <div class="text-sm font-extrabold text-white mt-1">${moneySafe(overallTotal)}</div>
+                        </div>
+                        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+                            <div class="text-[9px] text-slate-500 uppercase">Total Paid</div>
+                            <div class="text-sm font-extrabold text-emerald-300 mt-1">${moneySafe(overallPaid)}</div>
+                        </div>
+                        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+                            <div class="text-[9px] text-slate-500 uppercase">Total Pending</div>
+                            <div class="text-sm font-extrabold text-rose-300 mt-1">${moneySafe(overallDue)}</div>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-2">
+                        ${customersForReport.length} customer(s) • ${filteredRows.length} bill(s)
+                    </div>
+                </div>
+
+                ${customersForReport.map((g, customerNo) => `
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-2xl overflow-hidden">
+                        <div class="p-3.5 bg-slate-900/80 border-b border-slate-800">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="font-extrabold text-amber-300 text-sm">${esc(g.name)}</span>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-800/50 text-amber-300">${esc(g.customerId)}</span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 mt-1">
+                                        ${g.phone ? `📞 ${esc(g.phone)}` : 'No mobile number'} • ${g.rows.length} bill(s)
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div class="text-[9px] text-slate-500 uppercase">Customer Total</div>
+                                    <div class="text-sm font-extrabold text-white">${moneySafe(g.total)}</div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-1.5 mt-2.5">
+                                <div class="rounded-lg bg-slate-950 p-2">
+                                    <div class="text-[8px] text-slate-500 uppercase">Purchase</div>
+                                    <div class="text-[11px] font-bold text-white">${moneySafe(g.total)}</div>
+                                </div>
+                                <div class="rounded-lg bg-slate-950 p-2">
+                                    <div class="text-[8px] text-slate-500 uppercase">Paid</div>
+                                    <div class="text-[11px] font-bold text-emerald-300">${moneySafe(g.paid)}</div>
+                                </div>
+                                <div class="rounded-lg bg-slate-950 p-2">
+                                    <div class="text-[8px] text-slate-500 uppercase">Pending</div>
+                                    <div class="text-[11px] font-bold text-rose-300">${moneySafe(g.due)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-[10px] min-w-[900px]">
+                                <thead>
+                                    <tr class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                                        <th class="p-2 text-left font-bold">Customer ID</th>
+                                        <th class="p-2 text-left font-bold">Name</th>
+                                        <th class="p-2 text-left font-bold">Module</th>
+                                        <th class="p-2 text-left font-bold">Bill Number</th>
+                                        <th class="p-2 text-left font-bold">Date</th>
+                                        <th class="p-2 text-left font-bold">Wholesale / Retail</th>
+                                        <th class="p-2 text-left font-bold">Particulars</th>
+                                        <th class="p-2 text-right font-bold">Total</th>
+                                        <th class="p-2 text-right font-bold">Paid</th>
+                                        <th class="p-2 text-right font-bold">Pending</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${g.rows.map(r => `
+                                        <tr class="border-b border-slate-800/80 align-top hover:bg-slate-900/60">
+                                            <td class="p-2 text-amber-300 font-semibold">${esc(r.customerId)}</td>
+                                            <td class="p-2 text-slate-200 font-semibold">${esc(r.name)}</td>
+                                            <td class="p-2">
+                                                <span class="${r.type === 'cleaning' ? 'text-amber-300' : 'text-pink-300'} font-bold">
+                                                    ${r.type === 'cleaning' ? '🧹 Cleaning' : '💄 Cosmetics'}
+                                                </span>
+                                            </td>
+                                            <td class="p-2 text-slate-200 font-bold">${esc(r.billNo)}</td>
+                                            <td class="p-2 text-slate-300 whitespace-nowrap">${esc(formatDateDDMMYYYY(r.date))}</td>
+                                            <td class="p-2 text-slate-300">
+                                                <div class="font-bold">${esc(r.saleType)}</div>
+                                                <div class="text-[9px] text-slate-500">${esc(r.paymentMode)}</div>
+                                            </td>
+                                            <td class="p-2 text-slate-300 leading-4">${itemText(r.items)}</td>
+                                            <td class="p-2 text-right text-white font-bold whitespace-nowrap">${moneySafe(r.total)}</td>
+                                            <td class="p-2 text-right text-emerald-300 font-bold whitespace-nowrap">${moneySafe(r.paid)}</td>
+                                            <td class="p-2 text-right ${r.due > 0 ? 'text-rose-300' : 'text-slate-400'} font-bold whitespace-nowrap">${moneySafe(r.due)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+        // ----------------------------------------------------
+
         function openBarcodeScanner() {
             scannerTargetMode = 'stock';
             document.getElementById('barcodeScannerModal').classList.remove('hidden');
@@ -1492,14 +1793,76 @@
 
         function downloadBillPDF() {
             if (!activePreviewCustomer) { alert("Bill data not available!"); return; }
-            const c = activePreviewCustomer, source = document.createElement('div');
-            source.id = 'fiaPdfExportSource'; source.style.cssText = 'position:absolute;left:0;top:0;width:190mm;min-height:20mm;background:#fff;color:#000;padding:8mm;z-index:999999;display:block;visibility:visible;opacity:1;box-sizing:border-box;';
-            const rows = (c.items||[]).map((item,i)=>`<tr><td style="padding:6px;border:1px solid #d1d5db">${i+1}</td><td style="padding:6px;border:1px solid #d1d5db">${item.productName}</td><td style="padding:6px;border:1px solid #d1d5db;text-align:center">${item.qty} ${item.unitType!=='Standard'?item.unitType:''}</td><td style="padding:6px;border:1px solid #d1d5db;text-align:right">₹${Number(item.rate||0).toFixed(2)}</td><td style="padding:6px;border:1px solid #d1d5db;text-align:right">₹${Number(item.total||0).toFixed(2)}</td></tr>`).join('');
-            const paid = c.paidAmount!==undefined?Number(c.paidAmount):Number(c.grandTotal||0), due = c.pendingAmount!==undefined?Number(c.pendingAmount):0;
-            source.innerHTML = `<div style="font-family:Arial,Helvetica,sans-serif;background:#fff;color:#000;padding:8px"><div style="text-align:center;border-bottom:2px solid #333;padding-bottom:7px;margin-bottom:12px"><div style="font-size:20px;font-weight:700;color:#065f46">FIA CLEAN & CARE</div><div style="font-size:11px;color:#000">Fia Clean & Care, Edathanattukara | Mob: 8086452106</div></div><div style="font-size:12px;margin-bottom:10px;color:#000"><strong>Customer:</strong> ${c.name||''} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}</div><table style="width:100%;border-collapse:collapse;font-size:11px;color:#000"><thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #d1d5db;color:#000">#</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Product</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Qty</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Rate</th><th style="padding:6px;border:1px solid #d1d5db;color:#000">Total</th></tr></thead><tbody>${rows}</tbody></table><div style="text-align:right;font-size:12px;line-height:1.7;margin-top:10px;color:#000"><div><strong>Grand Total: ₹${Number(c.grandTotal||0).toFixed(2)}</strong></div><div style="color:#047857"><strong>Paid: ₹${paid.toFixed(2)}</strong></div><div><strong>Payment Mode: ${c.paymentMode || 'Cash'}</strong></div><div style="color:#b91c1c"><strong>Balance Due: ₹${due.toFixed(2)}</strong></div></div><div style="text-align:center;border-top:1px solid #ddd;margin-top:15px;padding-top:7px;font-size:9px;color:#555">Thank you for your business.</div></div>`;
+            const c = activePreviewCustomer;
+            const source = document.createElement('div');
+            source.id = 'fiaPdfExportSource';
+            source.style.cssText = 'position: absolute; left: 0; top: 0; width: 210mm; background: #ffffff !important; color: #000000 !important; padding: 15mm; z-index: 999999; display: block; visibility: visible; opacity: 1; box-sizing: border-box;';
+
+            const rows = (c.items || []).map((item, i) => `
+                <tr>
+                    <td style="padding: 6px; border: 1px solid #d1d5db; color: #000;">${i + 1}</td>
+                    <td style="padding: 6px; border: 1px solid #d1d5db; color: #000;">${item.productName}</td>
+                    <td style="padding: 6px; border: 1px solid #d1d5db; text-align: center; color: #000;">${item.qty} ${item.unitType !== 'Standard' ? item.unitType : ''}</td>
+                    <td style="padding: 6px; border: 1px solid #d1d5db; text-align: right; color: #000;">₹${Number(item.rate || 0).toFixed(2)}</td>
+                    <td style="padding: 6px; border: 1px solid #d1d5db; text-align: right; color: #000;">₹${Number(item.total || 0).toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            const paid = c.paidAmount !== undefined ? Number(c.paidAmount) : Number(c.grandTotal || 0);
+            const due = c.pendingAmount !== undefined ? Number(c.pendingAmount) : 0;
+            const excess = c.excessAmount !== undefined ? Number(c.excessAmount) : Math.max(0, paid - Number(c.grandTotal || 0));
+
+            source.innerHTML = `
+                <div style="font-family: Arial, sans-serif; background: #ffffff !important; color: #000000 !important; padding: 10px;">
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 12px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #065f46;">FIA CLEAN & CARE</div>
+                        <div style="font-size: 11px; color: #333;">Fia Clean & Care, Edathanattukara | Mob: 8086452106</div>
+                    </div>
+                    <div style="font-size: 12px; margin-bottom: 10px; color: #000;">
+                        <strong>Bill No:</strong> ${c.billNo || '—'} &nbsp;|&nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}<br>
+                        <strong>Customer:</strong> ${c.name || ''}
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000; margin-bottom: 12px;">
+                        <thead>
+                            <tr style="background: #f3f4f6;">
+                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">#</th>
+                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">Product</th>
+                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">Qty</th>
+                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">Rate</th>
+                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <div style="text-align: right; font-size: 12px; line-height: 1.6; color: #000;">
+                        <div><strong>Grand Total: ₹${Number(c.grandTotal || 0).toFixed(2)}</strong></div>
+                        <div style="color: #047857;"><strong>Paid: ₹${paid.toFixed(2)}</strong></div>
+                        <div><strong>Payment Mode: ${c.paymentMode || 'Cash'}</strong></div>
+                        <div style="color: #b91c1c;"><strong>Balance Due: ₹${due.toFixed(2)}</strong></div>
+                        ${excess > 0 ? `<div style="color: #b45309;"><strong>Excess / Return: ₹${excess.toFixed(2)}</strong></div>` : ''}
+                    </div>
+                    <div style="text-align: center; border-top: 1px solid #ddd; margin-top: 20px; padding-top: 8px; font-size: 10px; color: #555;">
+                        Thank you for your business!
+                    </div>
+                </div>
+            `;
+
             document.body.appendChild(source);
-            const opt = {margin:8,filename:`bill_${String(c.name||'fia').replace(/[^a-z0-9_-]+/gi,'_')}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#fff',scrollX:0,scrollY:0},pagebreak:{mode:['avoid-all','css','legacy']},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
-            html2pdf().set(opt).from(source).save().then(()=>source.remove()).catch(err=>{console.error('PDF error:',err);source.remove();alert('PDF error. Please use Print option.');});
+            const opt = {
+                margin: 5,
+                filename: `bill_${String(c.name || 'fia').replace(/[^a-z0-9_-]+/gi, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(source).save().then(() => {
+                source.remove();
+            }).catch(err => {
+                console.error('PDF error:', err);
+                source.remove();
+                alert('PDF error. Please use Print option.');
+            });
         }
 
         function exportDayBookToExcel() {
@@ -1655,6 +2018,7 @@
             document.getElementById('directCustOriginalIndex').value = idx;
             document.getElementById('custMgrTitle').innerText = "Edit Customer";
             document.getElementById('directCustSubmitBtn').innerText = "Update Customer";
+            switchCustomerSubTab('list');
             switchTab('customers', false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -2079,7 +2443,19 @@
             const total = parseFloat(document.getElementById('billCalculatedTotal').value);
 
             if(!productName || isNaN(qty) || isNaN(rate)) { alert("Please select product, quantity, and rate."); return; }
+            
+            const product = products.find(p => p.name === productName);
             let stockDeductionQty = (unitType === 'Gram' || unitType === 'ml') ? qty / 1000 : qty;
+
+            if (product) {
+                const already = currentBillItems
+                    .filter(i => i.productName === productName)
+                    .reduce((s, i) => s + Number(i.stockDeductionQty || 0), 0);
+                if (stockDeductionQty + already > Number(product.stock || 0)) {
+                    alert(`Insufficient stock. Available: ${product.stock} ${product.unit}`);
+                    return;
+                }
+            }
 
             currentBillItems.push({ productName, qty, unitType, rate, total, stockDeductionQty });
             document.getElementById('billQty').value = "";
@@ -2191,6 +2567,7 @@
 
         function renderCustomers() {
             renderDirectCustomerList();
+            renderCustomerConsolidationReport();
         }
 
         function editCustomerBill(index) {
@@ -2647,6 +3024,7 @@
 
         function renderCosSales() {
             renderCosmeticsSummary();
+            renderCustomerConsolidationReport();
         }
 
         function resetCosSalesForm() {
@@ -3098,7 +3476,6 @@
             try { renderSalesHistory(); } catch (e) { console.warn('Initial render:', e); }
         });
 
-        // Keep user-entered alphabetic text in CAPITAL LETTERS across the app.
         document.addEventListener('input', function(e) {
             const el = e.target;
             if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA')) return;
