@@ -254,53 +254,96 @@
                 <button type="button" onclick="switchStockSubTab('cosmetics')" id="subTabStockCosmetics" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">💄 Cosmetics</button>
             </div>
             <div id="stockCleaningContent">
-                <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 id="stockFormTitle" class="font-bold text-emerald-400 text-sm">Add New Product</h2>
-                        <button type="button" onclick="openBarcodeScanner()" class="bg-slate-800 text-emerald-400 border border-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-bold">📷 Scan Barcode</button>
-                    </div>
-                    <form id="productForm" class="space-y-3" onsubmit="saveProduct(event)">
-                        <input type="hidden" id="prodId" value="">
-                        <input type="text" id="prodName" placeholder="Product Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500">
-                        <input type="text" id="prodBarcode" placeholder="Barcode / QR Number (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500">
-                        
-                        <div class="flex gap-2">
-                            <input type="number" id="prodStock" placeholder="Stock Qty" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500" min="0" step="any">
-                            <select id="prodUnit" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500">
-                                <option value="">Select Unit</option>
-                                <option value="Ltr">Litre (Ltr)</option>
-                                <option value="Kg">Kilogram (Kg)</option>
-                                <option value="Gram">Gram (g)</option>
-                                <option value="ml">Millilitre (ml)</option>
-                                <option value="Pcs">Pieces (Pcs)</option>
-                                <option value="Bottle">Bottle</option>
-                            </select>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">Wholesale Price (₹):</label>
-                                <input type="number" id="prodWholesalePrice" placeholder="Wholesale Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500" min="0" step="any">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">Retail Price (₹):</label>
-                                <input type="number" id="prodRetailPrice" placeholder="Retail Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500" min="0" step="any">
-                            </div>
-                        </div>
-                        <div class="flex gap-2 pt-1">
-                            <button type="submit" id="prodSubmitBtn" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/30">Add Product</button>
-                            <button type="button" onclick="resetProductForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm hover:bg-slate-700 transition border border-slate-700">Clear</button>
-                        </div>
-                    </form>
+                <!-- Cleaning Stock Action Tabs -->
+                <div class="flex justify-between items-center bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1 mb-3">
+                    <button type="button" onclick="switchStockActionTab('cleaning','add')" id="cleanStockAddTab" class="flex-1 py-2 text-center text-xs font-bold bg-emerald-700 text-white rounded-xl shadow-md transition">➕ Add Stock</button>
+                    <button type="button" onclick="switchStockActionTab('cleaning','view')" id="cleanStockViewTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">👁️ View Stock</button>
+                    <button type="button" onclick="switchStockActionTab('cleaning','return')" id="cleanStockReturnTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">↩️ Return Stock</button>
                 </div>
-                <div class="flex justify-between items-center px-1 mt-3"><h2 class="font-bold text-slate-300 text-sm">Cleaning Product Stock List</h2><button type="button" onclick="document.getElementById('productListContainer').scrollIntoView({behavior:'smooth',block:'start'})" class="text-emerald-300 text-[11px] font-bold">👁️ View Stock</button></div><div class="space-y-2.5 mt-2" id="productListContainer"></div>
-                <div class="bg-slate-950/60 p-4 rounded-2xl border border-emerald-800/40 shadow-inner mt-3"><h3 class="font-bold text-emerald-300 text-sm mb-3">➕ Add Stock to Existing Product</h3><div class="space-y-2"><label class="text-[10px] text-slate-400 font-semibold">PRODUCT</label><select id="cleanAddStockProduct" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></select><div class="grid grid-cols-[1fr_auto] gap-2"><div><label class="text-[10px] text-slate-400 font-semibold">QUANTITY</label><input type="number" id="cleanAddStockQty" placeholder="Enter quantity" min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></div><div class="flex items-end"><button type="button" onclick="addCleaningStock()" class="bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm font-bold min-h-[48px]">Add</button></div></div></div></div>
+
+                <!-- Cleaning: ADD TAB -->
+                <div id="cleanStockAddContent">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                        <div class="flex justify-between items-center mb-3">
+                            <h2 id="stockFormTitle" class="font-bold text-emerald-400 text-sm">Add New Product</h2>
+                            <button type="button" onclick="openBarcodeScanner()" class="bg-slate-800 text-emerald-400 border border-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-bold">📷 Scan Barcode</button>
+                        </div>
+                        <form id="productForm" class="space-y-3" onsubmit="saveProduct(event)">
+                            <input type="hidden" id="prodId" value="">
+                            <input type="text" id="prodName" placeholder="Product Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <input type="text" id="prodBarcode" placeholder="Barcode / QR Number (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <div class="flex gap-2">
+                                <input type="number" id="prodStock" placeholder="Stock Qty" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500" min="0" step="any">
+                                <select id="prodUnit" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500">
+                                    <option value="">Select Unit</option><option value="Ltr">Litre (Ltr)</option><option value="Kg">Kilogram (Kg)</option><option value="Gram">Gram (g)</option><option value="ml">Millilitre (ml)</option><option value="Pcs">Pieces (Pcs)</option><option value="Bottle">Bottle</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="text-[10px] text-slate-400 block mb-1">Wholesale Price (₹):</label><input type="number" id="prodWholesalePrice" placeholder="Wholesale Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div>
+                                <div><label class="text-[10px] text-slate-400 block mb-1">Retail Price (₹):</label><input type="number" id="prodRetailPrice" placeholder="Retail Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div>
+                            </div>
+                            <div class="flex gap-2 pt-1"><button type="submit" id="prodSubmitBtn" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm">Add Product</button><button type="button" onclick="resetProductForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm">Clear</button></div>
+                        </form>
+                    </div>
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-emerald-800/40 shadow-inner mt-3">
+                        <h3 class="font-bold text-emerald-300 text-sm mb-3">➕ Add Stock to Existing Product</h3>
+                        <div class="space-y-2"><label class="text-[10px] text-slate-400 font-semibold">PRODUCT</label><select id="cleanAddStockProduct" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></select>
+                            <div class="grid grid-cols-[1fr_auto] gap-2"><div><label class="text-[10px] text-slate-400 font-semibold">QUANTITY</label><input type="number" id="cleanAddStockQty" placeholder="Enter quantity" min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></div><div class="flex items-end"><button type="button" onclick="addCleaningStock()" class="bg-emerald-600 text-white px-5 py-3 rounded-xl text-sm font-bold min-h-[48px]">Add</button></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cleaning: VIEW TAB -->
+                <div id="cleanStockViewContent" class="hidden">
+                    <div class="flex justify-between items-center px-1 mb-2"><h2 class="font-bold text-slate-300 text-sm">Cleaning Product Stock List</h2><span class="text-[10px] text-slate-500">Edit / Delete available</span></div>
+                    <div class="space-y-2.5" id="productListContainer"></div>
+                </div>
+
+                <!-- Cleaning: RETURN TAB -->
+                <div id="cleanStockReturnContent" class="hidden">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-amber-800/40 shadow-inner">
+                        <div class="mb-3"><h3 class="font-bold text-amber-300 text-sm">↩️ Return Stock</h3><p class="text-[10px] text-slate-500">Returned from customer / issued stock</p></div>
+                        <form id="cleanReturnStockForm" class="space-y-2.5" onsubmit="saveStockReturn(event,'cleaning')">
+                            <select id="cleanReturnProduct" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></select>
+                            <div class="grid grid-cols-2 gap-2"><input type="text" id="cleanReturnCustomer" placeholder="Customer / Party Name" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><input type="number" id="cleanReturnQty" placeholder="Return Qty" required min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"></div>
+                            <div class="grid grid-cols-2 gap-2"><select id="cleanReturnCondition" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="">-- Select Condition --</option><option value="Usable">🟢 Usable Stock</option><option value="Damaged">🔴 Damaged / Not Usable</option></select><input type="text" id="cleanReturnReason" placeholder="Reason (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"></div>
+                            <input type="text" id="cleanReturnRemarks" placeholder="Remarks (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><button type="submit" class="w-full bg-amber-600 text-white py-3 rounded-xl text-sm font-bold">↩️ Save Return Stock</button>
+                        </form>
+                        <div class="mt-4 pt-3 border-t border-slate-800"><div class="flex justify-between items-center mb-2"><h4 class="font-bold text-slate-300 text-xs">Return History</h4><span class="text-[9px] text-slate-500">Newest first</span></div><div id="cleanReturnHistoryContainer" class="space-y-2"></div></div>
+                    </div>
+                </div>
             </div>
+
             <div id="stockCosmeticsContent" class="space-y-4 hidden">
-                <div class="bg-slate-950/60 p-4 rounded-2xl border border-pink-800/40 shadow-inner"><div class="flex justify-between items-center mb-3"><h2 id="cosStockFormTitle" class="font-bold text-pink-400 text-sm">Add Cosmetic Product</h2><button type="button" onclick="openBarcodeScannerForCosmeticStock()" class="bg-slate-800 text-pink-300 border border-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-bold">📷 Scan Barcode</button></div>
-                <form id="cosProductForm" class="space-y-3" onsubmit="saveCosProduct(event)"><input type="hidden" id="cosProdId" value=""><input type="text" id="cosProdName" placeholder="Product Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-pink-500"><input type="text" id="cosProdBarcode" placeholder="Barcode / QR Number (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-pink-500"><div class="flex gap-2"><input type="number" id="cosProdStock" placeholder="Stock Qty" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-pink-500" min="0" step="any"><select id="cosProdUnit" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-pink-500"><option value="">Select Unit</option><option value="Ltr">Litre (Ltr)</option><option value="Kg">Kilogram (Kg)</option><option value="Gram">Gram (g)</option><option value="ml">Millilitre (ml)</option><option value="Pcs">Pieces (Pcs)</option><option value="Bottle">Bottle</option></select></div><div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] text-slate-400 block mb-1">Wholesale Price (₹):</label><input type="number" id="cosProdCostPrice" placeholder="Wholesale Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div><div><label class="text-[10px] text-slate-400 block mb-1">Retail Price (₹):</label><input type="number" id="cosProdSalePrice" placeholder="Retail Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div></div><div class="flex gap-2 pt-1"><button type="submit" id="cosProdSubmitBtn" class="flex-1 bg-pink-600 text-white py-3 rounded-xl font-bold text-sm">Add Product</button><button type="button" onclick="resetCosProductForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm">Clear</button></div></form></div>
-                <div class="flex justify-between items-center px-1"><h2 class="font-bold text-slate-300 text-sm">Cosmetic Product Stock List</h2><button type="button" onclick="showCosmeticStockList()" class="text-pink-300 text-[11px] font-bold">👁️ View Stock</button></div><div class="space-y-2.5" id="cosProductListContainer"></div>
-                <div class="bg-slate-950/60 p-4 rounded-2xl border border-emerald-800/40 shadow-inner"><h3 class="font-bold text-emerald-300 text-sm mb-3">➕ Add Stock to Existing Product</h3><div class="space-y-2"><label class="text-[10px] text-slate-400 font-semibold">PRODUCT</label><select id="cosAddStockProduct" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></select><div class="grid grid-cols-[1fr_auto] gap-2"><div><label class="text-[10px] text-slate-400 font-semibold">QUANTITY</label><input type="number" id="cosAddStockQty" placeholder="Enter quantity" min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></div><div class="flex items-end"><button type="button" onclick="addCosmeticStock()" class="bg-pink-600 text-white px-5 py-3 rounded-xl text-sm font-bold min-h-[48px]">Add</button></div></div></div></div>
+                <!-- Cosmetics Stock Action Tabs -->
+                <div class="flex justify-between items-center bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1 mb-3">
+                    <button type="button" onclick="switchStockActionTab('cosmetics','add')" id="cosStockAddTab" class="flex-1 py-2 text-center text-xs font-bold bg-pink-700 text-white rounded-xl shadow-md transition">➕ Add Stock</button>
+                    <button type="button" onclick="switchStockActionTab('cosmetics','view')" id="cosStockViewTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">👁️ View Stock</button>
+                    <button type="button" onclick="switchStockActionTab('cosmetics','return')" id="cosStockReturnTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">↩️ Return Stock</button>
+                </div>
+
+                <!-- Cosmetics: ADD TAB -->
+                <div id="cosStockAddContent">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-pink-800/40 shadow-inner">
+                        <div class="flex justify-between items-center mb-3"><h2 id="cosStockFormTitle" class="font-bold text-pink-400 text-sm">Add Cosmetic Product</h2><button type="button" onclick="openBarcodeScannerForCosmeticStock()" class="bg-slate-800 text-pink-300 border border-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-bold">📷 Scan Barcode</button></div>
+                        <form id="cosProductForm" class="space-y-3" onsubmit="saveCosProduct(event)"><input type="hidden" id="cosProdId" value=""><input type="text" id="cosProdName" placeholder="Product Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><input type="text" id="cosProdBarcode" placeholder="Barcode / QR Number (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><div class="flex gap-2"><input type="number" id="cosProdStock" placeholder="Stock Qty" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"><select id="cosProdUnit" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="">Select Unit</option><option value="Ltr">Litre (Ltr)</option><option value="Kg">Kilogram (Kg)</option><option value="Gram">Gram (g)</option><option value="ml">Millilitre (ml)</option><option value="Pcs">Pieces (Pcs)</option><option value="Bottle">Bottle</option></select></div><div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] text-slate-400 block mb-1">Wholesale Price (₹):</label><input type="number" id="cosProdCostPrice" placeholder="Wholesale Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div><div><label class="text-[10px] text-slate-400 block mb-1">Retail Price (₹):</label><input type="number" id="cosProdSalePrice" placeholder="Retail Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div></div><div class="flex gap-2 pt-1"><button type="submit" id="cosProdSubmitBtn" class="flex-1 bg-pink-600 text-white py-3 rounded-xl font-bold text-sm">Add Product</button><button type="button" onclick="resetCosProductForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm">Clear</button></div></form>
+                    </div>
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-pink-800/40 shadow-inner mt-3"><h3 class="font-bold text-pink-300 text-sm mb-3">➕ Add Stock to Existing Product</h3><div class="space-y-2"><label class="text-[10px] text-slate-400 font-semibold">PRODUCT</label><select id="cosAddStockProduct" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></select><div class="grid grid-cols-[1fr_auto] gap-2"><div><label class="text-[10px] text-slate-400 font-semibold">QUANTITY</label><input type="number" id="cosAddStockQty" placeholder="Enter quantity" min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></div><div class="flex items-end"><button type="button" onclick="addCosmeticStock()" class="bg-pink-600 text-white px-5 py-3 rounded-xl text-sm font-bold min-h-[48px]">Add</button></div></div></div></div>
+                </div>
+
+                <!-- Cosmetics: VIEW TAB -->
+                <div id="cosStockViewContent" class="hidden">
+                    <div class="flex justify-between items-center px-1 mb-2"><h2 class="font-bold text-slate-300 text-sm">Cosmetic Product Stock List</h2><span class="text-[10px] text-slate-500">Edit / Delete available</span></div>
+                    <div class="space-y-2.5" id="cosProductListContainer"></div>
+                </div>
+
+                <!-- Cosmetics: RETURN TAB -->
+                <div id="cosStockReturnContent" class="hidden">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-amber-800/40 shadow-inner"><div class="mb-3"><h3 class="font-bold text-amber-300 text-sm">↩️ Return Stock</h3><p class="text-[10px] text-slate-500">Returned from customer / issued stock</p></div>
+                        <form id="cosReturnStockForm" class="space-y-2.5" onsubmit="saveStockReturn(event,'cosmetics')"><select id="cosReturnProduct" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></select><div class="grid grid-cols-2 gap-2"><input type="text" id="cosReturnCustomer" placeholder="Customer / Party Name" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><input type="number" id="cosReturnQty" placeholder="Return Qty" required min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"></div><div class="grid grid-cols-2 gap-2"><select id="cosReturnCondition" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="">-- Select Condition --</option><option value="Usable">🟢 Usable Stock</option><option value="Damaged">🔴 Damaged / Not Usable</option></select><input type="text" id="cosReturnReason" placeholder="Reason (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"></div><input type="text" id="cosReturnRemarks" placeholder="Remarks (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><button type="submit" class="w-full bg-amber-600 text-white py-3 rounded-xl text-sm font-bold">↩️ Save Return Stock</button></form>
+                        <div class="mt-4 pt-3 border-t border-slate-800"><div class="flex justify-between items-center mb-2"><h4 class="font-bold text-slate-300 text-xs">Return History</h4><span class="text-[9px] text-slate-500">Newest first</span></div><div id="cosReturnHistoryContainer" class="space-y-2"></div></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -364,10 +407,7 @@
                                 <button type="button" onclick="downloadCustomerConsolidationReportPDF()" class="bg-purple-700 text-white px-2.5 py-2 rounded-lg text-[10px] font-bold">📥 PDF</button>
                             </div>
                         </div>
-                        <div class="flex gap-2 items-center">
-                            <input id="consolidationSearchInput" type="search" oninput="selectedConsolidationCustomer = ''; renderCustomerConsolidationReport()" placeholder="Search customer..." class="flex-1 p-2.5 border border-slate-700 rounded-lg text-xs bg-slate-900 text-slate-200 focus:outline-none focus:border-amber-500">
-                            <button type="button" onclick="clearConsolidationCustomerSelection()" class="bg-slate-800 text-slate-300 px-3 py-2.5 rounded-lg text-[10px] font-bold border border-slate-700">✕ Clear</button>
-                        </div>
+                        <input id="consolidationSearchInput" type="search" oninput="renderCustomerConsolidationReport()" placeholder="Search customer..." class="w-full p-2.5 border border-slate-700 rounded-lg text-xs bg-slate-900 text-slate-200 focus:outline-none focus:border-amber-500">
                         <p class="text-[11px] text-slate-400">Total purchases, payments, and pending dues consolidated across all bills.</p>
                     </div>
                     <div id="customerConsolidationContainer" class="space-y-2.5"></div>
@@ -823,6 +863,19 @@
         </div>
     </div>
 
+    <div id="customerConsolidatedDetailModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[88vh] overflow-hidden shadow-2xl">
+            <div class="flex justify-between items-center p-3 border-b border-slate-800">
+                <h3 id="customerConsolidatedDetailTitle" class="font-bold text-amber-400 text-sm">Customer Details</h3>
+                <button type="button" onclick="closeCustomerConsolidatedDetail()" class="text-slate-400 hover:text-white font-bold text-sm">✕ Close</button>
+            </div>
+            <div id="customerConsolidatedDetailContent" class="p-4 overflow-y-auto max-h-[68vh] text-xs text-slate-200"></div>
+            <div class="p-3 border-t border-slate-800">
+                <button type="button" onclick="shareSelectedCustomerConsolidatedDetail()" class="w-full bg-green-700 text-white py-2.5 rounded-xl text-xs font-bold">💬 Share Customer Details on WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
     <div id="recordViewModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[85vh] overflow-hidden shadow-2xl">
             <div class="flex justify-between items-center p-3 border-b border-slate-800">
@@ -953,6 +1006,7 @@
         let cosProducts = [];
         let cosPurchases = [];
         let cosSales = [];
+        let stockReturns = [];
         let clearedDayBookEntries = [];
         let appPin = "1234";
         const MASTER_RECOVERY_KEY = "FIA786";
@@ -1056,6 +1110,7 @@
                     expenses = Array.isArray(data.expenses) ? data.expenses : Object.values(data.expenses || {});
                     cosPurchases = Array.isArray(data.cosPurchases) ? data.cosPurchases : Object.values(data.cosPurchases || {});
                     cosSales = Array.isArray(data.cosSales) ? data.cosSales : Object.values(data.cosSales || {});
+                    stockReturns = Array.isArray(data.stockReturns) ? data.stockReturns : Object.values(data.stockReturns || {});
                     clearedDayBookEntries = Array.isArray(data.clearedDayBookEntries) ? data.clearedDayBookEntries : Object.values(data.clearedDayBookEntries || {});
                     appPin = data.appPin || "1234";
 
@@ -1063,6 +1118,8 @@
                     isFirebaseConnected = true;
                     updateSyncStatus(true, 'Cloud Data Synchronized');
                     renderAll();
+                    updateStockReturnDropdowns();
+                    renderStockReturnHistory();
                 } else {
                     loadFromLocalStorage();
                     if (products.length || customers.length || cosProducts.length || purchases.length) {
@@ -1175,6 +1232,7 @@
             expenses = JSON.parse(localStorage.getItem('fia_expenses')) || [];
             cosPurchases = JSON.parse(localStorage.getItem('fia_cospurchases')) || [];
             cosSales = JSON.parse(localStorage.getItem('fia_cossales')) || [];
+            stockReturns = JSON.parse(localStorage.getItem('fia_stock_returns')) || [];
             clearedDayBookEntries = JSON.parse(localStorage.getItem('fia_cleared_daybook')) || [];
             appPin = localStorage.getItem('fia_app_pin') || "1234";
         }
@@ -1188,6 +1246,7 @@
                 localStorage.setItem('fia_expenses', JSON.stringify(expenses));
                 localStorage.setItem('fia_cospurchases', JSON.stringify(cosPurchases));
                 localStorage.setItem('fia_cossales', JSON.stringify(cosSales));
+                localStorage.setItem('fia_stock_returns', JSON.stringify(stockReturns));
                 localStorage.setItem('fia_cleared_daybook', JSON.stringify(clearedDayBookEntries));
                 localStorage.setItem('fia_app_pin', appPin);
             } catch (e) { console.warn('Local storage write failed:', e); }
@@ -1200,7 +1259,7 @@
                 return Promise.resolve(false);
             }
 
-            const payload = { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, clearedDayBookEntries, appPin };
+            const payload = { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, stockReturns, clearedDayBookEntries, appPin };
             
             return window.FB_DB.ref('fia_data').update(payload)
                 .then(() => {
@@ -1271,9 +1330,10 @@
                     expenses = Array.isArray(d.expenses) ? d.expenses : [];
                     cosPurchases = Array.isArray(d.cosPurchases) ? d.cosPurchases : [];
                     cosSales = Array.isArray(d.cosSales) ? d.cosSales : [];
+                    stockReturns = Array.isArray(d.stockReturns) ? d.stockReturns : [];
                     clearedDayBookEntries = Array.isArray(d.clearedDayBookEntries) ? d.clearedDayBookEntries : [];
                     if (typeof d.appPin === 'string' && d.appPin) appPin = d.appPin;
-                    syncToFirebase(); renderAll(); updateCosProductDropdowns();
+                    syncToFirebase(); renderAll(); updateCosProductDropdowns(); updateStockReturnDropdowns(); renderStockReturnHistory();
                     alert('Backup restored successfully!');
                 } catch(err) { console.error(err); alert('Backup restore failed. Please select a valid FIA backup file.'); }
                 finally {
@@ -1409,7 +1469,7 @@
             
             const expDateEl = document.getElementById('expDate');
             if(expDateEl && !expDateEl.value) expDateEl.value = todayDDMMYYYY();
-            setTimeout(() => { switchStockSubTab('cleaning'); switchPurchaseSubTab('cleaning'); updateCleaningPurchaseDropdown(); updateCosProductDropdowns(); }, 0);
+            setTimeout(() => { switchStockSubTab('cleaning'); switchPurchaseSubTab('cleaning'); updateCleaningPurchaseDropdown(); updateCosProductDropdowns(); updateStockReturnDropdowns(); renderStockReturnHistory(); }, 0);
             renderAll();
             startRealtimeSync();
         };
@@ -1421,8 +1481,36 @@
             const b2 = document.getElementById('subTabStockCosmetics');
             [cleaning, cosmetics].forEach(el => el && el.classList.add('hidden'));
             [b1, b2].forEach(btn => { if(btn){ btn.classList.remove('bg-emerald-700','bg-pink-700','text-white','shadow-md'); btn.classList.add('text-slate-400'); }});
-            if(tab === 'cosmetics') { cosmetics?.classList.remove('hidden'); b2?.classList.add('bg-pink-700','text-white','shadow-md'); b2?.classList.remove('text-slate-400'); renderCosProductStock(); updateCosProductDropdowns(); }
-            else { cleaning?.classList.remove('hidden'); b1?.classList.add('bg-emerald-700','text-white','shadow-md'); b1?.classList.remove('text-slate-400'); renderProducts(); }
+            if(tab === 'cosmetics') {
+                cosmetics?.classList.remove('hidden'); b2?.classList.add('bg-pink-700','text-white','shadow-md'); b2?.classList.remove('text-slate-400');
+                renderCosProductStock(); updateCosProductDropdowns(); updateStockReturnDropdowns(); renderStockReturnHistory(); switchStockActionTab('cosmetics','add');
+            } else {
+                cleaning?.classList.remove('hidden'); b1?.classList.add('bg-emerald-700','text-white','shadow-md'); b1?.classList.remove('text-slate-400');
+                renderProducts(); updateStockReturnDropdowns(); renderStockReturnHistory(); switchStockActionTab('cleaning','add');
+            }
+        }
+
+        function switchStockActionTab(type, tab) {
+            const prefix = type === 'cosmetics' ? 'cos' : 'clean';
+            const ids = ['add','view','return'];
+            ids.forEach(t => {
+                const content = document.getElementById(prefix + 'Stock' + t.charAt(0).toUpperCase() + t.slice(1) + 'Content');
+                const button = document.getElementById(prefix + 'Stock' + t.charAt(0).toUpperCase() + t.slice(1) + 'Tab');
+                if (content) content.classList.toggle('hidden', t !== tab);
+                if (button) {
+                    button.classList.remove('bg-emerald-700','bg-pink-700','text-white','shadow-md');
+                    button.classList.add('text-slate-400');
+                    if (t === tab) {
+                        button.classList.add(type === 'cosmetics' ? 'bg-pink-700' : 'bg-emerald-700','text-white','shadow-md');
+                        button.classList.remove('text-slate-400');
+                    }
+                }
+            });
+            if (tab === 'view') {
+                if (type === 'cosmetics') renderCosProductStock(); else renderProducts();
+            } else if (tab === 'return') {
+                updateStockReturnDropdowns(); renderStockReturnHistory();
+            }
         }
 
         function switchPurchaseSubTab(tab) {
@@ -1585,44 +1673,76 @@
             }).join('');
         }
 
+        let selectedCustomerConsolidatedName = '';
+
         function openCustomerConsolidationCustomer(encodedName) {
             const name = decodeURIComponent(encodedName || '');
-            const search = document.getElementById('consolidationViewSearchInput');
-            if (search) search.value = name;
-            switchCustomerConsolidationView('view');
-            setTimeout(() => {
-                const box = document.getElementById('customerConsolidationViewContainer');
-                if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 50);
+            selectedCustomerConsolidatedName = name;
+            const title = document.getElementById('customerConsolidatedDetailTitle');
+            const content = document.getElementById('customerConsolidatedDetailContent');
+            if (!content) return;
+            if (title) title.textContent = name + ' - Consolidated Report';
+
+            let purchaseCount = 0, total = 0, paid = 0, due = 0;
+            customers.forEach(c => {
+                if (!c || String(c.name || '').trim() !== name) return;
+                const g = Number(c.grandTotal || 0);
+                const p = c.paidAmount !== undefined ? Number(c.paidAmount) : g;
+                const d = c.pendingAmount !== undefined ? Number(c.pendingAmount) : Math.max(0, g - p);
+                purchaseCount += 1; total += g; paid += p; due += d;
+            });
+            if (typeof cosSales !== 'undefined') cosSales.forEach(s => {
+                if (!s || String(s.customer || '').trim() !== name) return;
+                const n = normalizeCosSale(s);
+                purchaseCount += 1; total += Number(n.grandTotal || 0); paid += Number(n.paidAmount || 0); due += Number(n.pendingAmount || 0);
+            });
+
+            const phone = (customers.find(c => c && String(c.name || '').trim() === name && c.phone)?.phone) ||
+                (typeof cosSales !== 'undefined' ? (cosSales.find(s => s && String(s.customer || '').trim() === name && s.phone)?.phone || '') : '');
+
+            content.innerHTML = `
+                <div class="space-y-3">
+                    <div class="bg-slate-950/70 rounded-xl p-3 border border-slate-800">
+                        <div class="font-bold text-amber-300 text-sm">${name}</div>
+                        <div class="text-slate-400 mt-1">Phone: ${phone || 'No Phone'}</div>
+                    </div>
+                    <div class="bg-slate-950/70 rounded-xl p-3 border border-slate-800">
+                        <div class="text-center text-amber-300 text-xs font-bold mb-3">CUSTOMER CONSOLIDATED SUMMARY</div>
+                        <div class="grid grid-cols-2 gap-2 text-center">
+                            <div class="bg-slate-900 rounded-lg p-3"><div class="text-slate-400 text-[10px]">Total Purchases</div><b class="text-white text-base">${purchaseCount}</b></div>
+                            <div class="bg-slate-900 rounded-lg p-3"><div class="text-slate-400 text-[10px]">Total Purchase Amount</div><b class="text-white text-sm">₹${total.toFixed(2)}</b></div>
+                            <div class="bg-slate-900 rounded-lg p-3"><div class="text-slate-400 text-[10px]">Total Paid</div><b class="text-emerald-400 text-sm">₹${paid.toFixed(2)}</b></div>
+                            <div class="bg-slate-900 rounded-lg p-3"><div class="text-slate-400 text-[10px]">Balance Due</div><b class="text-rose-400 text-sm">₹${due.toFixed(2)}</b></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800 text-[11px] text-slate-400 text-center">This is the customer's consolidated statement. Detailed bill-wise history remains available separately in the View section.</div>
+                </div>`;
+            document.getElementById('customerConsolidatedDetailModal')?.classList.remove('hidden');
         }
 
-        let selectedConsolidationCustomer = '';
-
-        function selectCustomerForConsolidatedReport(encodedName) {
-            selectedConsolidationCustomer = decodeURIComponent(encodedName || '');
-            const search = document.getElementById('consolidationSearchInput');
-            if (search) search.value = selectedConsolidationCustomer;
-            history.pushState({ consolidationCustomer: selectedConsolidationCustomer }, '', '#customer-consolidated-' + encodeURIComponent(selectedConsolidationCustomer));
-            renderCustomerConsolidationReport();
+        function closeCustomerConsolidatedDetail() {
+            document.getElementById('customerConsolidatedDetailModal')?.classList.add('hidden');
         }
 
-        function clearConsolidationCustomerSelection(pushHistory = true) {
-            selectedConsolidationCustomer = '';
-            const search = document.getElementById('consolidationSearchInput');
-            if (search) search.value = '';
-            if (pushHistory) history.pushState({ consolidationReport: true }, '', '#customer-report');
-            renderCustomerConsolidationReport();
+        function shareSelectedCustomerConsolidatedDetail() {
+            const name = selectedCustomerConsolidatedName;
+            if (!name) return;
+            let purchaseCount = 0, total = 0, paid = 0, due = 0;
+            customers.forEach(c => {
+                if (!c || String(c.name || '').trim() !== name) return;
+                const g = Number(c.grandTotal || 0);
+                const p = c.paidAmount !== undefined ? Number(c.paidAmount) : g;
+                const d = c.pendingAmount !== undefined ? Number(c.pendingAmount) : Math.max(0, g - p);
+                purchaseCount += 1; total += g; paid += p; due += d;
+            });
+            if (typeof cosSales !== 'undefined') cosSales.forEach(s => {
+                if (!s || String(s.customer || '').trim() !== name) return;
+                const n = normalizeCosSale(s);
+                purchaseCount += 1; total += Number(n.grandTotal || 0); paid += Number(n.paidAmount || 0); due += Number(n.pendingAmount || 0);
+            });
+            const msg = `*--- FIA CLEAN & CARE ---*\n*CUSTOMER CONSOLIDATED STATEMENT*\n\n*Customer:* ${name}\n\n*Total Purchases:* ${purchaseCount}\n*Total Purchase Amount:* ₹${total.toFixed(2)}\n*Total Paid:* ₹${paid.toFixed(2)}\n*Balance Due:* ₹${due.toFixed(2)}\n\n_Thank you for your business!_`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
         }
-
-        window.addEventListener('popstate', function() {
-            if (selectedConsolidationCustomer) {
-                clearConsolidationCustomerSelection(false);
-                const reportTab = document.getElementById('customerConsolidationReportTab');
-                if (reportTab && !document.getElementById('customerConsolidationReportContent')?.classList.contains('hidden')) {
-                    reportTab.scrollIntoView({behavior:'smooth', block:'start'});
-                }
-            }
-        });
 
         function renderCustomerConsolidationReport() {
             const container = document.getElementById('customerConsolidationContainer');
@@ -1688,7 +1808,7 @@
             }
 
             container.innerHTML = entries.map(e => `
-                <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2 cursor-pointer active:scale-[0.99] transition" role="button" tabindex="0" title="Tap to view customer history" onclick="selectCustomerForConsolidatedReport('${encodeURIComponent(e.name)}')" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); selectCustomerForConsolidatedReport('${encodeURIComponent(e.name)}'); }">
+                <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2 cursor-pointer active:scale-[0.99] transition" role="button" tabindex="0" title="Tap to view customer history" onclick="openCustomerConsolidationCustomer('${encodeURIComponent(e.name)}')" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); openCustomerConsolidationCustomer('${encodeURIComponent(e.name)}'); }">
                     <div class="flex justify-between items-start">
                         <div>
                             <span class="font-bold text-amber-300 text-sm">${e.name}</span>
@@ -1858,72 +1978,36 @@
             await fiaDownloadPDFElement(wrapper.firstElementChild, filename, 'Bill');
         }
 
-        function getSelectedConsolidationSummary() {
-            const requested = (selectedConsolidationCustomer || document.getElementById('consolidationSearchInput')?.value || '').trim().toLowerCase();
-            if (!requested) return null;
-            let map = {};
-            const add = (name, phone, total, paid, pending) => {
-                const key = String(name || '').trim().toLowerCase();
-                if (!key) return;
-                if (!map[key]) map[key] = {name:String(name).trim(), phone:phone||'', totalPurchase:0, totalPaid:0, totalPending:0, billCount:0};
-                if (phone && !map[key].phone) map[key].phone=phone;
-                map[key].totalPurchase += Number(total||0);
-                map[key].totalPaid += Number(paid||0);
-                map[key].totalPending += Number(pending||0);
-                map[key].billCount += 1;
-            };
-            customers.forEach(c=>{
-                if(!c || !c.name) return;
-                const g=Number(c.grandTotal||0), paid=c.paidAmount!==undefined?Number(c.paidAmount):g;
-                const pending=c.pendingAmount!==undefined?Number(c.pendingAmount):Math.max(0,g-paid);
-                add(c.name,c.phone,g,paid,pending);
-            });
-            if(typeof cosSales!=='undefined') cosSales.forEach(s=>{
-                if(!s || !s.customer) return;
-                const n=normalizeCosSale(s);
-                add(s.customer,s.phone,n.grandTotal,n.paidAmount,n.pendingAmount);
-            });
-            return Object.values(map).find(e=>e.name.toLowerCase()===requested || (e.phone && e.phone.toLowerCase()===requested)) || null;
-        }
-
         async function downloadCustomerConsolidationReportPDF() {
-            const summary = getSelectedConsolidationSummary();
-            if (!summary) { alert('Please tap/select a customer first.'); return; }
-            const root=document.createElement('div');
-            root.innerHTML=`<div style="font-family:Arial,sans-serif;background:#fff;color:#000;padding:14px;width:100%;box-sizing:border-box">
-                <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:9px;margin-bottom:14px">
-                    <div style="font-size:20px;font-weight:bold;color:#065f46">FIA CLEAN & CARE</div>
-                    <div style="font-size:14px;font-weight:bold">Customer Consolidated Report</div>
-                </div>
-                <div style="font-size:13px;margin-bottom:12px"><strong>Customer:</strong> ${summary.name}<br><strong>Phone:</strong> ${summary.phone||'—'}</div>
-                <table style="width:100%;border-collapse:collapse;font-size:13px">
-                    <tr><td style="padding:9px;border:1px solid #ddd"><strong>Total Purchases</strong></td><td style="padding:9px;border:1px solid #ddd;text-align:right"><strong>${summary.billCount}</strong></td></tr>
-                    <tr><td style="padding:9px;border:1px solid #ddd"><strong>Total Purchase Amount</strong></td><td style="padding:9px;border:1px solid #ddd;text-align:right"><strong>₹${summary.totalPurchase.toFixed(2)}</strong></td></tr>
-                    <tr><td style="padding:9px;border:1px solid #ddd">Total Paid</td><td style="padding:9px;border:1px solid #ddd;text-align:right;color:#047857"><strong>₹${summary.totalPaid.toFixed(2)}</strong></td></tr>
-                    ${summary.totalPending>0?`<tr><td style="padding:9px;border:1px solid #ddd">Total Pending / Due</td><td style="padding:9px;border:1px solid #ddd;text-align:right;color:#b91c1c"><strong>₹${summary.totalPending.toFixed(2)}</strong></td></tr>`:''}
-                    <tr><td style="padding:9px;border:1px solid #ddd"><strong>Total Balance</strong></td><td style="padding:9px;border:1px solid #ddd;text-align:right"><strong>₹${summary.totalPending.toFixed(2)}</strong></td></tr>
-                </table>
-                <div style="text-align:center;border-top:1px solid #ddd;margin-top:20px;padding-top:8px;font-size:10px;color:#555">Thank you for your business!</div>
-            </div>`;
-            const safeName=summary.name.replace(/[^a-z0-9_-]+/gi,'_');
-            await fiaDownloadPDFElement(root.firstElementChild,`FIA_CONSOLIDATED_${safeName}.pdf`,'Customer Consolidated Report');
+            const container = document.getElementById('customerConsolidationContainer');
+            if (!container || !container.children.length) { alert('No customer report available to download.'); return; }
+            const query = (document.getElementById('consolidationSearchInput')?.value || '').trim();
+            const report = document.createElement('div');
+            report.innerHTML = `<div style="font-family:Arial,sans-serif;background:#fff;color:#000;padding:10px"><div style="text-align:center;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:12px"><div style="font-size:20px;font-weight:bold;color:#065f46">FIA CLEAN & CARE</div><div style="font-size:13px;font-weight:bold">Customer Consolidation Report</div>${query ? `<div style="font-size:11px;margin-top:4px">Customer: ${query}</div>` : ''}</div>${container.innerHTML}</div>`;
+            const root = report.firstElementChild;
+            root.querySelectorAll('button').forEach(b => b.remove());
+            root.querySelectorAll('*').forEach(el => { el.style.color = '#000'; el.style.backgroundColor = '#fff'; el.style.borderColor = '#ddd'; });
+            const safeName = query ? query.replace(/[^a-z0-9_-]+/gi,'_') : 'All_Customers';
+            await fiaDownloadPDFElement(root, `FIA_CONSOLIDATED_REPORT_${safeName}.pdf`, 'Consolidation Report');
         }
 
         function shareCustomerConsolidationReport() {
-            const summary = getSelectedConsolidationSummary();
-            if (!summary) { alert('Please tap/select a customer first.'); return; }
-            const lines=[
-                '*--- FIA CLEAN & CARE ---*','*Customer Consolidated Report*','',
-                `*Customer:* ${summary.name}`,
-                summary.phone ? `*Phone:* ${summary.phone}` : '', '',
-                `*Total Purchases:* ${summary.billCount}`,
-                `*Total Purchase Amount:* ₹${summary.totalPurchase.toFixed(2)}`,
-                `*Total Paid:* ₹${summary.totalPaid.toFixed(2)}`,
-                summary.totalPending>0 ? `*Total Pending / Due:* ₹${summary.totalPending.toFixed(2)}` : '',
-                `*Total Balance:* ₹${summary.totalPending.toFixed(2)}`,'','_Thank you for your business!_'
-            ].filter(Boolean);
-            const url=`https://api.whatsapp.com/send?text=${encodeURIComponent(lines.join('\n'))}`;
-            window.open(url,'_blank');
+            const container = document.getElementById('customerConsolidationContainer');
+            if (!container || !container.children.length) { alert('No customer report available to share.'); return; }
+            const query = (document.getElementById('consolidationSearchInput')?.value || '').trim();
+            const lines = [];
+            lines.push('*--- FIA CLEAN & CARE ---*');
+            lines.push('*Customer Consolidation Report*');
+            if (query) lines.push(`*Customer:* ${query}`);
+            lines.push('');
+            Array.from(container.children).forEach(card => {
+                const text = card.innerText.replace(/\n+/g, '\n').trim();
+                if (text) lines.push(text);
+            });
+            lines.push('');
+            lines.push('_Thank you for your business!_');
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(lines.join('\n'))}`;
+            window.open(url, '_blank');
         }
 
         function exportDayBookToExcel() {
@@ -1974,6 +2058,7 @@
             updateCosProductDropdowns();
             updateCleaningAddStockDropdown();
             checkLowStockAlerts();
+            updateStockReturnDropdowns();
         }
 
         function addCleaningStock() {
@@ -1982,7 +2067,107 @@
             if (!id || !(qty > 0)) { alert('Product and valid stock quantity are required.'); return; }
             const p = products.find(x => x.id === id); if (!p) return;
             p.stock = (parseFloat(p.stock) || 0) + qty; syncToFirebase();
-            document.getElementById('cleanAddStockQty').value = ''; renderProducts(); updateProductDropdown(); updateCleaningAddStockDropdown();
+            document.getElementById('cleanAddStockQty').value = ''; renderProducts(); updateProductDropdown(); updateCleaningAddStockDropdown(); updateStockReturnDropdowns();
+        }
+
+        function saveStockReturn(event, type) {
+            event.preventDefault();
+            const isCos = type === 'cosmetics';
+            const productSelect = document.getElementById(isCos ? 'cosReturnProduct' : 'cleanReturnProduct');
+            const customerEl = document.getElementById(isCos ? 'cosReturnCustomer' : 'cleanReturnCustomer');
+            const qtyEl = document.getElementById(isCos ? 'cosReturnQty' : 'cleanReturnQty');
+            const conditionEl = document.getElementById(isCos ? 'cosReturnCondition' : 'cleanReturnCondition');
+            const reasonEl = document.getElementById(isCos ? 'cosReturnReason' : 'cleanReturnReason');
+            const remarksEl = document.getElementById(isCos ? 'cosReturnRemarks' : 'cleanReturnRemarks');
+            const id = productSelect?.value;
+            const qty = parseFloat(qtyEl?.value);
+            const condition = conditionEl?.value;
+            const list = isCos ? cosProducts : products;
+            const product = list.find(p => p.id === id);
+
+            if (!id || !product || !(qty > 0) || !condition) {
+                alert('Product, valid return quantity and condition are required.');
+                return;
+            }
+
+            if (condition === 'Usable') {
+                product.stock = (parseFloat(product.stock) || 0) + qty;
+            }
+
+            stockReturns.push({
+                id: 'ret_' + Date.now().toString() + '_' + Math.random().toString(36).slice(2, 7),
+                type,
+                productId: product.id,
+                productName: product.name,
+                unit: product.unit,
+                customer: (customerEl?.value || '').trim(),
+                qty,
+                condition,
+                reason: (reasonEl?.value || '').trim(),
+                remarks: (remarksEl?.value || '').trim(),
+                date: todayDDMMYYYY()
+            });
+
+            syncToFirebase();
+
+            const form = document.getElementById(isCos ? 'cosReturnStockForm' : 'cleanReturnStockForm');
+            if (form) form.reset();
+
+            renderProducts();
+            renderCosProductStock();
+            updateProductDropdown();
+            updateCosProductDropdowns();
+            updateCleaningAddStockDropdown();
+            updateStockReturnDropdowns();
+            renderStockReturnHistory();
+
+            alert(condition === 'Usable'
+                ? `${qty} ${product.unit} returned to usable stock successfully.`
+                : `${qty} ${product.unit} recorded as damaged. It was NOT added to usable stock.`);
+        }
+
+        function updateStockReturnDropdowns() {
+            const clean = document.getElementById('cleanReturnProduct');
+            const cos = document.getElementById('cosReturnProduct');
+
+            if (clean) {
+                clean.innerHTML = '<option value="">-- Select Cleaning Product --</option>';
+                sortByNameAsc(products).forEach(p => {
+                    clean.innerHTML += `<option value="${p.id}">${p.name} (Stock: ${p.stock} ${p.unit})</option>`;
+                });
+            }
+
+            if (cos) {
+                cos.innerHTML = '<option value="">-- Select Cosmetic Product --</option>';
+                sortByNameAsc(cosProducts).forEach(p => {
+                    cos.innerHTML += `<option value="${p.id}">${p.name} (Stock: ${p.stock} ${p.unit})</option>`;
+                });
+            }
+        }
+
+        function renderStockReturnHistory() {
+            const clean = document.getElementById('cleanReturnHistoryContainer');
+            const cos = document.getElementById('cosReturnHistoryContainer');
+            const render = (container, type) => {
+                if (!container) return;
+                const rows = stockReturns.filter(r => r.type === type).slice().reverse();
+                if (!rows.length) {
+                    container.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-2">No return records yet.</p>';
+                    return;
+                }
+                container.innerHTML = rows.slice(0, 30).map(r => `
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-2.5 text-[10px]">
+                        <div class="flex justify-between gap-2">
+                            <span class="font-bold text-slate-200">${r.productName}</span>
+                            <span class="${r.condition === 'Usable' ? 'text-emerald-300' : 'text-rose-300'} font-bold">${r.condition}</span>
+                        </div>
+                        <div class="text-slate-400 mt-1">${r.qty} ${r.unit} • ${r.date}${r.customer ? ' • ' + r.customer : ''}</div>
+                        ${r.reason ? `<div class="text-slate-500 mt-1">Reason: ${r.reason}</div>` : ''}
+                        ${r.remarks ? `<div class="text-slate-500">Remarks: ${r.remarks}</div>` : ''}
+                    </div>`).join('');
+            };
+            render(clean, 'cleaning');
+            render(cos, 'cosmetics');
         }
 
         function sortByNameAsc(list, field = 'name') {
@@ -2040,6 +2225,7 @@
                 renderProducts();
                 updateProductDropdown();
                 updateCosProductDropdowns();
+                updateStockReturnDropdowns();
             }
         }
 
@@ -2236,6 +2422,7 @@
             renderCosProductStock();
             updateCosProductDropdowns();
             updateCleaningAddStockDropdown();
+            updateStockReturnDropdowns();
         }
 
         function addCosmeticStock() {
@@ -2252,6 +2439,7 @@
             document.getElementById('cosAddStockQty').value = '';
             renderCosProductStock();
             updateCosProductDropdowns();
+            updateStockReturnDropdowns();
         }
 
         function editCosProduct(id) {
@@ -2276,6 +2464,7 @@
             syncToFirebase();
             renderCosProductStock();
             updateCosProductDropdowns();
+            updateStockReturnDropdowns();
         }
 
         function renderCosProductStock() {
