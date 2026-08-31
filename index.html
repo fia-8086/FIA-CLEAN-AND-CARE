@@ -2678,7 +2678,7 @@
             const paidVal = c.paidAmount !== undefined ? c.paidAmount : c.grandTotal;
             const pendingVal = c.pendingAmount !== undefined ? c.pendingAmount : 0;
             
-            let msg = `*--- FIA CLEAN & CARE ---*\n*Fia Clean & Care, Edathanattukara | Mob: 8086452106*\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n*Balance Due:* ₹${Number(pendingVal).toFixed(2)}\n*Excess / Return:* ₹${Number(c.excessAmount||0).toFixed(2)}\n\n_Thank you for your business!_`;
+            let msg = `*FIA CLEAN & CARE*\n*WholeSale & Retail, Edathanattukara | Mob: 8086452106*\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n*Balance Due:* ₹${Number(pendingVal).toFixed(2)}\n*Excess / Return:* ₹${Number(c.excessAmount||0).toFixed(2)}\n\n_Thank you for your business!_`;
             
             history.pushState({ loggedIn: true, tab: 'billing' }, "", "#billing");
             
