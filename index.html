@@ -308,8 +308,8 @@
         <div id="sectionCustomers" class="space-y-4 hidden">
             <!-- Sub-tab Navigation for Customer Section -->
             <div class="flex justify-between items-center bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1">
-                <button type="button" onclick="switchCustomerSubTab('list')" id="subTabCustList" class="flex-1 py-2 text-center text-xs font-bold bg-amber-600 text-white rounded-xl shadow-md transition">👥 Add Customer</button>
-                <button type="button" onclick="switchCustomerSubTab('report')" id="subTabCustReport" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">📊 Consolidated Report</button>
+                <button type="button" onclick="switchCustomerSubTab('list')" id="subTabCustList" class="flex-1 py-2 text-center text-xs font-bold bg-amber-600 text-white rounded-xl shadow-md transition">👥 Add Customer / List</button>
+                <button type="button" onclick="switchCustomerSubTab('report')" id="subTabCustReport" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">📊 Consolidation Report</button>
             </div>
 
             <!-- Sub-tab 1: Add Customer & Directory -->
@@ -337,16 +337,41 @@
                 <div id="directCustomerListContainer" class="space-y-2.5"></div>
             </div>
 
-            <!-- Sub-tab 2: Customer Consolidation Report -->
+            <!-- Sub-tab 2: Customer Consolidation -->
             <div id="customerReportSubContent" class="space-y-4 hidden">
-                <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-amber-400 text-sm">Customer Consolidation Summary</h3>
-                        <input id="consolidationSearchInput" type="search" oninput="renderCustomerConsolidationReport()" placeholder="Search customer..." class="p-2 border border-slate-700 rounded-lg text-xs bg-slate-900 text-slate-200 focus:outline-none focus:border-amber-500 w-44">
-                    </div>
-                    <p class="text-[11px] text-slate-400">Total purchases, payments, and pending dues consolidated across all bills.</p>
+                <div class="flex justify-between items-center bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1">
+                    <button type="button" onclick="switchCustomerConsolidationView('view')" id="customerConsolidationViewTab" class="flex-1 py-2 text-center text-xs font-bold bg-amber-600 text-white rounded-xl shadow-md transition">👁️ View</button>
+                    <button type="button" onclick="switchCustomerConsolidationView('report')" id="customerConsolidationReportTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">📊 Report</button>
                 </div>
-                <div id="customerConsolidationContainer" class="space-y-2.5"></div>
+
+                <div id="customerConsolidationViewContent" class="space-y-4">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-amber-400 text-sm">Customer Purchase History</h3>
+                            <input id="consolidationViewSearchInput" type="search" oninput="renderCustomerConsolidationView()" placeholder="Search customer..." class="p-2 border border-slate-700 rounded-lg text-xs bg-slate-900 text-slate-200 focus:outline-none focus:border-amber-500 w-44">
+                        </div>
+                        <p class="text-[11px] text-slate-400">All bills for each customer are shown line by line.</p>
+                    </div>
+                    <div id="customerConsolidationViewContainer" class="space-y-2.5"></div>
+                </div>
+
+                <div id="customerConsolidationReportContent" class="space-y-4 hidden">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner space-y-3">
+                        <div class="flex justify-between items-center gap-2">
+                            <h3 class="font-bold text-amber-400 text-sm">Customer Consolidation Summary</h3>
+                            <div class="flex gap-1.5 shrink-0">
+                                <button type="button" onclick="shareCustomerConsolidationReport()" class="bg-green-700 text-white px-2.5 py-2 rounded-lg text-[10px] font-bold">💬 WhatsApp</button>
+                                <button type="button" onclick="downloadCustomerConsolidationReportPDF()" class="bg-purple-700 text-white px-2.5 py-2 rounded-lg text-[10px] font-bold">📥 PDF</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <input id="consolidationSearchInput" type="search" oninput="selectedConsolidationCustomer = ''; renderCustomerConsolidationReport()" placeholder="Search customer..." class="flex-1 p-2.5 border border-slate-700 rounded-lg text-xs bg-slate-900 text-slate-200 focus:outline-none focus:border-amber-500">
+                            <button type="button" onclick="clearConsolidationCustomerSelection()" class="bg-slate-800 text-slate-300 px-3 py-2.5 rounded-lg text-[10px] font-bold border border-slate-700">✕ Clear</button>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Total purchases, payments, and pending dues consolidated across all bills.</p>
+                    </div>
+                    <div id="customerConsolidationContainer" class="space-y-2.5"></div>
+                </div>
             </div>
         </div>
 
@@ -1430,7 +1455,7 @@
                 reportContent?.classList.remove('hidden');
                 btnReport?.classList.add('bg-amber-600', 'text-white', 'shadow-md');
                 btnReport?.classList.remove('text-slate-400');
-                renderCustomerConsolidationReport();
+                switchCustomerConsolidationView('view');
             } else {
                 listContent?.classList.remove('hidden');
                 btnList?.classList.add('bg-amber-600', 'text-white', 'shadow-md');
@@ -1439,256 +1464,251 @@
             }
         }
 
-        function renderCustomerConsolidationReport() {
-            const container = document.getElementById('customerConsolidationContainer');
-            if (!container) return;
+        function switchCustomerConsolidationView(view) {
+            const viewContent = document.getElementById('customerConsolidationViewContent');
+            const reportContent = document.getElementById('customerConsolidationReportContent');
+            const viewTab = document.getElementById('customerConsolidationViewTab');
+            const reportTab = document.getElementById('customerConsolidationReportTab');
 
-            // Customer ID is display-only and deterministic. Existing database records
-            // are not modified, so this feature remains backward compatible.
-            function consolidationCustomerId(name, phone) {
-                const source = String(name || '').trim().toLowerCase() + '|' + String(phone || '').trim();
-                let hash = 0;
-                for (let i = 0; i < source.length; i++) {
-                    hash = ((hash << 5) - hash) + source.charCodeAt(i);
-                    hash |= 0;
-                }
-                return 'CUS-' + String(Math.abs(hash)).padStart(8, '0');
-            }
-
-            const rows = [];
-            const customerPhones = {};
-
-            // Cleaning sales
-            customers.forEach((c, index) => {
-                if (!c || !c.name) return;
-                const name = String(c.name).trim();
-                const phone = String(c.phone || '').trim();
-                if (!customerPhones[name] && phone) customerPhones[name] = phone;
-
-                const items = Array.isArray(c.items) ? c.items : [];
-                const total = Number(c.grandTotal || 0);
-                const paid = Number(c.paidAmount || 0);
-                const due = c.pendingAmount !== undefined
-                    ? Number(c.pendingAmount || 0)
-                    : Math.max(0, total - paid);
-
-                if (items.length) {
-                    rows.push({
-                        type: 'cleaning',
-                        index,
-                        customerId: consolidationCustomerId(name, phone),
-                        name,
-                        phone,
-                        billNo: c.billNo || '—',
-                        date: c.date,
-                        saleType: c.saleType || 'Retail',
-                        paymentMode: c.paymentMode || 'Cash',
-                        total,
-                        paid,
-                        due,
-                        items
-                    });
+            [viewContent, reportContent].forEach(el => el && el.classList.add('hidden'));
+            [viewTab, reportTab].forEach(btn => {
+                if (btn) {
+                    btn.classList.remove('bg-amber-600', 'text-white', 'shadow-md');
+                    btn.classList.add('text-slate-400');
                 }
             });
 
-            // Cosmetics sales
-            if (typeof cosSales !== 'undefined' && Array.isArray(cosSales)) {
+            if (view === 'report') {
+                reportContent?.classList.remove('hidden');
+                reportTab?.classList.add('bg-amber-600', 'text-white', 'shadow-md');
+                reportTab?.classList.remove('text-slate-400');
+                renderCustomerConsolidationReport();
+            } else {
+                viewContent?.classList.remove('hidden');
+                viewTab?.classList.add('bg-amber-600', 'text-white', 'shadow-md');
+                viewTab?.classList.remove('text-slate-400');
+                renderCustomerConsolidationView();
+            }
+        }
+
+        function renderCustomerConsolidationView() {
+            const container = document.getElementById('customerConsolidationViewContainer');
+            if (!container) return;
+
+            const query = (document.getElementById('consolidationViewSearchInput')?.value || '').trim().toLowerCase();
+            const grouped = {};
+
+            customers.forEach((c, index) => {
+                if (!c || !c.name || (!Array.isArray(c.items) && c.grandTotal === undefined)) return;
+                const name = c.name.trim();
+                if (!name) return;
+                if (query && !name.toLowerCase().includes(query) && !String(c.phone || '').toLowerCase().includes(query)) return;
+
+                if (!grouped[name]) grouped[name] = { name, phone: c.phone || '', rows: [] };
+                if (c.phone && !grouped[name].phone) grouped[name].phone = c.phone;
+
+                const total = Number(c.grandTotal || 0);
+                const paid = c.paidAmount !== undefined ? Number(c.paidAmount) : total;
+                const due = c.pendingAmount !== undefined ? Number(c.pendingAmount) : Math.max(0, total - paid);
+                const ret = c.excessAmount !== undefined ? Number(c.excessAmount) : Math.max(0, paid - total);
+
+                grouped[name].rows.push({
+                    index, billNo: c.billNo || '—', date: c.date, items: Array.isArray(c.items) ? c.items : [],
+                    total, paid, due, ret, saleType: c.saleType || 'Retail', paymentMode: c.paymentMode || 'Cash'
+                });
+            });
+
+            if (typeof cosSales !== 'undefined') {
                 cosSales.forEach((s, index) => {
                     if (!s || !s.customer) return;
                     const name = String(s.customer).trim();
-                    const phone = String(s.phone || '').trim();
-                    if (!customerPhones[name] && phone) customerPhones[name] = phone;
+                    if (!name) return;
+                    if (query && !name.toLowerCase().includes(query) && !String(s.phone || '').toLowerCase().includes(query)) return;
 
                     const n = normalizeCosSale(s);
-                    rows.push({
-                        type: 'cosmetics',
-                        index,
-                        customerId: consolidationCustomerId(name, phone),
-                        name,
-                        phone,
-                        billNo: s.billNo || '—',
-                        date: s.date,
-                        saleType: n.saleType || s.saleType || 'Retail',
-                        paymentMode: n.paymentMode || s.paymentMode || 'Cash',
-                        total: Number(n.grandTotal || 0),
-                        paid: Number(n.paidAmount || 0),
-                        due: Number(n.pendingAmount || 0),
-                        items: Array.isArray(n.items) ? n.items : []
+                    if (!grouped[name]) grouped[name] = { name, phone: s.phone || '', rows: [] };
+                    if (s.phone && !grouped[name].phone) grouped[name].phone = s.phone;
+
+                    grouped[name].rows.push({
+                        index, billNo: s.billNo || '—', date: s.date, items: n.items || [],
+                        total: n.grandTotal, paid: n.paidAmount, due: n.pendingAmount,
+                        ret: n.excessAmount || Math.max(0, n.paidAmount - n.grandTotal),
+                        saleType: n.saleType || 'Retail', paymentMode: n.paymentMode || 'Cash', cosmetics: true
                     });
                 });
             }
 
-            const query = (document.getElementById('consolidationSearchInput')?.value || '')
-                .trim().toLowerCase();
+            const entries = Object.values(grouped).sort((a, b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base', numeric:true}));
 
-            let filteredRows = rows.filter(r =>
-                !query ||
-                r.name.toLowerCase().includes(query) ||
-                r.phone.toLowerCase().includes(query) ||
-                r.customerId.toLowerCase().includes(query) ||
-                String(r.billNo).toLowerCase().includes(query)
-            );
-
-            filteredRows.sort((a, b) => {
-                const d = dateSortValue(b.date) - dateSortValue(a.date);
-                return d !== 0 ? d : (b.index - a.index);
-            });
-
-            if (!filteredRows.length) {
-                container.innerHTML = '<div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-6 text-center text-xs text-slate-500">No customer data found for consolidated report.</div>';
+            if (!entries.length) {
+                container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">No customer purchase history found.</p>';
                 return;
             }
 
-            // Group bill rows by customer.
-            const grouped = {};
-            filteredRows.forEach(r => {
-                const key = r.name.toLowerCase();
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        name: r.name,
-                        phone: r.phone,
-                        customerId: r.customerId,
-                        rows: [],
-                        total: 0,
-                        paid: 0,
-                        due: 0
-                    };
+            container.innerHTML = entries.map(e => {
+                e.rows.sort((a,b) => {
+                    const d = dateSortValue(b.date) - dateSortValue(a.date);
+                    return d !== 0 ? d : b.index - a.index;
+                });
+
+                return `<div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <span class="font-bold text-amber-300 text-sm">${e.name}</span>
+                            <p class="text-slate-400 text-[11px]">Phone: ${e.phone || 'No Phone'} • ${e.rows.length} Bills</p>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5 pt-1">
+                        ${e.rows.map((r, ri) => {
+                            const itemText = r.items.map(i => i && (i.productName || i.item || 'Item')).join(', ');
+                            const viewFn = r.cosmetics ? `previewCosSaleBill(cosSales[${r.index}])` : `previewBill(${r.index})`;
+                            const detailParts = [
+                                `Bill ${r.billNo}`,
+                                formatDateDDMMYYYY(r.date),
+                                itemText || 'No item details',
+                                `Total ₹${r.total.toFixed(2)}`,
+                                `Paid ₹${r.paid.toFixed(2)}`
+                            ];
+                            if (r.due > 0) detailParts.push(`Due ₹${r.due.toFixed(2)}`);
+                            if (r.ret > 0) detailParts.push(`Return ₹${r.ret.toFixed(2)}`);
+                            return `<div class="bg-slate-900/70 border border-slate-800 rounded-lg p-2.5 flex justify-between gap-2 items-start">
+                                <div class="min-w-0">
+                                    <div class="font-bold ${r.cosmetics ? 'text-pink-300' : 'text-amber-300'}">#${ri + 1} • ${detailParts[0]}</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">${detailParts.slice(1).join(' | ')}</div>
+                                    <div class="text-[10px] text-slate-500 mt-0.5">${r.saleType} • ${r.paymentMode}</div>
+                                </div>
+                                <button type="button" onclick="${viewFn}" class="bg-blue-900 text-blue-200 px-2 py-1.5 rounded-lg shrink-0">View</button>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openCustomerConsolidationCustomer(encodedName) {
+            const name = decodeURIComponent(encodedName || '');
+            const search = document.getElementById('consolidationViewSearchInput');
+            if (search) search.value = name;
+            switchCustomerConsolidationView('view');
+            setTimeout(() => {
+                const box = document.getElementById('customerConsolidationViewContainer');
+                if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+        }
+
+        let selectedConsolidationCustomer = '';
+
+        function selectCustomerForConsolidatedReport(encodedName) {
+            selectedConsolidationCustomer = decodeURIComponent(encodedName || '');
+            const search = document.getElementById('consolidationSearchInput');
+            if (search) search.value = selectedConsolidationCustomer;
+            history.pushState({ consolidationCustomer: selectedConsolidationCustomer }, '', '#customer-consolidated-' + encodeURIComponent(selectedConsolidationCustomer));
+            renderCustomerConsolidationReport();
+        }
+
+        function clearConsolidationCustomerSelection(pushHistory = true) {
+            selectedConsolidationCustomer = '';
+            const search = document.getElementById('consolidationSearchInput');
+            if (search) search.value = '';
+            if (pushHistory) history.pushState({ consolidationReport: true }, '', '#customer-report');
+            renderCustomerConsolidationReport();
+        }
+
+        window.addEventListener('popstate', function() {
+            if (selectedConsolidationCustomer) {
+                clearConsolidationCustomerSelection(false);
+                const reportTab = document.getElementById('customerConsolidationReportTab');
+                if (reportTab && !document.getElementById('customerConsolidationReportContent')?.classList.contains('hidden')) {
+                    reportTab.scrollIntoView({behavior:'smooth', block:'start'});
                 }
-                grouped[key].rows.push(r);
-                grouped[key].total += r.total;
-                grouped[key].paid += r.paid;
-                grouped[key].due += r.due;
-                if (!grouped[key].phone && r.phone) grouped[key].phone = r.phone;
+            }
+        });
+
+        function renderCustomerConsolidationReport() {
+            const container = document.getElementById('customerConsolidationContainer');
+            if (!container) return;
+
+            let customerMap = {};
+
+            customers.forEach(c => {
+                if (c && c.name) {
+                    let key = c.name.trim();
+                    if (!customerMap[key]) {
+                        customerMap[key] = { name: key, phone: c.phone || '', totalPurchase: 0, totalPaid: 0, totalPending: 0, billCount: 0 };
+                    } else if (c.phone && !customerMap[key].phone) {
+                        customerMap[key].phone = c.phone;
+                    }
+                }
             });
 
-            const customersForReport = Object.values(grouped).sort((a, b) =>
-                b.total - a.total || a.name.localeCompare(b.name)
-            );
+            customers.forEach(c => {
+                if (c && c.name && (c.items || c.grandTotal !== undefined)) {
+                    let key = c.name.trim();
+                    if (!customerMap[key]) {
+                        customerMap[key] = { name: key, phone: c.phone || '', totalPurchase: 0, totalPaid: 0, totalPending: 0, billCount: 0 };
+                    }
+                    let gTotal = Number(c.grandTotal || 0);
+                    let paid = c.paidAmount !== undefined ? Number(c.paidAmount) : gTotal;
+                    let pending = c.pendingAmount !== undefined ? Number(c.pendingAmount) : Math.max(0, gTotal - paid);
 
-            const overallTotal = filteredRows.reduce((s, r) => s + r.total, 0);
-            const overallPaid = filteredRows.reduce((s, r) => s + r.paid, 0);
-            const overallDue = filteredRows.reduce((s, r) => s + r.due, 0);
+                    customerMap[key].totalPurchase += gTotal;
+                    customerMap[key].totalPaid += paid;
+                    customerMap[key].totalPending += pending;
+                    customerMap[key].billCount += 1;
+                }
+            });
 
-            const esc = (value) => String(value ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+            if (typeof cosSales !== 'undefined') {
+                cosSales.forEach(s => {
+                    if (s && s.customer) {
+                        let key = s.customer.trim();
+                        if (!customerMap[key]) {
+                            customerMap[key] = { name: key, phone: s.phone || '', totalPurchase: 0, totalPaid: 0, totalPending: 0, billCount: 0 };
+                        }
+                        let norm = normalizeCosSale(s);
+                        customerMap[key].totalPurchase += norm.grandTotal;
+                        customerMap[key].totalPaid += norm.paidAmount;
+                        customerMap[key].totalPending += norm.pendingAmount;
+                        customerMap[key].billCount += 1;
+                    }
+                });
+            }
 
-            const moneySafe = value => '₹' + Number(value || 0).toFixed(2);
+            let entries = Object.values(customerMap);
+            const query = (document.getElementById('consolidationSearchInput')?.value || '').trim().toLowerCase();
+            if (query) {
+                entries = entries.filter(e => e.name.toLowerCase().includes(query) || (e.phone && e.phone.toLowerCase().includes(query)));
+            }
 
-            const itemText = items => {
-                if (!Array.isArray(items) || !items.length) return '—';
-                return items.map(item => {
-                    const product = item?.productName || item?.item || 'Item';
-                    const qty = item?.qty !== undefined && item?.qty !== '' ? ` × ${item.qty}` : '';
-                    const unit = item?.unitType && item.unitType !== 'Standard' ? ` ${item.unitType}` : '';
-                    return `${esc(product)}${qty}${unit}`;
-                }).join('<br>');
-            };
+            entries.sort((a, b) => b.totalPurchase - a.totalPurchase);
 
-            container.innerHTML = `
-                <div class="bg-slate-950/60 border border-amber-800/50 rounded-2xl p-3.5 shadow-inner">
-                    <div class="text-[10px] uppercase tracking-wider text-amber-400 font-bold mb-2">CONSOLIDATED REPORT</div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
-                            <div class="text-[9px] text-slate-500 uppercase">Total Purchase</div>
-                            <div class="text-sm font-extrabold text-white mt-1">${moneySafe(overallTotal)}</div>
+            if (entries.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6">No customer data found for consolidation.</p>';
+                return;
+            }
+
+            container.innerHTML = entries.map(e => `
+                <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2 cursor-pointer active:scale-[0.99] transition" role="button" tabindex="0" title="Tap to view customer history" onclick="selectCustomerForConsolidatedReport('${encodeURIComponent(e.name)}')" onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); selectCustomerForConsolidatedReport('${encodeURIComponent(e.name)}'); }">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="font-bold text-amber-300 text-sm">${e.name}</span>
+                            <p class="text-slate-400 text-[11px]">Phone: ${e.phone || 'No Phone'} • Bills: ${e.billCount}</p>
                         </div>
-                        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
-                            <div class="text-[9px] text-slate-500 uppercase">Total Paid</div>
-                            <div class="text-sm font-extrabold text-emerald-300 mt-1">${moneySafe(overallPaid)}</div>
-                        </div>
-                        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
-                            <div class="text-[9px] text-slate-500 uppercase">Total Pending</div>
-                            <div class="text-sm font-extrabold text-rose-300 mt-1">${moneySafe(overallDue)}</div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-slate-400 uppercase">Total Purchase</span>
+                            <p class="font-extrabold text-white text-sm">₹${e.totalPurchase.toFixed(2)}</p>
                         </div>
                     </div>
-                    <div class="text-[10px] text-slate-500 mt-2">
-                        ${customersForReport.length} customer(s) • ${filteredRows.length} bill(s)
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
+                        <div>
+                            <span class="text-slate-400">Total Paid:</span> <strong class="text-emerald-400">₹${e.totalPaid.toFixed(2)}</strong>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-slate-400">Pending Due:</span> <strong class="${e.totalPending > 0 ? 'text-rose-400 font-bold' : 'text-slate-300'}">₹${e.totalPending.toFixed(2)}</strong>
+                        </div>
                     </div>
                 </div>
-
-                ${customersForReport.map((g, customerNo) => `
-                    <div class="bg-slate-950/60 border border-slate-800 rounded-2xl overflow-hidden">
-                        <div class="p-3.5 bg-slate-900/80 border-b border-slate-800">
-                            <div class="flex items-start justify-between gap-2">
-                                <div class="min-w-0">
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <span class="font-extrabold text-amber-300 text-sm">${esc(g.name)}</span>
-                                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-800/50 text-amber-300">${esc(g.customerId)}</span>
-                                    </div>
-                                    <div class="text-[10px] text-slate-400 mt-1">
-                                        ${g.phone ? `📞 ${esc(g.phone)}` : 'No mobile number'} • ${g.rows.length} bill(s)
-                                    </div>
-                                </div>
-                                <div class="text-right shrink-0">
-                                    <div class="text-[9px] text-slate-500 uppercase">Customer Total</div>
-                                    <div class="text-sm font-extrabold text-white">${moneySafe(g.total)}</div>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-3 gap-1.5 mt-2.5">
-                                <div class="rounded-lg bg-slate-950 p-2">
-                                    <div class="text-[8px] text-slate-500 uppercase">Purchase</div>
-                                    <div class="text-[11px] font-bold text-white">${moneySafe(g.total)}</div>
-                                </div>
-                                <div class="rounded-lg bg-slate-950 p-2">
-                                    <div class="text-[8px] text-slate-500 uppercase">Paid</div>
-                                    <div class="text-[11px] font-bold text-emerald-300">${moneySafe(g.paid)}</div>
-                                </div>
-                                <div class="rounded-lg bg-slate-950 p-2">
-                                    <div class="text-[8px] text-slate-500 uppercase">Pending</div>
-                                    <div class="text-[11px] font-bold text-rose-300">${moneySafe(g.due)}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-[10px] min-w-[900px]">
-                                <thead>
-                                    <tr class="bg-slate-950 text-slate-400 border-b border-slate-800">
-                                        <th class="p-2 text-left font-bold">Customer ID</th>
-                                        <th class="p-2 text-left font-bold">Name</th>
-                                        <th class="p-2 text-left font-bold">Module</th>
-                                        <th class="p-2 text-left font-bold">Bill Number</th>
-                                        <th class="p-2 text-left font-bold">Date</th>
-                                        <th class="p-2 text-left font-bold">Wholesale / Retail</th>
-                                        <th class="p-2 text-left font-bold">Particulars</th>
-                                        <th class="p-2 text-right font-bold">Total</th>
-                                        <th class="p-2 text-right font-bold">Paid</th>
-                                        <th class="p-2 text-right font-bold">Pending</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${g.rows.map(r => `
-                                        <tr class="border-b border-slate-800/80 align-top hover:bg-slate-900/60">
-                                            <td class="p-2 text-amber-300 font-semibold">${esc(r.customerId)}</td>
-                                            <td class="p-2 text-slate-200 font-semibold">${esc(r.name)}</td>
-                                            <td class="p-2">
-                                                <span class="${r.type === 'cleaning' ? 'text-amber-300' : 'text-pink-300'} font-bold">
-                                                    ${r.type === 'cleaning' ? '🧹 Cleaning' : '💄 Cosmetics'}
-                                                </span>
-                                            </td>
-                                            <td class="p-2 text-slate-200 font-bold">${esc(r.billNo)}</td>
-                                            <td class="p-2 text-slate-300 whitespace-nowrap">${esc(formatDateDDMMYYYY(r.date))}</td>
-                                            <td class="p-2 text-slate-300">
-                                                <div class="font-bold">${esc(r.saleType)}</div>
-                                                <div class="text-[9px] text-slate-500">${esc(r.paymentMode)}</div>
-                                            </td>
-                                            <td class="p-2 text-slate-300 leading-4">${itemText(r.items)}</td>
-                                            <td class="p-2 text-right text-white font-bold whitespace-nowrap">${moneySafe(r.total)}</td>
-                                            <td class="p-2 text-right text-emerald-300 font-bold whitespace-nowrap">${moneySafe(r.paid)}</td>
-                                            <td class="p-2 text-right ${r.due > 0 ? 'text-rose-300' : 'text-slate-400'} font-bold whitespace-nowrap">${moneySafe(r.due)}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `).join('')}
-            `;
+            `).join('');
         }
         // ----------------------------------------------------
 
@@ -1790,79 +1810,120 @@
                 preview.innerHTML = '';
             }
         }
+        async function fiaWaitForPDFLibrary() {
+            for (let i = 0; i < 30; i++) {
+                if (typeof window.html2pdf === 'function') return true;
+                await new Promise(resolve => setTimeout(resolve, 150));
+            }
+            return false;
+        }
 
-        function downloadBillPDF() {
-            if (!activePreviewCustomer) { alert("Bill data not available!"); return; }
-            const c = activePreviewCustomer;
+        async function fiaDownloadPDFElement(element, filename, title) {
+            if (!element) { alert('Report/Bill content is not available.'); return false; }
+            const ready = await fiaWaitForPDFLibrary();
+            if (!ready) { alert('PDF service is not ready. Please check your internet connection and try again.'); return false; }
+
             const source = document.createElement('div');
-            source.id = 'fiaPdfExportSource';
-            source.style.cssText = 'position: absolute; left: 0; top: 0; width: 210mm; background: #ffffff !important; color: #000000 !important; padding: 15mm; z-index: 999999; display: block; visibility: visible; opacity: 1; box-sizing: border-box;';
-
-            const rows = (c.items || []).map((item, i) => `
-                <tr>
-                    <td style="padding: 6px; border: 1px solid #d1d5db; color: #000;">${i + 1}</td>
-                    <td style="padding: 6px; border: 1px solid #d1d5db; color: #000;">${item.productName}</td>
-                    <td style="padding: 6px; border: 1px solid #d1d5db; text-align: center; color: #000;">${item.qty} ${item.unitType !== 'Standard' ? item.unitType : ''}</td>
-                    <td style="padding: 6px; border: 1px solid #d1d5db; text-align: right; color: #000;">₹${Number(item.rate || 0).toFixed(2)}</td>
-                    <td style="padding: 6px; border: 1px solid #d1d5db; text-align: right; color: #000;">₹${Number(item.total || 0).toFixed(2)}</td>
-                </tr>
-            `).join('');
-
-            const paid = c.paidAmount !== undefined ? Number(c.paidAmount) : Number(c.grandTotal || 0);
-            const due = c.pendingAmount !== undefined ? Number(c.pendingAmount) : 0;
-            const excess = c.excessAmount !== undefined ? Number(c.excessAmount) : Math.max(0, paid - Number(c.grandTotal || 0));
-
-            source.innerHTML = `
-                <div style="font-family: Arial, sans-serif; background: #ffffff !important; color: #000000 !important; padding: 10px;">
-                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 12px;">
-                        <div style="font-size: 20px; font-weight: bold; color: #065f46;">FIA CLEAN & CARE</div>
-                        <div style="font-size: 11px; color: #333;">Fia Clean & Care, Edathanattukara | Mob: 8086452106</div>
-                    </div>
-                    <div style="font-size: 12px; margin-bottom: 10px; color: #000;">
-                        <strong>Bill No:</strong> ${c.billNo || '—'} &nbsp;|&nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}<br>
-                        <strong>Customer:</strong> ${c.name || ''}
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000; margin-bottom: 12px;">
-                        <thead>
-                            <tr style="background: #f3f4f6;">
-                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">#</th>
-                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">Product</th>
-                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">Qty</th>
-                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">Rate</th>
-                                <th style="padding: 6px; border: 1px solid #d1d5db; color: #000;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                    <div style="text-align: right; font-size: 12px; line-height: 1.6; color: #000;">
-                        <div><strong>Grand Total: ₹${Number(c.grandTotal || 0).toFixed(2)}</strong></div>
-                        <div style="color: #047857;"><strong>Paid: ₹${paid.toFixed(2)}</strong></div>
-                        <div><strong>Payment Mode: ${c.paymentMode || 'Cash'}</strong></div>
-                        <div style="color: #b91c1c;"><strong>Balance Due: ₹${due.toFixed(2)}</strong></div>
-                        ${excess > 0 ? `<div style="color: #b45309;"><strong>Excess / Return: ₹${excess.toFixed(2)}</strong></div>` : ''}
-                    </div>
-                    <div style="text-align: center; border-top: 1px solid #ddd; margin-top: 20px; padding-top: 8px; font-size: 10px; color: #555;">
-                        Thank you for your business!
-                    </div>
-                </div>
-            `;
-
+            source.style.cssText = 'position:absolute;left:-10000px;top:0;width:210mm;min-height:100mm;background:#fff!important;color:#000!important;padding:10mm;display:block;visibility:visible;opacity:1;overflow:visible;box-sizing:border-box;';
+            source.innerHTML = element.outerHTML;
             document.body.appendChild(source);
-            const opt = {
-                margin: 5,
-                filename: `bill_${String(c.name || 'fia').replace(/[^a-z0-9_-]+/gi, '_')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
 
-            html2pdf().set(opt).from(source).save().then(() => {
+            try {
+                const worker = window.html2pdf().set({
+                    margin: 5,
+                    filename: filename,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, allowTaint: false },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+                }).from(source).toPdf();
+                await worker.save();
+                return true;
+            } catch (err) {
+                console.error(title + ' PDF error:', err);
+                alert(title + ' PDF could not be created. Please try again.');
+                return false;
+            } finally {
                 source.remove();
-            }).catch(err => {
-                console.error('PDF error:', err);
-                source.remove();
-                alert('PDF error. Please use Print option.');
+            }
+        }
+
+        async function downloadBillPDF() {
+            if (!activePreviewCustomer) { alert('Bill data not available!'); return; }
+            const c = activePreviewCustomer;
+            const rows = (c.items || []).map((item, i) => `<tr><td style="padding:6px;border:1px solid #ddd">${i+1}</td><td style="padding:6px;border:1px solid #ddd">${item.productName || ''}</td><td style="padding:6px;border:1px solid #ddd;text-align:center">${item.qty || 0} ${item.unitType !== 'Standard' ? (item.unitType || '') : ''}</td><td style="padding:6px;border:1px solid #ddd;text-align:right">₹${Number(item.rate || 0).toFixed(2)}</td><td style="padding:6px;border:1px solid #ddd;text-align:right">₹${Number(item.total || 0).toFixed(2)}</td></tr>`).join('');
+            const grand = Number(c.grandTotal || 0), paid = Number(c.paidAmount ?? grand), due = Number(c.pendingAmount ?? Math.max(0, grand-paid)), ret = Number(c.excessAmount ?? Math.max(0, paid-grand));
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = `<div style="font-family:Arial,sans-serif;background:#fff!important;color:#000!important;padding:10px;width:100%;box-sizing:border-box"><div style="text-align:center;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:12px"><div style="font-size:20px;font-weight:bold;color:#065f46">FIA CLEAN & CARE</div><div style="font-size:11px;color:#333">Fia Clean & Care, Edathanattukara | Mob: 8086452106</div></div><div style="font-size:12px;margin-bottom:10px"><strong>Bill No:</strong> ${c.billNo || '—'} &nbsp;|&nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}<br><strong>Customer:</strong> ${c.name || ''}</div><table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px"><thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #ddd">#</th><th style="padding:6px;border:1px solid #ddd">Product</th><th style="padding:6px;border:1px solid #ddd">Qty</th><th style="padding:6px;border:1px solid #ddd">Rate</th><th style="padding:6px;border:1px solid #ddd">Total</th></tr></thead><tbody>${rows}</tbody></table><div style="text-align:right;font-size:12px;line-height:1.6"><div><strong>Grand Total: ₹${grand.toFixed(2)}</strong></div><div style="color:#047857"><strong>Paid: ₹${paid.toFixed(2)}</strong></div>${due>0?`<div style="color:#b91c1c"><strong>Balance Due: ₹${due.toFixed(2)}</strong></div>`:''}${ret>0?`<div style="color:#b45309"><strong>Excess / Return: ₹${ret.toFixed(2)}</strong></div>`:''}</div><div style="text-align:center;border-top:1px solid #ddd;margin-top:20px;padding-top:8px;font-size:10px;color:#555">Thank you for your business!</div></div>`;
+            const filename = `FIA_BILL_${String(c.billNo || c.name || 'bill').replace(/[^a-z0-9_-]+/gi,'_')}.pdf`;
+            await fiaDownloadPDFElement(wrapper.firstElementChild, filename, 'Bill');
+        }
+
+        function getSelectedConsolidationSummary() {
+            const requested = (selectedConsolidationCustomer || document.getElementById('consolidationSearchInput')?.value || '').trim().toLowerCase();
+            if (!requested) return null;
+            let map = {};
+            const add = (name, phone, total, paid, pending) => {
+                const key = String(name || '').trim().toLowerCase();
+                if (!key) return;
+                if (!map[key]) map[key] = {name:String(name).trim(), phone:phone||'', totalPurchase:0, totalPaid:0, totalPending:0, billCount:0};
+                if (phone && !map[key].phone) map[key].phone=phone;
+                map[key].totalPurchase += Number(total||0);
+                map[key].totalPaid += Number(paid||0);
+                map[key].totalPending += Number(pending||0);
+                map[key].billCount += 1;
+            };
+            customers.forEach(c=>{
+                if(!c || !c.name) return;
+                const g=Number(c.grandTotal||0), paid=c.paidAmount!==undefined?Number(c.paidAmount):g;
+                const pending=c.pendingAmount!==undefined?Number(c.pendingAmount):Math.max(0,g-paid);
+                add(c.name,c.phone,g,paid,pending);
             });
+            if(typeof cosSales!=='undefined') cosSales.forEach(s=>{
+                if(!s || !s.customer) return;
+                const n=normalizeCosSale(s);
+                add(s.customer,s.phone,n.grandTotal,n.paidAmount,n.pendingAmount);
+            });
+            return Object.values(map).find(e=>e.name.toLowerCase()===requested || (e.phone && e.phone.toLowerCase()===requested)) || null;
+        }
+
+        async function downloadCustomerConsolidationReportPDF() {
+            const summary = getSelectedConsolidationSummary();
+            if (!summary) { alert('Please tap/select a customer first.'); return; }
+            const root=document.createElement('div');
+            root.innerHTML=`<div style="font-family:Arial,sans-serif;background:#fff;color:#000;padding:14px;width:100%;box-sizing:border-box">
+                <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:9px;margin-bottom:14px">
+                    <div style="font-size:20px;font-weight:bold;color:#065f46">FIA CLEAN & CARE</div>
+                    <div style="font-size:14px;font-weight:bold">Customer Consolidated Report</div>
+                </div>
+                <div style="font-size:13px;margin-bottom:12px"><strong>Customer:</strong> ${summary.name}<br><strong>Phone:</strong> ${summary.phone||'—'}</div>
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <tr><td style="padding:9px;border:1px solid #ddd"><strong>Total Purchases</strong></td><td style="padding:9px;border:1px solid #ddd;text-align:right"><strong>${summary.billCount}</strong></td></tr>
+                    <tr><td style="padding:9px;border:1px solid #ddd"><strong>Total Purchase Amount</strong></td><td style="padding:9px;border:1px solid #ddd;text-align:right"><strong>₹${summary.totalPurchase.toFixed(2)}</strong></td></tr>
+                    <tr><td style="padding:9px;border:1px solid #ddd">Total Paid</td><td style="padding:9px;border:1px solid #ddd;text-align:right;color:#047857"><strong>₹${summary.totalPaid.toFixed(2)}</strong></td></tr>
+                    ${summary.totalPending>0?`<tr><td style="padding:9px;border:1px solid #ddd">Total Pending / Due</td><td style="padding:9px;border:1px solid #ddd;text-align:right;color:#b91c1c"><strong>₹${summary.totalPending.toFixed(2)}</strong></td></tr>`:''}
+                    <tr><td style="padding:9px;border:1px solid #ddd"><strong>Total Balance</strong></td><td style="padding:9px;border:1px solid #ddd;text-align:right"><strong>₹${summary.totalPending.toFixed(2)}</strong></td></tr>
+                </table>
+                <div style="text-align:center;border-top:1px solid #ddd;margin-top:20px;padding-top:8px;font-size:10px;color:#555">Thank you for your business!</div>
+            </div>`;
+            const safeName=summary.name.replace(/[^a-z0-9_-]+/gi,'_');
+            await fiaDownloadPDFElement(root.firstElementChild,`FIA_CONSOLIDATED_${safeName}.pdf`,'Customer Consolidated Report');
+        }
+
+        function shareCustomerConsolidationReport() {
+            const summary = getSelectedConsolidationSummary();
+            if (!summary) { alert('Please tap/select a customer first.'); return; }
+            const lines=[
+                '*--- FIA CLEAN & CARE ---*','*Customer Consolidated Report*','',
+                `*Customer:* ${summary.name}`,
+                summary.phone ? `*Phone:* ${summary.phone}` : '', '',
+                `*Total Purchases:* ${summary.billCount}`,
+                `*Total Purchase Amount:* ₹${summary.totalPurchase.toFixed(2)}`,
+                `*Total Paid:* ₹${summary.totalPaid.toFixed(2)}`,
+                summary.totalPending>0 ? `*Total Pending / Due:* ₹${summary.totalPending.toFixed(2)}` : '',
+                `*Total Balance:* ₹${summary.totalPending.toFixed(2)}`,'','_Thank you for your business!_'
+            ].filter(Boolean);
+            const url=`https://api.whatsapp.com/send?text=${encodeURIComponent(lines.join('\n'))}`;
+            window.open(url,'_blank');
         }
 
         function exportDayBookToExcel() {
@@ -2567,6 +2628,7 @@
 
         function renderCustomers() {
             renderDirectCustomerList();
+            renderCustomerConsolidationView();
             renderCustomerConsolidationReport();
         }
 
@@ -2661,7 +2723,7 @@
                     <div style="text-align: right; font-size: 11px; line-height: 1.5; margin-top: 5px; color: #000000 !important;">
                         <div style="color: #000000 !important;"><strong>Grand Total: ₹${grandVal.toFixed(2)}</strong></div>
                         <div style="color:#047857 !important;"><strong>Paid: ₹${paidVal.toFixed(2)}</strong></div>
-                        <div style="color:#b91c1c !important;"><strong>${pendingVal > 0 ? 'Balance Due' : 'Balance'}: ₹${pendingVal.toFixed(2)}</strong></div>
+                        ${pendingVal > 0 ? `<div style="color:#b91c1c !important;"><strong>Balance Due: ₹${pendingVal.toFixed(2)}</strong></div>` : ''}
                         ${excessVal > 0 ? `<div style="color:#b45309 !important;"><strong>Excess / Return: ₹${excessVal.toFixed(2)}</strong></div>` : ''}
                     </div>
                 </div>`;
@@ -2678,7 +2740,10 @@
             const paidVal = c.paidAmount !== undefined ? c.paidAmount : c.grandTotal;
             const pendingVal = c.pendingAmount !== undefined ? c.pendingAmount : 0;
             
-            let msg = `*FIA CLEAN & CARE*\n*WholeSale & Retail, Edathanattukara | Mob: 8086452106*\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n*Balance Due:* ₹${Number(pendingVal).toFixed(2)}\n*Excess / Return:* ₹${Number(c.excessAmount||0).toFixed(2)}\n\n_Thank you for your business!_`;
+            const excessVal = Number(c.excessAmount || 0);
+            const dueLine = Number(pendingVal) > 0 ? `*Balance Due:* ₹${Number(pendingVal).toFixed(2)}\n` : '';
+            const returnLine = excessVal > 0 ? `*Excess / Return:* ₹${excessVal.toFixed(2)}\n` : '';
+            let msg = `*--- FIA CLEAN & CARE ---*\n*Fia Clean & Care, Edathanattukara | Mob: 8086452106*\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n${dueLine}${returnLine}\n_Thank you for your business!_`;
             
             history.pushState({ loggedIn: true, tab: 'billing' }, "", "#billing");
             
