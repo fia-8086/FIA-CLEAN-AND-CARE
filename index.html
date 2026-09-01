@@ -62,6 +62,70 @@
             scrollbar-width: none;
         }
         .tab-scroll::-webkit-scrollbar { display: none; }
+        /* ===== MOBILE-FRIENDLY PURCHASE + STOCK CONSOLIDATED REPORT ===== */
+        @media (max-width: 640px) {
+            #sectionPurchase #purchaseActionTabsCleaning,
+            #sectionPurchase #purchaseActionTabsCosmetics {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 4px !important;
+                width: 100%;
+            }
+            #sectionPurchase #purchaseActionTabsCleaning button,
+            #sectionPurchase #purchaseActionTabsCosmetics button {
+                width: 100%;
+                min-width: 0;
+                white-space: normal;
+                line-height: 1.15;
+                min-height: 42px;
+                padding: 8px 4px !important;
+            }
+            #sectionPurchase > .bg-slate-950\/60:nth-of-type(2) > div:nth-child(2),
+            #sectionPurchase #purchaseCleaningContent .flex.gap-2,
+            #sectionPurchase #purchaseCosmeticsContent .flex.gap-2 {
+                flex-direction: column;
+            }
+            #sectionPurchase #purchaseCleaningContent input,
+            #sectionPurchase #purchaseCleaningContent select,
+            #sectionPurchase #purchaseCosmeticsContent input,
+            #sectionPurchase #purchaseCosmeticsContent select {
+                max-width: 100%;
+            }
+            #sectionPurchase #purchaseCleaningContent .flex.gap-2 > *,
+            #sectionPurchase #purchaseCosmeticsContent .flex.gap-2 > * {
+                width: 100% !important;
+                flex: 1 1 100% !important;
+            }
+            #sectionPurchase #purchaseCleaningContent #rawBarcode,
+            #sectionPurchase #purchaseCleaningContent #rawQty,
+            #sectionPurchase #purchaseCosmeticsContent #cosPBarcode,
+            #sectionPurchase #purchaseCosmeticsContent #cosPQty,
+            #sectionPurchase #purchaseCosmeticsContent #cosPUnit {
+                width: 100% !important;
+            }
+            #sectionPurchase #purchaseCleaningContent .grid.grid-cols-2,
+            #sectionPurchase #purchaseCosmeticsContent .grid.grid-cols-2 {
+                grid-template-columns: minmax(0, 1fr) !important;
+            }
+            #sectionPurchase #purchaseCleaningContent .grid.grid-cols-1.sm\:grid-cols-2,
+            #sectionPurchase #purchaseCosmeticsContent .grid.grid-cols-1.sm\:grid-cols-2 {
+                grid-template-columns: minmax(0, 1fr) !important;
+            }
+            #sectionPurchase #purchaseCleaningContent .flex.flex-wrap,
+            #sectionPurchase #purchaseCosmeticsContent .flex.flex-wrap {
+                flex-wrap: wrap;
+            }
+            #sectionPurchase #purchaseCleaningContent button,
+            #sectionPurchase #purchaseCosmeticsContent button {
+                max-width: 100%;
+            }
+            #sectionPurchase .purchase-mobile-stack {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+        }
+
         @media print {
             body * { visibility: hidden !important; }
             #billPreviewModal, #billPreviewModal * { visibility: visible !important; }
@@ -259,6 +323,7 @@
                     <button type="button" onclick="switchStockActionTab('cleaning','add')" id="cleanStockAddTab" class="flex-1 py-2 text-center text-xs font-bold bg-emerald-700 text-white rounded-xl shadow-md transition">➕ Add Stock</button>
                     <button type="button" onclick="switchStockActionTab('cleaning','view')" id="cleanStockViewTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">👁️ View Stock</button>
                     <button type="button" onclick="switchStockActionTab('cleaning','return')" id="cleanStockReturnTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">↩️ Return Stock</button>
+                    <button type="button" onclick="switchStockActionTab('cleaning','consolidated')" id="cleanStockConsolidatedTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">📊 Consolidated</button>
                 </div>
 
                 <!-- Cleaning: ADD TAB -->
@@ -299,6 +364,24 @@
                     <div class="space-y-2.5" id="productListContainer"></div>
                 </div>
 
+                <!-- Cleaning: CONSOLIDATED STOCK REPORT -->
+                <div id="cleanStockConsolidatedContent" class="hidden">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-emerald-800/40 shadow-inner">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                            <div><h2 class="font-bold text-emerald-300 text-sm">📊 Consolidated Stock Report</h2><p class="text-[10px] text-slate-500">Cleaning + Cosmetics • All products in one list</p></div>
+                            <button type="button" onclick="renderConsolidatedStockReport()" class="bg-slate-800 text-emerald-300 border border-slate-700 px-3 py-2 rounded-lg text-[10px] font-bold">↻ Refresh Report</button>
+                        </div>
+                        <div id="consolidatedStockSummary" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3"></div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-800">
+                            <table class="w-full min-w-[560px] text-xs">
+                                <thead class="bg-slate-900"><tr><th class="text-left p-2 text-slate-400">#</th><th class="text-left p-2 text-slate-400">Category</th><th class="text-left p-2 text-slate-400">Product</th><th class="text-right p-2 text-slate-400">Stock</th><th class="text-left p-2 text-slate-400">Unit</th><th class="text-left p-2 text-slate-400">Barcode</th></tr></thead>
+                                <tbody id="consolidatedStockTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="consolidatedStockUnitTotals" class="mt-3 space-y-1"></div>
+                    </div>
+                </div>
+
                 <!-- Cleaning: RETURN TAB -->
                 <div id="cleanStockReturnContent" class="hidden">
                     <div class="bg-slate-950/60 p-4 rounded-2xl border border-amber-800/40 shadow-inner">
@@ -320,6 +403,7 @@
                     <button type="button" onclick="switchStockActionTab('cosmetics','add')" id="cosStockAddTab" class="flex-1 py-2 text-center text-xs font-bold bg-pink-700 text-white rounded-xl shadow-md transition">➕ Add Stock</button>
                     <button type="button" onclick="switchStockActionTab('cosmetics','view')" id="cosStockViewTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">👁️ View Stock</button>
                     <button type="button" onclick="switchStockActionTab('cosmetics','return')" id="cosStockReturnTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">↩️ Return Stock</button>
+                    <button type="button" onclick="switchStockActionTab('cosmetics','consolidated')" id="cosStockConsolidatedTab" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">📊 Consolidated</button>
                 </div>
 
                 <!-- Cosmetics: ADD TAB -->
@@ -335,6 +419,24 @@
                 <div id="cosStockViewContent" class="hidden">
                     <div class="flex justify-between items-center px-1 mb-2"><h2 class="font-bold text-slate-300 text-sm">Cosmetic Product Stock List</h2><span class="text-[10px] text-slate-500">Edit / Delete available</span></div>
                     <div class="space-y-2.5" id="cosProductListContainer"></div>
+                </div>
+
+                <!-- Cosmetics: CONSOLIDATED STOCK REPORT -->
+                <div id="cosStockConsolidatedContent" class="hidden">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-pink-800/40 shadow-inner">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                            <div><h2 class="font-bold text-pink-300 text-sm">📊 Consolidated Stock Report</h2><p class="text-[10px] text-slate-500">Cleaning + Cosmetics • All products in one list</p></div>
+                            <button type="button" onclick="renderConsolidatedStockReport()" class="bg-slate-800 text-pink-300 border border-slate-700 px-3 py-2 rounded-lg text-[10px] font-bold">↻ Refresh Report</button>
+                        </div>
+                        <div id="consolidatedStockSummaryCos" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3"></div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-800">
+                            <table class="w-full min-w-[560px] text-xs">
+                                <thead class="bg-slate-900"><tr><th class="text-left p-2 text-slate-400">#</th><th class="text-left p-2 text-slate-400">Category</th><th class="text-left p-2 text-slate-400">Product</th><th class="text-right p-2 text-slate-400">Stock</th><th class="text-left p-2 text-slate-400">Unit</th><th class="text-left p-2 text-slate-400">Barcode</th></tr></thead>
+                                <tbody id="consolidatedStockTableBodyCos"></tbody>
+                            </table>
+                        </div>
+                        <div id="consolidatedStockUnitTotalsCos" class="mt-3 space-y-1"></div>
+                    </div>
                 </div>
 
                 <!-- Cosmetics: RETURN TAB -->
@@ -487,6 +589,16 @@
                         <select id="billProductSelect" onchange="fillProductPrice()" class="w-full p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500">
                             <option value="">-- Select Product --</option>
                         </select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="billPackSize" onchange="onCleaningPackSizeChange()" class="w-full p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500">
+                                <option value="">-- Select Pack Size --</option>
+                                <option value="1000">1 Litre Bottle</option>
+                                <option value="500">500 ml Bottle</option>
+                                <option value="300">300 ml Bottle</option>
+                                <option value="custom">Custom ml</option>
+                            </select>
+                            <input type="number" id="billCustomMl" placeholder="Custom ml" min="1" step="1" oninput="onCleaningPackSizeChange()" class="hidden w-full p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500">
+                        </div>
                         <div class="flex gap-2">
                             <input type="number" id="billQty" placeholder="Quantity" oninput="calculateItemTotal()" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500" min="0" step="any">
                             <select id="billUnitType" onchange="calculateItemTotal()" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500">
@@ -550,14 +662,14 @@
             </div>
             <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner space-y-3">
                 <div class="flex justify-between items-center"><h3 class="font-bold text-blue-300 text-sm">👤 Add Supplier</h3><span class="text-[10px] text-slate-500">Purchase suppliers</span></div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 purchase-mobile-stack">
                     <input id="newPurchaseSupplierName" type="text" placeholder="Supplier Name" class="flex-1 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100">
                     <input id="newPurchaseSupplierMobile" type="tel" placeholder="Mobile Number" class="flex-1 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100">
                     <button type="button" onclick="addPurchaseSupplier()" class="bg-blue-700 text-white px-4 py-3 rounded-xl font-bold text-xs">+ Add Supplier</button>
                 </div>
                 <div class="text-[10px] text-slate-500">Supplier can then be selected/searched while entering a purchase.</div>
             </div>
-            <div id="purchaseActionTabsCleaning" class="flex gap-1 bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
+            <div id="purchaseActionTabsCleaning" class="flex flex-wrap gap-1 bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
                 <button type="button" onclick="switchPurchaseActionTab('cleaning','add')" id="purchaseActionCleaningAdd" class="flex-1 py-2 text-[11px] font-bold rounded-xl bg-blue-700 text-white shadow-md">➕ Add</button>
                 <button type="button" onclick="switchPurchaseActionTab('cleaning','view')" id="purchaseActionCleaningView" class="flex-1 py-2 text-[11px] font-bold rounded-xl text-slate-400">👁 View</button>
                 <button type="button" onclick="switchPurchaseActionTab('cleaning','return')" id="purchaseActionCleaningReturn" class="flex-1 py-2 text-[11px] font-bold rounded-xl text-slate-400">↩️ Return</button>
@@ -577,7 +689,7 @@
                     <form id="purchaseForm" class="space-y-3" onsubmit="savePurchase(event)">
                         <input type="hidden" id="purchIndex" value="-1">
                         <div class="space-y-2">
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 purchase-mobile-stack">
                                 <input type="text" id="supplierName" list="purchaseSupplierList" placeholder="Supplier / Wholesaler Name" required oninput="fillPurchaseSupplierMobile()" class="flex-1 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-blue-500">
                                 <input type="tel" id="supplierMobile" placeholder="Mobile Number" class="w-2/5 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-blue-500">
                                 <select id="purchaseSupplierSelect" onchange="selectPurchaseSupplier(this,'cleaning')" class="w-full sm:w-2/5 p-3 border border-emerald-800 rounded-xl text-xs bg-slate-900 text-emerald-200 focus:outline-none focus:border-emerald-500"><option value="">-- Select Supplier from List --</option></select>
@@ -640,7 +752,7 @@
                     <h3 class="font-bold text-slate-300 text-xs">Purchase Return History</h3><div id="purchaseReturnHistoryContainer" class="space-y-2"></div>
                 </div>
             </div>
-            <div id="purchaseActionTabsCosmetics" class="flex gap-1 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 hidden">
+            <div id="purchaseActionTabsCosmetics" class="flex flex-wrap gap-1 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 hidden">
                 <button type="button" onclick="switchPurchaseActionTab('cosmetics','add')" id="purchaseActionCosmeticsAdd" class="flex-1 py-2 text-[11px] font-bold rounded-xl bg-pink-700 text-white shadow-md">➕ Add</button>
                 <button type="button" onclick="switchPurchaseActionTab('cosmetics','view')" id="purchaseActionCosmeticsView" class="flex-1 py-2 text-[11px] font-bold rounded-xl text-slate-400">👁 View</button>
                 <button type="button" onclick="switchPurchaseActionTab('cosmetics','return')" id="purchaseActionCosmeticsReturn" class="flex-1 py-2 text-[11px] font-bold rounded-xl text-slate-400">↩️ Return</button>
@@ -657,7 +769,7 @@
                     <form id="cosPurchaseForm" class="space-y-3" onsubmit="saveCosPurchase(event)">
                         <input type="hidden" id="cosPIndex" value="-1">
                         <div class="space-y-2">
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 purchase-mobile-stack">
                                 <input type="text" id="cosPSupplier" list="purchaseSupplierList" placeholder="Supplier / Wholesaler Name" required oninput="fillCosPurchaseSupplierMobile()" class="flex-1 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-pink-500">
                                 <input type="tel" id="cosPSupplierMobile" placeholder="Mobile Number" class="w-2/5 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-pink-500">
                                 <select id="cosPurchaseSupplierSelect" onchange="selectPurchaseSupplier(this,'cosmetics')" class="w-full sm:w-2/5 p-3 border border-emerald-800 rounded-xl text-xs bg-slate-900 text-emerald-200 focus:outline-none focus:border-emerald-500"><option value="">-- Select Supplier from List --</option></select>
@@ -1566,7 +1678,7 @@
 
         function switchStockActionTab(type, tab) {
             const prefix = type === 'cosmetics' ? 'cos' : 'clean';
-            const ids = ['add','view','return'];
+            const ids = ['add','view','return','consolidated'];
             ids.forEach(t => {
                 const content = document.getElementById(prefix + 'Stock' + t.charAt(0).toUpperCase() + t.slice(1) + 'Content');
                 const button = document.getElementById(prefix + 'Stock' + t.charAt(0).toUpperCase() + t.slice(1) + 'Tab');
@@ -1584,6 +1696,8 @@
                 if (type === 'cosmetics') renderCosProductStock(); else renderProducts();
             } else if (tab === 'return') {
                 updateStockReturnDropdowns(); renderStockReturnHistory();
+            } else if (tab === 'consolidated') {
+                renderConsolidatedStockReport();
             }
         }
 
@@ -2301,15 +2415,20 @@
         function editProduct(id) {
             const p = products.find(item => item.id === id);
             if(p) {
+                // Open the actual Add/Edit form before filling it.
+                switchTab('stock', false);
+                switchStockSubTab('cleaning');
+                switchStockActionTab('cleaning','add');
                 document.getElementById('prodId').value = p.id;
-                document.getElementById('prodName').value = p.name;
+                document.getElementById('prodName').value = p.name || '';
                 document.getElementById('prodBarcode').value = p.barcode || '';
-                document.getElementById('prodStock').value = p.stock;
-                document.getElementById('prodUnit').value = p.unit;
-                document.getElementById('prodWholesalePrice').value = p.wholesalePrice;
-                document.getElementById('prodRetailPrice').value = p.retailPrice;
+                document.getElementById('prodStock').value = p.stock ?? 0;
+                document.getElementById('prodUnit').value = p.unit || '';
+                document.getElementById('prodWholesalePrice').value = p.wholesalePrice ?? 0;
+                document.getElementById('prodRetailPrice').value = p.retailPrice ?? 0;
                 document.getElementById('stockFormTitle').innerText = "Edit Product";
                 document.getElementById('prodSubmitBtn').innerText = "Update Product";
+                setTimeout(() => document.getElementById('stockFormTitle')?.scrollIntoView({behavior:'smooth', block:'start'}), 50);
             }
         }
 
@@ -2540,6 +2659,10 @@
         function editCosProduct(id) {
             const p = cosProducts.find(x => x.id === id);
             if (!p) return;
+            // Open the actual Cosmetics Add/Edit form before filling it.
+            switchTab('stock', false);
+            switchStockSubTab('cosmetics');
+            switchStockActionTab('cosmetics','add');
             document.getElementById('cosProdId').value = p.id;
             document.getElementById('cosProdName').value = p.name || '';
             document.getElementById('cosProdBarcode').value = p.barcode || '';
@@ -2549,6 +2672,7 @@
             document.getElementById('cosProdSalePrice').value = p.salePrice ?? 0;
             document.getElementById('cosStockFormTitle').innerText = 'Edit Cosmetic Product';
             document.getElementById('cosProdSubmitBtn').innerText = 'Update Product';
+            setTimeout(() => document.getElementById('cosStockFormTitle')?.scrollIntoView({behavior:'smooth', block:'start'}), 50);
         }
 
         function deleteCosProduct(id) {
@@ -2769,6 +2893,33 @@
             if(!opt.value) return;
             const saleType = document.querySelector('input[name="saleType"]:checked').value;
             document.getElementById('billRate').value = saleType === 'Wholesale' ? opt.getAttribute('data-wholesale') : opt.getAttribute('data-retail');
+            const pack = document.getElementById('billPackSize'); if (pack) pack.value = '';
+            const custom = document.getElementById('billCustomMl'); if (custom) { custom.value = ''; custom.classList.add('hidden'); }
+            calculateItemTotal();
+        }
+
+        function getCleaningPackMl() {
+            const sel = document.getElementById('billPackSize');
+            if (!sel || !sel.value) return 0;
+            if (sel.value === 'custom') return parseFloat(document.getElementById('billCustomMl')?.value) || 0;
+            return parseFloat(sel.value) || 0;
+        }
+
+        function onCleaningPackSizeChange() {
+            const sel = document.getElementById('billPackSize');
+            const custom = document.getElementById('billCustomMl');
+            if (custom) custom.classList.toggle('hidden', sel?.value !== 'custom');
+            const productName = document.getElementById('billProductSelect')?.value || '';
+            const product = products.find(p => p.name === productName);
+            const baseUnit = String(product?.unit || '').toLowerCase();
+            const packMl = getCleaningPackMl();
+            if (product && packMl > 0 && (baseUnit.includes('lit') || baseUnit === 'l' || baseUnit.includes('ml'))) {
+                const saleType = document.querySelector('input[name="saleType"]:checked')?.value || 'Retail';
+                const baseRate = saleType === 'Wholesale' ? Number(product.wholesalePrice || 0) : Number(product.retailPrice || 0);
+                document.getElementById('billRate').value = (baseRate * (packMl / (baseUnit.includes('ml') ? 1000 : 1))).toFixed(2);
+                const unit = document.getElementById('billUnitType');
+                if (unit) unit.value = 'Bottle';
+            }
             calculateItemTotal();
         }
 
@@ -2776,7 +2927,16 @@
             const qty = parseFloat(document.getElementById('billQty').value) || 0;
             const rate = parseFloat(document.getElementById('billRate').value) || 0;
             const unitType = document.getElementById('billUnitType').value;
-            let total = (unitType === 'Gram' || unitType === 'ml') ? (rate / 1000) * qty : rate * qty;
+            const packMl = getCleaningPackMl();
+            const productName = document.getElementById('billProductSelect')?.value || '';
+            const product = products.find(p => p.name === productName);
+            const baseUnit = String(product?.unit || '').toLowerCase();
+            let total;
+            if (packMl > 0 && product && (baseUnit.includes('lit') || baseUnit === 'l' || baseUnit.includes('ml'))) {
+                total = rate * qty; // rate is the price of one selected bottle/pack
+            } else {
+                total = (unitType === 'Gram' || unitType === 'ml') ? (rate / 1000) * qty : rate * qty;
+            }
             document.getElementById('billCalculatedTotal').value = total.toFixed(2);
         }
 
@@ -2786,27 +2946,30 @@
             const rate = parseFloat(document.getElementById('billRate').value);
             const unitType = document.getElementById('billUnitType').value;
             const total = parseFloat(document.getElementById('billCalculatedTotal').value);
+            const packMl = getCleaningPackMl();
 
-            if(!productName || isNaN(qty) || isNaN(rate)) { alert("Please select product, quantity, and rate."); return; }
-            
+            if(!productName || isNaN(qty) || qty <= 0 || isNaN(rate)) { alert("Please select product, pack size, quantity, and rate."); return; }
             const product = products.find(p => p.name === productName);
-            let stockDeductionQty = (unitType === 'Gram' || unitType === 'ml') ? qty / 1000 : qty;
+            const isLiquidPack = !!(product && packMl > 0 && (String(product.unit||'').toLowerCase().includes('lit') || String(product.unit||'').toLowerCase() === 'l' || String(product.unit||'').toLowerCase().includes('ml')));
+            const stockDeductionQty = isLiquidPack ? (packMl / (String(product.unit||'').toLowerCase().includes('ml') ? 1000 : 1)) * qty : ((unitType === 'Gram' || unitType === 'ml') ? qty / 1000 : qty);
 
             if (product) {
-                const already = currentBillItems
-                    .filter(i => i.productName === productName)
-                    .reduce((s, i) => s + Number(i.stockDeductionQty || 0), 0);
+                const already = currentBillItems.filter(i => i.productName === productName).reduce((sum, i) => sum + Number(i.stockDeductionQty || 0), 0);
                 if (stockDeductionQty + already > Number(product.stock || 0)) {
                     alert(`Insufficient stock. Available: ${product.stock} ${product.unit}`);
                     return;
                 }
             }
 
-            currentBillItems.push({ productName, qty, unitType, rate, total, stockDeductionQty });
+            const displayUnit = isLiquidPack ? `Bottle (${packMl} ml)` : unitType;
+            currentBillItems.push({ productName, qty, unitType: displayUnit, packSizeMl: isLiquidPack ? packMl : 0, rate, total, stockDeductionQty });
             document.getElementById('billQty').value = "";
             document.getElementById('billRate').value = "";
             document.getElementById('billCalculatedTotal').value = "";
             document.getElementById('billProductSelect').value = "";
+            document.getElementById('billPackSize').value = "";
+            document.getElementById('billCustomMl').value = "";
+            document.getElementById('billCustomMl').classList.add('hidden');
             renderBillPreviewInput();
             calculateBalance();
         }
@@ -2819,7 +2982,7 @@
                 grandTotal += item.total;
                 container.innerHTML += `
                     <div class="flex justify-between items-center bg-slate-900 p-2 rounded-lg border border-slate-800">
-                        <span>${item.productName} (${item.qty} ${item.unitType !== 'Standard' ? item.unitType : ''} x ₹${item.rate}) = <strong>₹${item.total.toFixed(2)}</strong></span>
+                        <span>${item.productName} (${item.qty} ${item.unitType || ''} x ₹${item.rate}) = <strong>₹${item.total.toFixed(2)}</strong></span>
                         <button type="button" onclick="currentBillItems.splice(${index},1);renderBillPreviewInput();calculateBalance();" class="text-red-400 font-bold px-1">✕</button>
                     </div>`;
             });
@@ -2895,6 +3058,15 @@
             const customerData = { billNo, name, phone, saleType, paymentMode, items: [...currentBillItems], grandTotal, paidAmount: safePaidAmount, pendingAmount, excessAmount, date: (index >= 0 && customers[index]?.date) || new Date().toISOString().split('T')[0] };
 
             let savedIndex = index === -1 ? customers.push(customerData) - 1 : (customers[index] = customerData, index);
+
+            // Payment adjustment is an EDIT tool for due bills only; never show it after a normal save.
+            const savedDue = Number(pendingAmount || 0);
+            const savedEditBadge = document.getElementById('billingEditMode');
+            if (savedEditBadge) savedEditBadge.classList.add('hidden');
+            if (savedDue <= 0) {
+                const adj = document.getElementById('paymentAdjustmentAmt');
+                if (adj) adj.value = '';
+            }
 
             syncToFirebase();
             previewBill(savedIndex);
@@ -3054,6 +3226,31 @@
             const submitBtn = document.getElementById('custSubmitBtn');
             if(submitBtn) submitBtn.textContent = 'Save Bill & Folder';
             renderBillPreviewInput();
+        }
+
+        function renderConsolidatedStockReport(){
+            const cleaning = Array.isArray(products) ? products : [];
+            const cosmetics = Array.isArray(cosProducts) ? cosProducts : [];
+            const rows = [
+                ...cleaning.map(p => ({category:'Cleaning', name:p.name||'', stock:Number(p.stock)||0, unit:p.unit||'', barcode:p.barcode||''})),
+                ...cosmetics.map(p => ({category:'Cosmetics', name:p.name||'', stock:Number(p.stock)||0, unit:p.unit||'', barcode:p.barcode||''}))
+            ].sort((a,b)=>String(a.category).localeCompare(String(b.category)) || String(a.name).localeCompare(String(b.name)));
+
+            const summaryHtml = [
+                ['Total Products', rows.length],
+                ['Cleaning', cleaning.length],
+                ['Cosmetics', cosmetics.length],
+                ['Units Used', new Set(rows.map(r=>r.unit).filter(Boolean)).size]
+            ].map(([label,value])=>`<div class="bg-slate-900 rounded-lg p-3"><div class="text-[10px] text-slate-400">${label}</div><b class="text-sm text-white">${value}</b></div>`).join('');
+            ['consolidatedStockSummary','consolidatedStockSummaryCos'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=summaryHtml;});
+
+            const bodyHtml = rows.length ? rows.map((r,i)=>`<tr class="border-t border-slate-800"><td class="p-2 text-slate-500">${i+1}</td><td class="p-2 ${r.category==='Cosmetics'?'text-pink-300':'text-emerald-300'} font-semibold">${r.category}</td><td class="p-2 text-slate-200 font-semibold">${r.name||'—'}</td><td class="p-2 text-right font-bold ${r.stock<=5?'text-rose-300':'text-white'}">${r.stock}</td><td class="p-2 text-slate-300">${r.unit||'—'}</td><td class="p-2 text-slate-500">${r.barcode||'—'}</td></tr>`).join('') : '<tr><td colspan="6" class="p-5 text-center text-slate-500">No products found.</td></tr>';
+            ['consolidatedStockTableBody','consolidatedStockTableBodyCos'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=bodyHtml;});
+
+            const unitMap = {};
+            rows.forEach(r=>{ const u=r.unit||'No Unit'; unitMap[u]=(unitMap[u]||0)+r.stock; });
+            const unitHtml = Object.entries(unitMap).sort((a,b)=>a[0].localeCompare(b[0])).map(([u,total])=>`<div class="flex justify-between bg-slate-900/70 border border-slate-800 rounded-lg px-3 py-2 text-[11px]"><span class="text-slate-400">Total ${u}</span><b class="text-slate-200">${total}</b></div>`).join('') || '<div class="text-[10px] text-slate-500">No stock data.</div>';
+            ['consolidatedStockUnitTotals','consolidatedStockUnitTotalsCos'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=unitHtml;});
         }
 
         function updateCleaningPurchaseDropdown() {
