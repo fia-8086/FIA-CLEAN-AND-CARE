@@ -35,8 +35,8 @@ import {
 } from './types';
 
 export default function App() {
-  // Authentication & Security - Unlocked by default so no intrusive 1234 prompt
-  const [isUnlocked, setIsUnlocked] = useState<boolean>(true);
+  // Authentication & Security - Starts locked by default (requires login on opening)
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
   const [appPin, setAppPin] = useState<string>(() => {
     return localStorage.getItem('fia_app_pin') || '1234';
   });
@@ -563,15 +563,19 @@ export default function App() {
   const pendingDueCount = sales.filter((s) => s.pendingAmount > 0).length;
   const totalInvoicesCount = sales.length;
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-100 text-slate-900 font-sans">
-      {/* Optional PIN Lock Overlay (Only if user deliberately locked) */}
+  if (!isUnlocked) {
+    return (
       <PinModal
-        isOpen={!isUnlocked}
+        isOpen={true}
         appPin={appPin}
         onSuccess={() => setIsUnlocked(true)}
         onUpdatePin={handleUpdatePin}
       />
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-100 text-slate-900 font-sans">
 
       {/* Header */}
       <Header

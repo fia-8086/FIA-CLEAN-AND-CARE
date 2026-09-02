@@ -16,7 +16,6 @@ export const PinModal: React.FC<PinModalProps> = ({
 }) => {
   const [pinInput, setPinInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showActivePinHint, setShowActivePinHint] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetMethod, setResetMethod] = useState<'current' | 'master'>('current');
@@ -92,14 +91,14 @@ export const PinModal: React.FC<PinModalProps> = ({
 
         <div>
           <h2 className="text-lg font-bold text-slate-900 uppercase tracking-tight">FIA CLEAN & CARE</h2>
-          <p className="text-xs text-slate-500 mt-1">Enter your active system password to unlock</p>
+          <p className="text-xs text-slate-500 mt-1">Enter password to login to the system</p>
         </div>
 
         <form onSubmit={handleVerify} className="space-y-4">
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter active system password"
+              placeholder="Enter password"
               value={pinInput}
               autoComplete="new-password"
               name="current_system_lock_password"
@@ -113,38 +112,10 @@ export const PinModal: React.FC<PinModalProps> = ({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
               title={showPassword ? 'Hide Password' : 'Show Password'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-
-          {/* Active System Password helper to prevent confusion with pre-registered defaults */}
-          <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-slate-500">സിസ്റ്റം പാസ്‌വേർഡ്:</span>
-              <span className="font-mono font-bold text-indigo-950">
-                {showActivePinHint ? appPin : '••••••••'}
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowActivePinHint(!showActivePinHint)}
-                className="text-slate-400 hover:text-indigo-600 p-0.5"
-                title={showActivePinHint ? 'Hide' : 'Show'}
-              >
-                {showActivePinHint ? <EyeOff className="w-3.5 h-3.5 inline" /> : <Eye className="w-3.5 h-3.5 inline" />}
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setPinInput(appPin);
-                setErrorMsg('');
-              }}
-              className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[10px] font-bold px-2 py-1 rounded transition cursor-pointer"
-            >
-              നിലവിലെ പാസ്‌വേർഡ് ചേർക്കുക
             </button>
           </div>
 
@@ -156,10 +127,10 @@ export const PinModal: React.FC<PinModalProps> = ({
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold text-xs tracking-wider shadow-md transition flex items-center justify-center gap-2"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold text-xs tracking-wider shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>UNLOCK APPLICATION</span>
+            <span>LOGIN</span>
           </button>
         </form>
 
