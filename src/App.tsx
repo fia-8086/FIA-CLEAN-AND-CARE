@@ -462,6 +462,9 @@ export default function App() {
   const handleSavePurchase = (p: PurchaseRecord) => {
     setPurchases((prev) => [p, ...prev]);
   };
+  const handleUpdatePurchase = (p: PurchaseRecord) => {
+    setPurchases((prev) => prev.map((item) => (item.id === p.id ? p : item)));
+  };
   const handleDeletePurchase = (id: string) => {
     setPurchases((prev) => prev.filter((p) => p.id !== id));
   };
@@ -656,6 +659,7 @@ export default function App() {
             onUpdateCosProduct={handleUpdateCosProduct}
             onDeleteCosProduct={handleDeleteCosProduct}
             onSavePurchase={handleSavePurchase}
+            onUpdatePurchase={handleUpdatePurchase}
             onDeletePurchase={handleDeletePurchase}
             onAddSupplier={handleAddSupplier}
             onSaveExpense={handleSaveExpense}
