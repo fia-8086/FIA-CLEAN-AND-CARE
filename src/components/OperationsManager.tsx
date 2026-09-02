@@ -70,6 +70,8 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
   const [mainTab, setMainTab] = useState<'stock' | 'purchases' | 'expenses'>('stock');
   const [stockCategory, setStockCategory] = useState<'cleaning' | 'cosmetics'>('cleaning');
   const [stockActionTab, setStockActionTab] = useState<'add' | 'view' | 'return' | 'consolidated'>('add');
+  const [purchaseCategory, setPurchaseCategory] = useState<'cleaning' | 'cosmetics'>('cleaning');
+  const [purchaseActionTab, setPurchaseActionTab] = useState<'add' | 'view' | 'return'>('add');
 
   // Dedicated Modal States for View Stock Edit & Delete
   const [editingStockItem, setEditingStockItem] = useState<{
@@ -131,6 +133,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
   const [viewingPurchase, setViewingPurchase] = useState<PurchaseRecord | null>(null);
   const [returnPurchase, setReturnPurchase] = useState<PurchaseRecord | null>(null);
+  const [selectedReturnPurchId, setSelectedReturnPurchId] = useState<string>('');
   const [returnQty, setReturnQty] = useState<number>(1);
   const [returnDate, setReturnDate] = useState<string>(getTodayDateString());
   const [returnReason, setReturnReason] = useState<string>('');
@@ -357,6 +360,8 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
     setPurchTotalCost(p.rawCost);
     setPurchPaid(p.paid);
     setPurchDate(p.date || getTodayDateString());
+    setPurchaseCategory(p.type || 'cleaning');
+    setPurchaseActionTab('add');
 
     // Scroll to purchase form
     const formEl = document.getElementById('purchaseFormCard');
@@ -1465,482 +1470,765 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
 
       {/* ================= SECTION 2: PURCHASES ================= */}
       {mainTab === 'purchases' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Purchase Form */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* Quick Add Supplier */}
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                👤 Add Supplier
-              </h4>
-              <form onSubmit={handleAddSupplierQuick} className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="Supplier Name"
-                  value={newSupName}
-                  onChange={(e) => setNewSupName(e.target.value)}
-                  className="w-full bg-white border border-slate-200 p-2 rounded text-xs focus:border-indigo-500 outline-none"
-                />
-                <input
-                  type="tel"
-                  placeholder="Mobile"
-                  value={newSupMobile}
-                  onChange={(e) => setNewSupMobile(e.target.value)}
-                  className="w-full bg-white border border-slate-200 p-2 rounded text-xs font-mono focus:border-indigo-500 outline-none"
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded text-xs font-bold shadow-xs transition"
-                >
-                  + ADD SUPPLIER
-                </button>
-              </form>
+        <div className="space-y-6">
+          {/* Header Controls: Categories & Action Sub-Tabs (Matching Stock Module) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-slate-200">
+            {/* Category Toggle: Cleaning vs Cosmetics */}
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => {
+                  setPurchaseCategory('cleaning');
+                  setPurchType('cleaning');
+                  setPurchStockId('');
+                }}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  purchaseCategory === 'cleaning'
+                    ? 'bg-white text-blue-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                🧹 Cleaning Purchases ({purchases.filter((p) => p.type === 'cleaning').length})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPurchaseCategory('cosmetics');
+                  setPurchType('cosmetics');
+                  setPurchStockId('');
+                }}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  purchaseCategory === 'cosmetics'
+                    ? 'bg-white text-pink-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                💄 Cosmetics Purchases ({purchases.filter((p) => p.type === 'cosmetics').length})
+              </button>
             </div>
 
-            {/* Purchase Form (New or Edit) */}
-            <div id="purchaseFormCard" className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                  {editingPurchaseId ? (
-                    <>
-                      <Edit2 className="w-4 h-4 text-amber-600" />
-                      <span className="text-amber-700">Edit Purchase Entry</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="w-4 h-4 text-blue-600" />
-                      <span>🛒 New Purchase Entry</span>
-                    </>
-                  )}
-                </h3>
-                {editingPurchaseId && (
-                  <button
-                    type="button"
-                    onClick={handleCancelEditPurchase}
-                    className="text-xs text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-bold transition"
-                  >
-                    Cancel Edit
-                  </button>
-                )}
-              </div>
-
-              {editingPurchaseId && (
-                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 font-medium flex items-center justify-between">
-                  <span>⚠️ Updating existing purchase record. Changes will adjust stock automatically.</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSavePurchase} className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Supplier</label>
-                  <select
-                    value={purchSupplierName}
-                    onChange={(e) => {
-                      setPurchSupplierName(e.target.value);
-                      const s = suppliers.find((x) => x.name === e.target.value);
-                      if (s) setPurchSupplierMobile(s.mobile || '');
-                    }}
-                    className="w-full border-2 border-slate-200 bg-white p-2 rounded text-xs focus:border-blue-500 outline-none"
-                  >
-                    <option value="">-- Choose Supplier / Or Type Below --</option>
-                    {suppliers.map((s) => (
-                      <option key={s.id} value={s.name}>
-                        {s.name} ({s.mobile || 'No mobile'})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Supplier Name (Manual / Custom)</label>
-                  <input
-                    type="text"
-                    placeholder="Supplier Name"
-                    value={purchSupplierName}
-                    onChange={(e) => setPurchSupplierName(e.target.value)}
-                    required
-                    className="w-full border-2 border-slate-200 p-2 rounded text-xs focus:border-blue-500 outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Category & Stock Link</label>
-                  <div className="flex gap-2">
-                    <select
-                      value={purchType}
-                      onChange={(e) => {
-                        setPurchType(e.target.value as any);
-                        setPurchStockId('');
-                      }}
-                      className="w-1/2 border border-slate-200 bg-white p-2 rounded text-xs"
-                    >
-                      <option value="cleaning">🧹 Cleaning</option>
-                      <option value="cosmetics">💄 Cosmetics</option>
-                    </select>
-
-                    <select
-                      value={purchStockId}
-                      onChange={(e) => {
-                        setPurchStockId(e.target.value);
-                        if (e.target.value) {
-                          const p =
-                            purchType === 'cleaning'
-                              ? products.find((x) => x.id === e.target.value)
-                              : cosProducts.find((x) => x.id === e.target.value);
-                          if (p) {
-                            setPurchUnit(p.unit);
-                            setPurchBarcode(p.barcode || '');
-                          }
-                        }
-                      }}
-                      className="w-1/2 border border-slate-200 bg-white p-2 rounded text-xs"
-                    >
-                      <option value="">-- Link to Stock --</option>
-                      {(purchType === 'cleaning' ? products : cosProducts).map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {!purchStockId && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Product / Material Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Raw Concentrate"
-                      value={purchItemName}
-                      onChange={(e) => setPurchItemName(e.target.value)}
-                      required={!purchStockId}
-                      className="w-full border-2 border-slate-200 p-2 rounded text-xs focus:border-blue-500 outline-none"
-                    />
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Quantity</label>
-                    <input
-                      type="number"
-                      value={purchQty || ''}
-                      onChange={(e) =>
-                        handlePurchaseQtyPriceChange(
-                          parseFloat(e.target.value) || 0,
-                          purchUnitPrice
-                        )
-                      }
-                      min="0.1"
-                      step="any"
-                      required
-                      className="w-full border border-slate-200 p-2 rounded text-xs font-mono font-bold"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Unit Price (₹)</label>
-                    <input
-                      type="number"
-                      value={purchUnitPrice || ''}
-                      onChange={(e) =>
-                        handlePurchaseQtyPriceChange(
-                          purchQty,
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                      min="0"
-                      step="any"
-                      className="w-full border border-slate-200 p-2 rounded text-xs font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Total Cost (₹)</label>
-                    <input
-                      type="number"
-                      value={purchTotalCost || ''}
-                      onChange={(e) => setPurchTotalCost(parseFloat(e.target.value) || 0)}
-                      className="w-full border border-slate-200 p-2 rounded text-xs font-mono font-bold text-blue-700"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Paid Amount (₹)</label>
-                    <input
-                      type="number"
-                      value={purchPaid || ''}
-                      onChange={(e) => setPurchPaid(parseFloat(e.target.value) || 0)}
-                      className="w-full border border-slate-200 p-2 rounded text-xs font-mono font-bold text-emerald-700"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Purchase Date</label>
-                  <input
-                    type="date"
-                    value={purchDate}
-                    onChange={(e) => setPurchDate(e.target.value)}
-                    className="w-full border border-slate-200 p-2 rounded text-xs font-mono"
-                  />
-                </div>
-
-                {editingPurchaseId ? (
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={handleCancelEditPurchase}
-                      className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded font-bold text-xs transition cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-2 bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded font-bold text-xs shadow transition flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      <span>UPDATE PURCHASE</span>
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded font-bold text-xs shadow transition flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>SAVE PURCHASE</span>
-                  </button>
-                )}
-              </form>
+            {/* Purchase Action Sub-Tabs (Add, View List, Returns) */}
+            <div className="flex gap-1">
+              {[
+                { id: 'add', label: editingPurchaseId ? '✏️ Edit Purchase' : '➕ Add Purchase' },
+                { id: 'view', label: '👁️ View List' },
+                { id: 'return', label: '↩️ Returns' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setPurchaseActionTab(tab.id as any)}
+                  className={`px-3 py-1.5 rounded text-xs font-semibold transition cursor-pointer ${
+                    purchaseActionTab === tab.id
+                      ? 'bg-slate-900 text-white font-bold'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Purchase History List (Descending with View, Edit, Return, Delete) */}
-          <div className="lg:col-span-2 bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                  <span>📋 Purchase History</span>
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">
-                    {purchases.length}
-                  </span>
-                </h3>
-                <p className="text-[11px] text-slate-400">View, edit, return or delete recorded purchases</p>
+          {/* ================= SUB-TAB 1: ADD / EDIT PURCHASE ================= */}
+          {purchaseActionTab === 'add' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Purchase Entry Form */}
+              <div id="purchaseFormCard" className="lg:col-span-2 bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center text-white ${
+                        purchaseCategory === 'cleaning' ? 'bg-blue-600' : 'bg-pink-600'
+                      }`}
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+                        {editingPurchaseId
+                          ? `Edit ${purchaseCategory === 'cleaning' ? 'Cleaning' : 'Cosmetics'} Purchase`
+                          : `New ${purchaseCategory === 'cleaning' ? 'Cleaning' : 'Cosmetics'} Purchase`}
+                      </h3>
+                      <p className="text-[11px] text-slate-400">
+                        {editingPurchaseId
+                          ? 'Update purchase details and inventory stock'
+                          : 'Record purchase and automatically increment inventory stock'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {editingPurchaseId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEditPurchase}
+                      className="text-xs text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold transition cursor-pointer"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                {editingPurchaseId && (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 font-medium flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Editing active record. Saving changes will adjust inventory stock automatically.</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSavePurchase} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Select Existing Supplier</label>
+                      <select
+                        value={purchSupplierName}
+                        onChange={(e) => {
+                          setPurchSupplierName(e.target.value);
+                          const s = suppliers.find((x) => x.name === e.target.value);
+                          if (s) setPurchSupplierMobile(s.mobile || '');
+                        }}
+                        className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
+                      >
+                        <option value="">-- Choose Supplier / Or Type Custom Below --</option>
+                        {suppliers.map((s) => (
+                          <option key={s.id} value={s.name}>
+                            {s.name} {s.mobile ? `(${s.mobile})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Supplier Name (Required) *</label>
+                      <input
+                        type="text"
+                        placeholder="Supplier Name / Company"
+                        value={purchSupplierName}
+                        onChange={(e) => setPurchSupplierName(e.target.value)}
+                        required
+                        className="w-full border-2 border-slate-200 p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Supplier Mobile</label>
+                      <input
+                        type="tel"
+                        placeholder="Phone / WhatsApp"
+                        value={purchSupplierMobile}
+                        onChange={(e) => setPurchSupplierMobile(e.target.value)}
+                        className="w-full border border-slate-200 p-2.5 rounded-lg text-xs font-mono focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Link to Inventory Stock</label>
+                      <select
+                        value={purchStockId}
+                        onChange={(e) => {
+                          setPurchStockId(e.target.value);
+                          if (e.target.value) {
+                            const p =
+                              purchaseCategory === 'cleaning'
+                                ? products.find((x) => x.id === e.target.value)
+                                : cosProducts.find((x) => x.id === e.target.value);
+                            if (p) {
+                              setPurchUnit(p.unit);
+                              setPurchBarcode(p.barcode || '');
+                            }
+                          }
+                        }}
+                        className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
+                      >
+                        <option value="">-- Choose Stock Product (Auto Adds Stock) --</option>
+                        {(purchaseCategory === 'cleaning' ? products : cosProducts).map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (Current: {p.stock} {p.unit})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {!purchStockId && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Product / Raw Material Name *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Caustic Soda Flakes, Fragrance Oil, Liquid Base"
+                        value={purchItemName}
+                        onChange={(e) => setPurchItemName(e.target.value)}
+                        required={!purchStockId}
+                        className="w-full border-2 border-slate-200 p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Quantity *</label>
+                      <input
+                        type="number"
+                        value={purchQty || ''}
+                        onChange={(e) =>
+                          handlePurchaseQtyPriceChange(
+                            parseFloat(e.target.value) || 0,
+                            purchUnitPrice
+                          )
+                        }
+                        min="0.1"
+                        step="any"
+                        required
+                        className="w-full border-2 border-slate-200 p-2.5 rounded-lg text-xs font-mono font-bold focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Unit</label>
+                      <select
+                        value={purchUnit}
+                        onChange={(e) => setPurchUnit(e.target.value as UnitType)}
+                        className="w-full border border-slate-200 bg-white p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
+                      >
+                        <option value="Ltr">Ltr</option>
+                        <option value="Kg">Kg</option>
+                        <option value="Pcs">Pcs</option>
+                        <option value="Box">Box</option>
+                        <option value="Set">Set</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Unit Rate (₹)</label>
+                      <input
+                        type="number"
+                        value={purchUnitPrice || ''}
+                        onChange={(e) =>
+                          handlePurchaseQtyPriceChange(
+                            purchQty,
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        min="0"
+                        step="any"
+                        className="w-full border border-slate-200 p-2.5 rounded-lg text-xs font-mono focus:border-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Total Cost (₹)</label>
+                      <input
+                        type="number"
+                        value={purchTotalCost || ''}
+                        onChange={(e) => setPurchTotalCost(parseFloat(e.target.value) || 0)}
+                        className="w-full border-2 border-slate-200 p-2.5 rounded-lg text-xs font-mono font-bold text-blue-700 focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Paid Amount (₹)</label>
+                      <input
+                        type="number"
+                        value={purchPaid || ''}
+                        onChange={(e) => setPurchPaid(parseFloat(e.target.value) || 0)}
+                        className="w-full border-2 border-slate-200 p-2.5 rounded-lg text-xs font-mono font-bold text-emerald-700 focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700">Purchase Date</label>
+                      <input
+                        type="date"
+                        value={purchDate}
+                        onChange={(e) => setPurchDate(e.target.value)}
+                        className="w-full border border-slate-200 p-2.5 rounded-lg text-xs font-mono focus:border-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {editingPurchaseId ? (
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={handleCancelEditPurchase}
+                        className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-lg font-bold text-xs transition cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-2 bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-lg font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>UPDATE PURCHASE</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>SAVE & UPDATE INVENTORY</span>
+                    </button>
+                  )}
+                </form>
               </div>
 
-              {/* Search & Type Filter */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative min-w-[180px]">
+              {/* Quick Add Supplier & Quick Info */}
+              <div className="space-y-4">
+                <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                    <span>👤 Quick Add Supplier</span>
+                  </h4>
+                  <form onSubmit={handleAddSupplierQuick} className="space-y-2.5">
+                    <input
+                      type="text"
+                      placeholder="Supplier Name *"
+                      value={newSupName}
+                      onChange={(e) => setNewSupName(e.target.value)}
+                      required
+                      className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs focus:border-indigo-500 outline-none"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Mobile / Contact No"
+                      value={newSupMobile}
+                      onChange={(e) => setNewSupMobile(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono focus:border-indigo-500 outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                    >
+                      + ADD SUPPLIER
+                    </button>
+                  </form>
+                </div>
+
+                <div className="bg-blue-50/70 p-4 rounded-lg border border-blue-200 text-xs text-blue-900 space-y-2">
+                  <h5 className="font-bold flex items-center gap-1.5 text-blue-950">
+                    <span>💡 Stock Link Feature</span>
+                  </h5>
+                  <p className="text-[11px] text-blue-800 leading-relaxed">
+                    Selecting an existing product from the <strong>"Link to Inventory Stock"</strong> dropdown will automatically increase that item's available stock immediately upon saving!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ================= SUB-TAB 2: VIEW PURCHASES LIST ================= */}
+          {purchaseActionTab === 'view' && (
+            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-5">
+              {/* Category Summary Stats Banner */}
+              {(() => {
+                const categoryPurchases = purchases.filter((p) => p.type === purchaseCategory);
+                const totalCost = categoryPurchases.reduce((s, p) => s + (p.rawCost || 0), 0);
+                const totalPaid = categoryPurchases.reduce((s, p) => s + (p.paid || 0), 0);
+                const totalBal = categoryPurchases.reduce((s, p) => s + (p.balance || 0), 0);
+                const totalReturns = categoryPurchases.reduce((s, p) => s + (p.returnedAmount || 0), 0);
+
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">Total Purchases</span>
+                      <span className="text-base font-bold font-mono text-slate-900">{formatCurrency(totalCost)}</span>
+                    </div>
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                      <span className="text-[10px] text-emerald-700 font-bold uppercase block">Amount Paid</span>
+                      <span className="text-base font-bold font-mono text-emerald-800">{formatCurrency(totalPaid)}</span>
+                    </div>
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                      <span className="text-[10px] text-rose-700 font-bold uppercase block">Balance Due</span>
+                      <span className="text-base font-bold font-mono text-rose-800">{formatCurrency(totalBal)}</span>
+                    </div>
+                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <span className="text-[10px] text-purple-700 font-bold uppercase block">Total Returns</span>
+                      <span className="text-base font-bold font-mono text-purple-800">{formatCurrency(totalReturns)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Toolbar: Search, Filters, Count */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+                    {purchaseCategory === 'cleaning' ? '🧹 Cleaning Purchases' : '💄 Cosmetics Purchases'}
+                  </h3>
+                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono font-bold">
+                    {purchases.filter((p) => p.type === purchaseCategory).length}
+                  </span>
+                </div>
+
+                <div className="relative min-w-[240px]">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search supplier, item..."
+                    placeholder="Search supplier, item, mobile..."
                     value={purchaseSearchQuery}
                     onChange={(e) => setPurchaseSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500"
+                    className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500"
                   />
                   {purchaseSearchQuery && (
                     <button
                       onClick={() => setPurchaseSearchQuery('')}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
-
-                <div className="flex bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold">
-                  {(['all', 'cleaning', 'cosmetics'] as const).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setPurchaseFilterType(type)}
-                      className={`px-2.5 py-1 rounded-md capitalize transition ${
-                        purchaseFilterType === type
-                          ? 'bg-white text-blue-900 shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      {type === 'cleaning' ? '🧹 Clean' : type === 'cosmetics' ? '💄 Cos' : 'All'}
-                    </button>
-                  ))}
-                </div>
               </div>
-            </div>
 
-            <div className="space-y-3 max-h-[620px] overflow-y-auto pr-1">
-              {purchases.length === 0 ? (
-                <div className="text-center py-12 text-xs text-slate-400 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
-                  No purchases recorded yet. Enter purchases above to track supplies & inventory.
-                </div>
-              ) : (
-                [...purchases]
-                  .filter((p) => {
-                    if (purchaseFilterType !== 'all' && p.type !== purchaseFilterType) return false;
-                    if (!purchaseSearchQuery.trim()) return true;
-                    const q = purchaseSearchQuery.toLowerCase();
-                    return (
-                      p.supplierName.toLowerCase().includes(q) ||
-                      p.rawMaterial.toLowerCase().includes(q) ||
-                      (p.supplierMobile && p.supplierMobile.includes(q)) ||
-                      (p.rawBarcode && p.rawBarcode.toLowerCase().includes(q))
-                    );
-                  })
-                  .sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0))
-                  .map((p) => {
-                    const alreadyReturned = Number(p.returnedQty || 0);
-                    const canReturn = Math.max(0, Number(p.rawQty || 0) - alreadyReturned) > 0;
+              {/* Purchase Cards List */}
+              <div className="space-y-3 max-h-[640px] overflow-y-auto pr-1">
+                {purchases.filter((p) => p.type === purchaseCategory).length === 0 ? (
+                  <div className="text-center py-16 text-xs text-slate-400 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                    No {purchaseCategory} purchases recorded yet. Switch to "➕ Add Purchase" tab to record your first entry.
+                  </div>
+                ) : (
+                  [...purchases]
+                    .filter((p) => p.type === purchaseCategory)
+                    .filter((p) => {
+                      if (!purchaseSearchQuery.trim()) return true;
+                      const q = purchaseSearchQuery.toLowerCase();
+                      return (
+                        p.supplierName.toLowerCase().includes(q) ||
+                        p.rawMaterial.toLowerCase().includes(q) ||
+                        (p.supplierMobile && p.supplierMobile.includes(q)) ||
+                        (p.rawBarcode && p.rawBarcode.toLowerCase().includes(q))
+                      );
+                    })
+                    .sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0))
+                    .map((p) => {
+                      const alreadyReturned = Number(p.returnedQty || 0);
+                      const canReturn = Math.max(0, Number(p.rawQty || 0) - alreadyReturned) > 0;
 
-                    return (
-                      <div
-                        key={p.id}
-                        className={`p-4 rounded-xl border transition-all space-y-3 ${
-                          editingPurchaseId === p.id
-                            ? 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-200'
-                            : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-xs'
-                        }`}
-                      >
-                        {/* Top line: Supplier, Item, Category Badge, and Action Buttons */}
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
-                          <div className="space-y-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  p.type === 'cleaning'
-                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                    : 'bg-pink-50 text-pink-700 border border-pink-200'
-                                }`}
+                      return (
+                        <div
+                          key={p.id}
+                          className="p-4 rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-xs transition-all space-y-3"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-extrabold text-slate-900">{p.supplierName}</span>
+                                {p.supplierMobile && (
+                                  <a
+                                    href={`tel:${p.supplierMobile}`}
+                                    className="text-[11px] font-mono text-blue-600 hover:underline flex items-center gap-0.5"
+                                  >
+                                    <Phone className="w-3 h-3" />
+                                    {p.supplierMobile}
+                                  </a>
+                                )}
+                              </div>
+
+                              <p className="text-sm font-bold text-slate-800">{p.rawMaterial}</p>
+
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                <span>📅 {formatDateDDMMYYYY(p.date)}</span>
+                                <span>•</span>
+                                <span>
+                                  Qty: <strong className="font-mono text-slate-800">{p.rawQty} {p.rawUnit}</strong>
+                                </span>
+                                {p.rawUnitPrice > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>Rate: <strong className="font-mono text-slate-700">₹{p.rawUnitPrice}</strong></span>
+                                  </>
+                                )}
+                              </div>
+
+                              {alreadyReturned > 0 && (
+                                <div className="inline-flex items-center gap-1 text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded">
+                                  <RotateCcw className="w-3 h-3" />
+                                  <span>Returned: {alreadyReturned} {p.rawUnit} (Refund: ₹{p.returnedAmount || 0})</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* 4 Action Buttons: View, Edit, Return, Delete */}
+                            <div className="flex flex-wrap items-center gap-1.5 shrink-0 pt-1 sm:pt-0">
+                              <button
+                                type="button"
+                                onClick={() => setViewingPurchase(p)}
+                                className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                                title="View full purchase details"
                               >
-                                {p.type === 'cleaning' ? '🧹 Cleaning' : '💄 Cosmetics'}
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>View</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleEditPurchase(p)}
+                                className="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                                title="Edit this purchase entry"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenReturnModal(p)}
+                                disabled={!canReturn}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                                  canReturn
+                                    ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200'
+                                    : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                                }`}
+                                title={canReturn ? 'Return items to supplier' : 'All items already returned'}
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                <span>Return</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePurchaseWithStockReversal(p)}
+                                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                                title="Delete purchase record"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between pt-2 border-t border-slate-100 text-xs gap-2">
+                            <div className="flex items-center gap-3">
+                              <span className="text-slate-600">
+                                Total: <strong className="font-mono text-slate-900">{formatCurrency(p.rawCost)}</strong>
                               </span>
-                              <span className="text-xs font-bold text-slate-900 truncate">
-                                {p.supplierName}
+                              <span className="text-slate-600">
+                                Paid: <strong className="font-mono text-emerald-600">{formatCurrency(p.paid)}</strong>
                               </span>
-                              {p.supplierMobile && (
-                                <span className="text-[11px] font-mono text-slate-400 flex items-center gap-0.5">
-                                  <Phone className="w-3 h-3 text-slate-400" />
-                                  {p.supplierMobile}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {alreadyReturned > 0 && (
+                                <span className="text-slate-500 font-mono text-[11px]">
+                                  Net: {formatCurrency(p.netPurchaseAmount ?? (p.rawCost - (p.returnedAmount || 0)))}
+                                </span>
+                              )}
+                              {p.balance > 0 ? (
+                                <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                  Bal Due: {formatCurrency(p.balance)}
+                                </span>
+                              ) : (
+                                <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold text-[11px]">
+                                  Fully Paid ✓
                                 </span>
                               )}
                             </div>
-
-                            <p className="text-sm font-extrabold text-slate-800">
-                              {p.rawMaterial}
-                            </p>
-
-                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                              <span className="font-mono">
-                                📅 {formatDateDDMMYYYY(p.date)}
-                              </span>
-                              <span>•</span>
-                              <span>
-                                Qty: <strong className="font-mono text-slate-800">{p.rawQty} {p.rawUnit}</strong>
-                              </span>
-                              {p.rawUnitPrice > 0 && (
-                                <>
-                                  <span>•</span>
-                                  <span>Rate: <strong className="font-mono text-slate-700">₹{p.rawUnitPrice}</strong></span>
-                                </>
-                              )}
-                            </div>
-
-                            {/* Returned items badge */}
-                            {alreadyReturned > 0 && (
-                              <div className="inline-flex items-center gap-1 text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded">
-                                <RotateCcw className="w-3 h-3" />
-                                <span>Returned: {alreadyReturned} {p.rawUnit} (Refund: ₹{p.returnedAmount || 0})</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Action Buttons: VIEW, EDIT, RETURN, DELETE */}
-                          <div className="flex flex-wrap items-center gap-1.5 shrink-0 pt-1 sm:pt-0">
-                            {/* 1. VIEW BUTTON */}
-                            <button
-                              type="button"
-                              onClick={() => setViewingPurchase(p)}
-                              className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-                              title="View full purchase details"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>View</span>
-                            </button>
-
-                            {/* 2. EDIT BUTTON */}
-                            <button
-                              type="button"
-                              onClick={() => handleEditPurchase(p)}
-                              className="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-                              title="Edit this purchase entry"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              <span>Edit</span>
-                            </button>
-
-                            {/* 3. RETURN BUTTON */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenReturnModal(p)}
-                              disabled={!canReturn}
-                              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                                canReturn
-                                  ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200'
-                                  : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
-                              }`}
-                              title={canReturn ? 'Return items to supplier' : 'All items already returned'}
-                            >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                              <span>Return</span>
-                            </button>
-
-                            {/* 4. DELETE BUTTON */}
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePurchaseWithStockReversal(p)}
-                              className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-                              title="Delete purchase record"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
-                            </button>
                           </div>
                         </div>
+                      );
+                    })
+                )}
+              </div>
+            </div>
+          )}
 
-                        {/* Financial summary line */}
-                        <div className="flex flex-wrap items-center justify-between pt-2 border-t border-slate-100 text-xs gap-2">
-                          <div className="flex items-center gap-3">
-                            <span className="text-slate-600">
-                              Total: <strong className="font-mono text-slate-900">{formatCurrency(p.rawCost)}</strong>
-                            </span>
-                            <span className="text-slate-600">
-                              Paid: <strong className="font-mono text-emerald-600">{formatCurrency(p.paid)}</strong>
-                            </span>
-                          </div>
+          {/* ================= SUB-TAB 3: PURCHASE RETURNS ================= */}
+          {purchaseActionTab === 'return' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Record Purchase Return Form */}
+              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <RotateCcw className="w-4 h-4 text-purple-700" />
+                  <span>Record Return to Supplier ({purchaseCategory === 'cleaning' ? 'Cleaning' : 'Cosmetics'})</span>
+                </h3>
 
-                          <div className="flex items-center gap-2">
-                            {alreadyReturned > 0 && (
-                              <span className="text-slate-500 font-mono text-[11px]">
-                                Net: {formatCurrency(p.netPurchaseAmount ?? (p.rawCost - (p.returnedAmount || 0)))}
-                              </span>
-                            )}
-                            {p.balance > 0 ? (
-                              <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                                Bal Due: {formatCurrency(p.balance)}
-                              </span>
-                            ) : (
-                              <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold text-[11px]">
-                                Fully Paid ✓
-                              </span>
-                            )}
-                          </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!selectedReturnPurchId) {
+                      alert('Please select a purchase to return.');
+                      return;
+                    }
+                    const targetPurch = purchases.find((p) => p.id === selectedReturnPurchId);
+                    if (targetPurch) {
+                      setReturnPurchase(targetPurch);
+                      handleSavePurchaseReturn(e);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Select Purchase Record *</label>
+                    <select
+                      value={selectedReturnPurchId}
+                      onChange={(e) => {
+                        setSelectedReturnPurchId(e.target.value);
+                        const p = purchases.find((x) => x.id === e.target.value);
+                        if (p) {
+                          setReturnPurchase(p);
+                          setReturnQty(1);
+                        }
+                      }}
+                      required
+                      className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-lg text-xs focus:border-purple-600 outline-none"
+                    >
+                      <option value="">-- Choose Purchase to Return Goods --</option>
+                      {purchases
+                        .filter((p) => p.type === purchaseCategory)
+                        .map((p) => {
+                          const avail = Math.max(0, Number(p.rawQty || 0) - Number(p.returnedQty || 0));
+                          return (
+                            <option key={p.id} value={p.id} disabled={avail <= 0}>
+                              {formatDateDDMMYYYY(p.date)} • {p.supplierName} • {p.rawMaterial} (Avail: {avail} {p.rawUnit})
+                            </option>
+                          );
+                        })}
+                    </select>
+                  </div>
+
+                  {selectedReturnPurchId && (() => {
+                    const selP = purchases.find((p) => p.id === selectedReturnPurchId);
+                    if (!selP) return null;
+                    const avail = Math.max(0, Number(selP.rawQty || 0) - Number(selP.returnedQty || 0));
+                    const unitRate = selP.rawUnitPrice || (selP.rawCost / (selP.rawQty || 1));
+
+                    return (
+                      <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-xs space-y-1">
+                        <div className="flex justify-between font-bold text-purple-950">
+                          <span>{selP.supplierName}</span>
+                          <span>Purchased: {selP.rawQty} {selP.rawUnit}</span>
+                        </div>
+                        <div className="flex justify-between text-purple-800">
+                          <span>Material: {selP.rawMaterial}</span>
+                          <span>Already Returned: {selP.returnedQty || 0} {selP.rawUnit}</span>
+                        </div>
+                        <div className="pt-1 border-t border-purple-200 flex justify-between font-bold text-purple-900">
+                          <span>Max Available to Return:</span>
+                          <span className="font-mono text-sm">{avail} {selP.rawUnit}</span>
                         </div>
                       </div>
                     );
-                  })
-              )}
+                  })()}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Return Quantity *</label>
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="any"
+                        value={returnQty || ''}
+                        onChange={(e) => setReturnQty(parseFloat(e.target.value) || 0)}
+                        required
+                        className="w-full border-2 border-slate-200 p-2.5 rounded-lg text-xs font-mono font-bold focus:border-purple-600 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Return Date</label>
+                      <input
+                        type="date"
+                        value={returnDate}
+                        onChange={(e) => setReturnDate(e.target.value)}
+                        className="w-full border border-slate-200 p-2.5 rounded-lg text-xs font-mono focus:border-purple-600 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Reason for Return</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Damaged container, Defective raw material"
+                      value={returnReason}
+                      onChange={(e) => setReturnReason(e.target.value)}
+                      className="w-full border border-slate-200 p-2.5 rounded-lg text-xs focus:border-purple-600 outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-purple-700 hover:bg-purple-800 text-white py-3 rounded-lg font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>PROCESS PURCHASE RETURN</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Purchase Returns History */}
+              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center justify-between">
+                  <span>↩️ Return History ({purchaseCategory === 'cleaning' ? 'Cleaning' : 'Cosmetics'})</span>
+                </h3>
+
+                {(() => {
+                  const catPurchases = purchases.filter((p) => p.type === purchaseCategory);
+                  const returnEntries: Array<{
+                    purchId: string;
+                    supplier: string;
+                    material: string;
+                    unit: string;
+                    ret: { id: string; qty: number; date: string; reason: string; amount: number; savedAt: number };
+                  }> = [];
+
+                  catPurchases.forEach((p) => {
+                    (p.returns || []).forEach((r) => {
+                      returnEntries.push({
+                        purchId: p.id,
+                        supplier: p.supplierName,
+                        material: p.rawMaterial,
+                        unit: p.rawUnit,
+                        ret: r,
+                      });
+                    });
+                  });
+
+                  returnEntries.sort((a, b) => (b.ret.savedAt || 0) - (a.ret.savedAt || 0));
+
+                  if (returnEntries.length === 0) {
+                    return (
+                      <p className="text-xs text-slate-400 text-center py-12 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                        No purchase returns recorded for {purchaseCategory} goods yet.
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+                      {returnEntries.map((item) => (
+                        <div
+                          key={item.ret.id}
+                          className="p-3 bg-purple-50/40 rounded-lg border border-purple-200 text-xs space-y-1"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="font-bold text-purple-950">{item.supplier} — {item.material}</span>
+                            <span className="font-mono font-bold text-purple-800">
+                              {formatCurrency(item.ret.amount)}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 font-mono text-[11px]">
+                            📅 {formatDateDDMMYYYY(item.ret.date)} • Returned: {item.ret.qty} {item.unit}
+                          </p>
+                          {item.ret.reason && (
+                            <p className="text-[11px] text-purple-900 italic bg-white/60 p-1 rounded">
+                              "{item.ret.reason}"
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
