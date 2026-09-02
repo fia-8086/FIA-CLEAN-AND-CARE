@@ -83,15 +83,22 @@ export const PinModal: React.FC<PinModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-200 rounded-xl max-w-sm w-full p-6 shadow-2xl space-y-5 text-center">
-        <div className="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center mx-auto shadow-inner">
-          <Lock className="w-6 h-6" />
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-100 via-indigo-50/50 to-sky-100/60 z-50 flex items-center justify-center p-4">
+      {/* Subtle decorative background blur circles */}
+      <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-indigo-200/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-sky-200/35 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-2xl max-w-sm w-full p-6 sm:p-8 shadow-xl shadow-slate-300/40 space-y-6 text-center overflow-hidden">
+        {/* Top Accent Gradient Stripe */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-indigo-500 via-blue-500 to-teal-400 absolute top-0 left-0" />
+
+        <div className="w-14 h-14 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-xs">
+          <Lock className="w-6 h-6 text-indigo-600" />
         </div>
 
         <div>
-          <h2 className="text-lg font-bold text-slate-900 uppercase tracking-tight">FIA CLEAN & CARE</h2>
-          <p className="text-xs text-slate-500 mt-1">Enter password to login to the system</p>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">FIA CLEAN & CARE</h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">Enter password to login to the system</p>
         </div>
 
         <form onSubmit={handleVerify} className="space-y-4">
@@ -107,12 +114,12 @@ export const PinModal: React.FC<PinModalProps> = ({
                 setErrorMsg('');
               }}
               autoFocus
-              className="w-full text-center text-lg font-mono font-bold p-3 pr-10 bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-indigo-600 outline-none"
+              className="w-full text-center text-lg font-mono font-bold p-3 pr-10 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:border-indigo-600 focus:bg-white transition outline-none text-slate-800 placeholder:text-slate-400"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
               title={showPassword ? 'Hide Password' : 'Show Password'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -120,14 +127,14 @@ export const PinModal: React.FC<PinModalProps> = ({
           </div>
 
           {errorMsg && (
-            <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-xs font-bold text-rose-600 animate-in fade-in">
+            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-600 animate-in fade-in">
               {errorMsg}
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold text-xs tracking-wider shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white py-3 rounded-xl font-bold text-xs tracking-wider shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
           >
             <ShieldCheck className="w-4 h-4" />
             <span>LOGIN</span>
@@ -145,7 +152,7 @@ export const PinModal: React.FC<PinModalProps> = ({
               setNewPinDirect('');
               setMasterKey('');
             }}
-            className="text-indigo-600 hover:underline font-semibold inline-flex items-center gap-1 cursor-pointer"
+            className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold inline-flex items-center gap-1 cursor-pointer transition"
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span>Change / Reset Password</span>
@@ -155,7 +162,7 @@ export const PinModal: React.FC<PinModalProps> = ({
 
       {/* Change / Reset Password Modal */}
       {showResetModal && (
-        <div className="fixed inset-0 bg-slate-950/90 z-60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-60 flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-xl max-w-sm w-full p-6 space-y-4 text-left shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-100 pb-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
