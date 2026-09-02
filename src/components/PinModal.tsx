@@ -134,7 +134,7 @@ export const PinModal: React.FC<PinModalProps> = ({
           </button>
         </form>
 
-        <div className="flex justify-between items-center text-xs text-slate-400 pt-3 border-t border-slate-100">
+        <div className="text-center text-xs text-slate-400 pt-3 border-t border-slate-100">
           <button
             type="button"
             onClick={() => {
@@ -145,14 +145,11 @@ export const PinModal: React.FC<PinModalProps> = ({
               setNewPinDirect('');
               setMasterKey('');
             }}
-            className="text-indigo-600 hover:underline font-semibold flex items-center gap-1"
+            className="text-indigo-600 hover:underline font-semibold inline-flex items-center gap-1 cursor-pointer"
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span>Change / Reset Password</span>
           </button>
-          <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
-            <Shield className="w-3 h-3 text-emerald-600" /> Active System PIN
-          </span>
         </div>
       </div>
 
