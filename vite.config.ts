@@ -7,7 +7,27 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     base: './',
-    plugins: [react(), tailwindcss(), viteSingleFile()],
+    plugins: [
+      {
+        name: 'dev-html-rewrite',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (req.url === '/' || req.url === '/index.html') {
+              req.url = '/dev.html';
+            }
+            next();
+          });
+        },
+      },
+      react(),
+      tailwindcss(),
+      viteSingleFile(),
+    ],
+    build: {
+      rollupOptions: {
+        input: path.resolve(__dirname, 'dev.html'),
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
