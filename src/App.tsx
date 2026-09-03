@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { subscribeToCloud, syncToCloud, CloudPayload } from './firebase';
 import { Header } from './components/Header';
 import { Navbar, TabType } from './components/Navbar';
 import { Dashboard } from './components/Dashboard';
@@ -276,13 +277,70 @@ export default function App() {
     }
   });
 
+  // Realtime Cloud Sync Tracking
+  const isRemoteUpdateRef = useRef<boolean>(false);
+
   // Cloud / Offline Sync state
   const [syncStatus, setSyncStatus] = useState<{ connected: boolean; message: string }>({
-    connected: true,
-    message: 'Local Cache Active',
+    connected: false,
+    message: 'Connecting to Cloud...',
   });
 
-  // Persist states to LocalStorage
+  // 1. Subscribe to Firebase Realtime Database for live multi-device sync
+  useEffect(() => {
+    const unsubscribe = subscribeToCloud(
+      (cloudData) => {
+        isRemoteUpdateRef.current = true;
+
+        if (Array.isArray(cloudData.products)) {
+          setProducts(cloudData.products.filter((p) => !isPreloadedCleaningProduct(p)));
+        }
+        if (Array.isArray(cloudData.cosProducts)) {
+          setCosProducts(cloudData.cosProducts.filter((p) => !isPreloadedCosmeticProduct(p)));
+        }
+        if (Array.isArray(cloudData.customers)) {
+          setCustomers(cloudData.customers.filter((c) => !isPreloadedMockCustomer(c)));
+        }
+        if (Array.isArray(cloudData.suppliers)) {
+          setSuppliers(cloudData.suppliers.filter((s) => !isPreloadedSupplier(s)));
+        }
+        if (Array.isArray(cloudData.sales)) {
+          setSales(cloudData.sales.filter((s) => !isPreloadedSale(s)));
+        }
+        if (Array.isArray(cloudData.purchases)) {
+          setPurchases(cloudData.purchases.filter((p) => !isPreloadedPurchase(p)));
+        }
+        if (Array.isArray(cloudData.expenses)) {
+          setExpenses(cloudData.expenses.filter((e) => !isPreloadedExpense(e)));
+        }
+        if (Array.isArray(cloudData.stockReturns)) {
+          setStockReturns(cloudData.stockReturns);
+        }
+        if (Array.isArray(cloudData.clearedDayBookIds)) {
+          setClearedDayBookIds(cloudData.clearedDayBookIds);
+        }
+        if (cloudData.appPin) {
+          setAppPin(cloudData.appPin);
+        }
+
+        setSyncStatus({ connected: true, message: 'Cloud Synchronized' });
+
+        setTimeout(() => {
+          isRemoteUpdateRef.current = false;
+        }, 150);
+      },
+      (error) => {
+        console.warn('Firebase realtime sync error:', error);
+        setSyncStatus({ connected: false, message: 'Offline Mode (Local Cache)' });
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Persist states to LocalStorage & Sync updates to Cloud
   useEffect(() => {
     try {
       localStorage.setItem('fia_products', JSON.stringify(products));
@@ -298,6 +356,35 @@ export default function App() {
     } catch (err) {
       console.warn('LocalStorage save error:', err);
     }
+
+    if (isRemoteUpdateRef.current) {
+      return;
+    }
+
+    const payload = {
+      products,
+      cosProducts,
+      customers,
+      suppliers,
+      sales,
+      purchases,
+      expenses,
+      stockReturns,
+      clearedDayBookIds,
+      appPin,
+    };
+
+    const timer = setTimeout(async () => {
+      setSyncStatus((prev) => ({ ...prev, message: 'Syncing to Cloud...' }));
+      const ok = await syncToCloud(payload);
+      if (ok) {
+        setSyncStatus({ connected: true, message: 'Cloud Synchronized' });
+      } else {
+        setSyncStatus({ connected: false, message: 'Offline Mode' });
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
   }, [
     products,
     cosProducts,
@@ -523,11 +610,26 @@ export default function App() {
     }
   };
 
-  const handleManualSync = () => {
-    setSyncStatus({ connected: true, message: 'Synchronized ✓' });
-    setTimeout(() => {
-      setSyncStatus({ connected: true, message: 'Local Cache Active' });
-    }, 2500);
+  const handleManualSync = async () => {
+    setSyncStatus({ connected: true, message: 'Syncing to Cloud...' });
+    const payload = {
+      products,
+      cosProducts,
+      customers,
+      suppliers,
+      sales,
+      purchases,
+      expenses,
+      stockReturns,
+      clearedDayBookIds,
+      appPin,
+    };
+    const ok = await syncToCloud(payload);
+    if (ok) {
+      setSyncStatus({ connected: true, message: 'Cloud Synchronized' });
+    } else {
+      setSyncStatus({ connected: false, message: 'Sync Failed (Offline)' });
+    }
   };
 
   const handleLogout = () => {
