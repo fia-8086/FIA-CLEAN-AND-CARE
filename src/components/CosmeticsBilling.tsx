@@ -239,7 +239,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
     if (!existingCust) {
       onAddCustomer({
         id: 'cust_' + Date.now(),
-        name: customerName.trim(),
+        name: customerName.trim().toUpperCase(),
         phone: customerPhone.trim(),
         createdAt: getTodayDateString(),
       });
@@ -249,7 +249,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
       id: editingSaleId || 'sale_cos_' + Date.now(),
       billNo: nextBillNo,
       type: 'cosmetics',
-      name: customerName.trim(),
+      name: customerName.trim().toUpperCase(),
       phone: customerPhone.trim(),
       saleType,
       paymentMode,
@@ -386,7 +386,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                 type="text"
                 placeholder="e.g. Anjali / Beauty Parlour"
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+                onChange={(e) => setCustomerName(e.target.value.toUpperCase())}
                 className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-md text-xs font-semibold focus:border-pink-500 outline-none"
                 required
               />

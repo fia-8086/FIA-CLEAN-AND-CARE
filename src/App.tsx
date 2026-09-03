@@ -45,6 +45,7 @@ export default function App() {
   // Navigation: Defaults to Dashboard
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [invoicingSubTab, setInvoicingSubTab] = useState<'cleaning' | 'cosmetics' | 'history'>('cleaning');
+  const [operationsSubTab, setOperationsSubTab] = useState<'stock' | 'purchases' | 'expenses'>('stock');
 
   // Modals
   const [previewSale, setPreviewSale] = useState<SaleRecord | null>(null);
@@ -636,7 +637,37 @@ export default function App() {
     setIsUnlocked(false);
   };
 
-  const handleNavigateTab = (tab: TabType) => {
+  const handleDownloadBackup = () => {
+    const backup = {
+      backupVersion: 2,
+      app: 'FIA CLEAN & CARE',
+      createdAt: new Date().toISOString(),
+      data: {
+        products,
+        cosProducts,
+        customers,
+        suppliers,
+        sales,
+        purchases,
+        expenses,
+        stockReturns,
+        clearedDayBookIds,
+        appPin,
+      },
+    };
+    const nowStr = new Date().toISOString().split('T')[0];
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `FIA_CLEAN_CARE_BACKUP_${nowStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleNavigateTab = (tab: any) => {
     if (tab === 'billing') {
       setActiveTab('invoicing');
       setInvoicingSubTab('cleaning');
@@ -646,6 +677,15 @@ export default function App() {
     } else if (tab === 'history') {
       setActiveTab('invoicing');
       setInvoicingSubTab('history');
+    } else if (tab === 'stock') {
+      setActiveTab('operations');
+      setOperationsSubTab('stock');
+    } else if (tab === 'purchases') {
+      setActiveTab('operations');
+      setOperationsSubTab('purchases');
+    } else if (tab === 'expenses') {
+      setActiveTab('operations');
+      setOperationsSubTab('expenses');
     } else {
       setActiveTab(tab);
     }
@@ -711,6 +751,7 @@ export default function App() {
             purchases={purchases}
             expenses={expenses}
             onNavigate={handleNavigateTab}
+            onDownloadBackup={handleDownloadBackup}
             onViewInvoice={(s) => setPreviewSale(s)}
           />
         )}
@@ -748,6 +789,7 @@ export default function App() {
 
         {activeTab === 'operations' && (
           <OperationsManager
+            initialSubTab={operationsSubTab}
             products={products}
             cosProducts={cosProducts}
             purchases={purchases}

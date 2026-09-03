@@ -91,3 +91,9 @@
     page-break-after: auto !important;
   }
 }
+
+/* Business data inputs auto-uppercase */
+input[type="text"]:not(.keep-case),
+textarea:not(.keep-case) {
+  text-transform: uppercase;
+}

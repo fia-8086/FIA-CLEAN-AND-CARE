@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   ShoppingBag,
   Receipt,
+  Download,
   DollarSign,
   FileText,
   Boxes,
@@ -26,6 +27,7 @@ import {
 } from '../utils/formatters';
 
 interface DashboardProps {
+  onDownloadBackup?: () => void;
   products: Product[];
   cosProducts: CosmeticProduct[];
   customers: CustomerProfile[];
@@ -44,6 +46,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   purchases,
   expenses,
   onNavigate,
+  onDownloadBackup,
 }) => {
   const today = getTodayDateString();
 
@@ -96,18 +99,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => onNavigate('billing')}
-              className="flex-1 sm:flex-initial bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-initial bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Receipt className="w-4 h-4" />
               <span>+ Cleaning Bill</span>
             </button>
             <button
               onClick={() => onNavigate('cosmetics')}
-              className="flex-1 sm:flex-initial bg-pink-600 hover:bg-pink-500 text-white px-4 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-initial bg-pink-600 hover:bg-pink-500 text-white px-3.5 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
               <span>+ Cosmetics Bill</span>
             </button>
+            {onDownloadBackup && (
+              <button
+                onClick={onDownloadBackup}
+                className="flex-1 sm:flex-initial bg-slate-800/90 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3.5 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Download JSON Database Backup"
+              >
+                <Download className="w-4 h-4" />
+                <span className="text-white">Backup JSON</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -178,6 +191,84 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {totalLowStock}
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">Items ≤ 5 units</p>
+        </div>
+      </div>
+
+      {/* Operations & Stock Quick Access Shortcuts */}
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2">
+            <Boxes className="w-4 h-4 text-indigo-600" />
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800">
+              Operations & Stock Quick Access
+            </h3>
+          </div>
+          <button
+            onClick={() => onNavigate('operations')}
+            className="text-xs text-indigo-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <span>Open All</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* 1. Stock Inventory */}
+          <button
+            onClick={() => onNavigate('stock')}
+            className="flex items-center justify-between p-3.5 rounded-lg border border-slate-200/80 bg-slate-50/70 hover:bg-indigo-50/60 hover:border-indigo-300 transition text-left group cursor-pointer"
+          >
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">
+                📦 Stock Inventory
+              </span>
+              <p className="text-xs font-bold text-slate-900">
+                {products.length} Clean • {cosProducts.length} Cos
+              </p>
+              <span className="text-[10px] text-slate-500">
+                {totalLowStock > 0 ? `${totalLowStock} items low` : 'All stocks healthy'}
+              </span>
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition" />
+          </button>
+
+          {/* 2. Purchases */}
+          <button
+            onClick={() => onNavigate('purchases')}
+            className="flex items-center justify-between p-3.5 rounded-lg border border-slate-200/80 bg-slate-50/70 hover:bg-emerald-50/60 hover:border-emerald-300 transition text-left group cursor-pointer"
+          >
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
+                🛒 Purchases
+              </span>
+              <p className="text-xs font-bold text-slate-900">
+                {purchases.length} Records
+              </p>
+              <span className="text-[10px] text-slate-500">
+                Today: {formatCurrency(todayPurchases)}
+              </span>
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition" />
+          </button>
+
+          {/* 3. Expenses History */}
+          <button
+            onClick={() => onNavigate('expenses')}
+            className="flex items-center justify-between p-3.5 rounded-lg border border-slate-200/80 bg-slate-50/70 hover:bg-rose-50/60 hover:border-rose-300 transition text-left group cursor-pointer"
+          >
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider block">
+                💸 Expense History
+              </span>
+              <p className="text-xs font-bold text-slate-900">
+                {expenses.length} Records
+              </p>
+              <span className="text-[10px] text-slate-500">
+                Today: {formatCurrency(todayExpenses)}
+              </span>
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition" />
+          </button>
         </div>
       </div>
 

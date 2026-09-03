@@ -391,7 +391,7 @@ export const Billing: React.FC<BillingProps> = ({
     if (!existingCust) {
       onAddCustomer({
         id: 'cust_' + Date.now(),
-        name: customerName.trim(),
+        name: customerName.trim().toUpperCase(),
         phone: customerPhone.trim(),
         createdAt: getTodayDateString(),
       });
@@ -401,7 +401,7 @@ export const Billing: React.FC<BillingProps> = ({
       id: editingSaleId || 'sale_' + Date.now(),
       billNo: nextBillNo,
       type: 'cleaning',
-      name: customerName.trim(),
+      name: customerName.trim().toUpperCase(),
       phone: customerPhone.trim(),
       saleType,
       paymentMode,
@@ -541,7 +541,7 @@ export const Billing: React.FC<BillingProps> = ({
                 type="text"
                 placeholder="e.g. John Doe / Care Supermarket"
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+                onChange={(e) => setCustomerName(e.target.value.toUpperCase())}
                 className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-md text-xs font-semibold focus:border-indigo-500 outline-none"
                 required
               />

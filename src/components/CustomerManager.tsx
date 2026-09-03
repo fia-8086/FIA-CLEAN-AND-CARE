@@ -70,13 +70,13 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
     if (editingCustomerId) {
       const existing = customers.find((c) => c.id === editingCustomerId);
       if (existing) {
-        onUpdateCustomer({ ...existing, name: name.trim(), phone: phone.trim() });
+        onUpdateCustomer({ ...existing, name: name.trim().toUpperCase(), phone: phone.trim() });
         setFormSuccessMessage(`Updated customer "${name.trim()}" successfully!`);
       }
     } else {
       onAddCustomer({
         id: 'cust_' + Date.now(),
-        name: name.trim(),
+        name: name.trim().toUpperCase(),
         phone: phone.trim(),
         createdAt: new Date().toISOString().split('T')[0],
       });
@@ -263,7 +263,7 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
                   type="text"
                   placeholder="e.g. Salim K. / Metro Supermarket"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value.toUpperCase())}
                   required
                   className="w-full border-2 border-slate-200 p-2.5 rounded-md text-xs font-semibold focus:border-indigo-500 outline-none"
                 />

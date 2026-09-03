@@ -25,6 +25,7 @@ import { Product, CosmeticProduct, PurchaseRecord, Supplier, ExpenseRecord, Stoc
 import { formatCurrency, formatDateDDMMYYYY, getTodayDateString } from '../utils/formatters';
 
 interface OperationsManagerProps {
+  initialSubTab?: 'stock' | 'purchases' | 'expenses';
   products: Product[];
   cosProducts: CosmeticProduct[];
   purchases: PurchaseRecord[];
@@ -66,8 +67,15 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
   onSaveExpense,
   onDeleteExpense,
   onSaveStockReturn,
+  initialSubTab = 'stock',
 }) => {
-  const [mainTab, setMainTab] = useState<'stock' | 'purchases' | 'expenses'>('stock');
+  const [mainTab, setMainTab] = useState<'stock' | 'purchases' | 'expenses'>(initialSubTab);
+
+  React.useEffect(() => {
+    if (initialSubTab) {
+      setMainTab(initialSubTab);
+    }
+  }, [initialSubTab]);
   const [stockCategory, setStockCategory] = useState<'cleaning' | 'cosmetics'>('cleaning');
   const [stockActionTab, setStockActionTab] = useState<'add' | 'view' | 'return' | 'consolidated'>('add');
   const [purchaseCategory, setPurchaseCategory] = useState<'cleaning' | 'cosmetics'>('cleaning');
@@ -728,33 +736,33 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
       {/* ================= SECTION 1: STOCK MANAGEMENT ================= */}
       {mainTab === 'stock' && (
         <div className="space-y-6">
-          {/* Cleaning vs Cosmetics Sub tabs */}
-          <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
-            <div className="flex gap-2">
+          {/* Cleaning vs Cosmetics Sub tabs & Actions Header (Mobile Responsive) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setStockCategory('cleaning')}
-                className={`px-4 py-2 rounded text-xs font-bold transition ${
+                className={`px-3 py-2 sm:px-4 sm:py-2 rounded text-xs font-bold transition text-center cursor-pointer ${
                   stockCategory === 'cleaning'
                     ? 'bg-indigo-600 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                🧹 Cleaning Stock ({products.length})
+                🧹 Cleaning ({products.length})
               </button>
               <button
                 onClick={() => setStockCategory('cosmetics')}
-                className={`px-4 py-2 rounded text-xs font-bold transition ${
+                className={`px-3 py-2 sm:px-4 sm:py-2 rounded text-xs font-bold transition text-center cursor-pointer ${
                   stockCategory === 'cosmetics'
                     ? 'bg-pink-600 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                💄 Cosmetics Stock ({cosProducts.length})
+                💄 Cosmetics ({cosProducts.length})
               </button>
             </div>
 
-            {/* Stock Action Sub-Tabs */}
-            <div className="flex gap-1">
+            {/* Stock Action Sub-Tabs - Scrollable & Never Cut Off on Mobile */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none w-full sm:w-auto">
               {[
                 { id: 'add', label: '➕ Add Stock' },
                 { id: 'view', label: '👁️ View List' },
@@ -764,10 +772,10 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setStockActionTab(tab.id as any)}
-                  className={`px-3 py-1.5 rounded text-xs font-semibold transition ${
+                  className={`px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap shrink-0 transition cursor-pointer ${
                     stockActionTab === tab.id
-                      ? 'bg-slate-900 text-white font-bold'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-slate-900 text-white font-bold shadow-xs'
+                      : 'text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200/60'
                   }`}
                 >
                   {tab.label}
@@ -799,7 +807,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                         type="text"
                         placeholder="e.g. Dish Wash Concentrate"
                         value={cleanName}
-                        onChange={(e) => setCleanName(e.target.value)}
+                        onChange={(e) => setCleanName(e.target.value.toUpperCase())}
                         required
                         className="w-full border-2 border-slate-200 p-2.5 rounded-md text-xs font-semibold focus:border-indigo-500 outline-none"
                       />
@@ -892,7 +900,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                         type="text"
                         placeholder="e.g. Herbal Hair Oil 200ml"
                         value={cosName}
-                        onChange={(e) => setCosName(e.target.value)}
+                        onChange={(e) => setCosName(e.target.value.toUpperCase())}
                         required
                         className="w-full border-2 border-slate-200 p-2.5 rounded-md text-xs font-semibold focus:border-pink-500 outline-none"
                       />
@@ -1318,7 +1326,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                       type="text"
                       placeholder="Optional reason..."
                       value={retReason}
-                      onChange={(e) => setRetReason(e.target.value)}
+                      onChange={(e) => setRetReason(e.target.value.toUpperCase())}
                       className="w-full border-2 border-slate-200 p-2.5 rounded-md text-xs focus:border-indigo-500 outline-none"
                     />
                   </div>
@@ -1507,8 +1515,8 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
               </button>
             </div>
 
-            {/* Purchase Action Sub-Tabs (Add, View List, Returns) */}
-            <div className="flex gap-1">
+            {/* Purchase Action Sub-Tabs (Add, View List, Returns) - Responsive */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none w-full sm:w-auto">
               {[
                 { id: 'add', label: editingPurchaseId ? '✏️ Edit Purchase' : '➕ Add Purchase' },
                 { id: 'view', label: '👁️ View List' },
@@ -1518,10 +1526,10 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                   key={tab.id}
                   type="button"
                   onClick={() => setPurchaseActionTab(tab.id as any)}
-                  className={`px-3 py-1.5 rounded text-xs font-semibold transition cursor-pointer ${
+                  className={`px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap shrink-0 transition cursor-pointer ${
                     purchaseActionTab === tab.id
-                      ? 'bg-slate-900 text-white font-bold'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-slate-900 text-white font-bold shadow-xs'
+                      : 'text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200/60'
                   }`}
                 >
                   {tab.label}
@@ -1604,7 +1612,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                         type="text"
                         placeholder="Supplier Name / Company"
                         value={purchSupplierName}
-                        onChange={(e) => setPurchSupplierName(e.target.value)}
+                        onChange={(e) => setPurchSupplierName(e.target.value.toUpperCase())}
                         required
                         className="w-full border-2 border-slate-200 p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
                       />
@@ -1659,7 +1667,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                         type="text"
                         placeholder="e.g. Caustic Soda Flakes, Fragrance Oil, Liquid Base"
                         value={purchItemName}
-                        onChange={(e) => setPurchItemName(e.target.value)}
+                        onChange={(e) => setPurchItemName(e.target.value.toUpperCase())}
                         required={!purchStockId}
                         className="w-full border-2 border-slate-200 p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
                       />
@@ -2246,7 +2254,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                   type="text"
                   placeholder="e.g. Shop Rent, Electricity, Freight"
                   value={expTitle}
-                  onChange={(e) => setExpTitle(e.target.value)}
+                  onChange={(e) => setExpTitle(e.target.value.toUpperCase())}
                   required
                   className="w-full border-2 border-slate-200 p-2.5 rounded-md text-xs font-semibold focus:border-rose-500 outline-none"
                 />

@@ -441,7 +441,13 @@ export const BillInvoiceModal: React.FC<BillInvoiceModalProps> = ({ sale, onClos
 
   const handleShareWhatsApp = () => {
     const text = createWhatsAppBillMessage(sale);
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    const rawPhone = (sale.phone || '').replace(/\D/g, '');
+    let url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    if (rawPhone.length >= 10) {
+      const fullPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+      url = `https://wa.me/${fullPhone}?text=${encodeURIComponent(text)}`;
+    }
+    window.open(url, '_blank');
   };
 
   return (
