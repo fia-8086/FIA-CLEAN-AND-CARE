@@ -90,3 +90,23 @@ export async function syncToCloud(payload: CloudPayload): Promise<boolean> {
     return false;
   }
 }
+
+export async function saveDailySnapshot(payload: CloudPayload): Promise<boolean> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const snapRef = ref(db, `fia_daily_backups/${today}`);
+    await set(snapRef, {
+      ...payload,
+      _meta: {
+        updatedAt: Date.now(),
+        snapshotDate: today,
+        clientId: myClientId,
+      }
+    });
+    console.log('[Firebase] Daily snapshot archived for ' + today);
+    return true;
+  } catch (err) {
+    console.warn('Failed to save daily snapshot to Firebase:', err);
+    return false;
+  }
+}

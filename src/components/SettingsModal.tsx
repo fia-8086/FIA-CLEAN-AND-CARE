@@ -8,9 +8,6 @@ import {
   AlertCircle,
   Trash2,
   AlertTriangle,
-  Eye,
-  EyeOff,
-  KeyRound,
   ShieldCheck,
 } from 'lucide-react';
 import { exportJSONBackup } from '../utils/formatters';
@@ -21,8 +18,6 @@ interface SettingsModalProps {
   onClose: () => void;
   onRestoreBackup: (data: any) => void;
   onClearAllData?: () => void;
-  appPin?: string;
-  onUpdatePin?: (newPin: string) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -31,18 +26,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   onRestoreBackup,
   onClearAllData,
-  appPin,
-  onUpdatePin,
 }) => {
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [newPinInput, setNewPinInput] = useState('');
-  const [showPinInput, setShowPinInput] = useState(false);
-  const [showCurrentPin, setShowCurrentPin] = useState(false);
-  const [showNewPin, setShowNewPin] = useState(false);
 
   if (!isOpen) return null;
 
@@ -121,10 +110,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded-md transition"
+            className="text-slate-400 hover:text-slate-700 p-1 rounded-md transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Automatic Backup Status Card */}
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2.5">
+          <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+          <div className="text-xs">
+            <p className="font-bold text-emerald-900">Automatic Backup Active</p>
+            <p className="text-[11px] text-emerald-700">
+              Daily cloud snapshots & auto-downloads are enabled.
+            </p>
+          </div>
         </div>
 
         {/* Status Message Notification */}
@@ -184,102 +184,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               Restore previously downloaded JSON backup file
             </p>
           </div>
-
-          {/* Security PIN / Password Settings */}
-          {onUpdatePin && (
-            <div className="pt-3 border-t border-slate-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>System Lock Password / PIN</span>
-                  </h4>
-                  <p className="text-[11px] text-slate-500">
-                    Active password required when unlocking after logout
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPinInput(!showPinInput);
-                    setNewPinInput('');
-                  }}
-                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline"
-                >
-                  {showPinInput ? 'Cancel' : 'Change Password'}
-                </button>
-              </div>
-
-              {/* Current Active Password display */}
-              <div className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 text-xs">
-                <span className="text-[11px] text-slate-600 font-medium">Currently Active Password:</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-slate-900 tracking-wider">
-                    {showCurrentPin ? (appPin || 'None') : '••••••••'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPin(!showCurrentPin)}
-                    className="text-slate-500 hover:text-slate-800 p-0.5"
-                    title={showCurrentPin ? 'Hide Password' : 'Show Password'}
-                  >
-                    {showCurrentPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              {showPinInput && (
-                <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-200 space-y-2.5">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-700">
-                      Enter New System Password / PIN:
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showNewPin ? 'text' : 'password'}
-                        placeholder="Enter new password"
-                        value={newPinInput}
-                        onChange={(e) => setNewPinInput(e.target.value)}
-                        className="w-full bg-white border border-slate-300 p-2 pr-9 rounded text-xs font-mono font-bold tracking-wider outline-none focus:border-indigo-600"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPin(!showNewPin)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                      >
-                        {showNewPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const trimmed = newPinInput.trim();
-                      if (trimmed.length < 2) {
-                        setStatusMessage({
-                          type: 'error',
-                          text: 'Password must be at least 2 characters.',
-                        });
-                        return;
-                      }
-                      onUpdatePin(trimmed);
-                      setShowPinInput(false);
-                      setNewPinInput('');
-                      setStatusMessage({
-                        type: 'success',
-                        text: `Active password updated to "${trimmed}"! Use this for future sign-in/unlock.`,
-                      });
-                      setTimeout(() => setStatusMessage(null), 3500);
-                    }}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Save & Update Active Password</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Reset / Clear Data to Empty FIA Slate */}
           {onClearAllData && (

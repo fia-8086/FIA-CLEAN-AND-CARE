@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { subscribeToCloud, syncToCloud, CloudPayload } from './firebase';
+import { subscribeToCloud, syncToCloud, saveDailySnapshot, CloudPayload } from './firebase';
 import { Header } from './components/Header';
 import { Navbar, TabType } from './components/Navbar';
 import { Dashboard } from './components/Dashboard';
@@ -667,6 +667,38 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+
+  // Automatic Daily Cloud Backup & Local Snapshot
+  useEffect(() => {
+    if (!isUnlocked) return;
+    const today = getTodayDateString();
+    const lastBackupDate = localStorage.getItem('fia_last_auto_backup_date');
+
+    if (lastBackupDate !== today && (products.length > 0 || sales.length > 0)) {
+      const payload: CloudPayload = {
+        products,
+        cosProducts,
+        customers,
+        suppliers,
+        sales,
+        purchases,
+        expenses,
+        stockReturns,
+        clearedDayBookIds,
+        appPin,
+      };
+
+      // 1. Archive daily snapshot in Firebase cloud
+      saveDailySnapshot(payload);
+
+      // 2. Automatically download daily offline JSON backup file
+      handleDownloadBackup();
+
+      localStorage.setItem('fia_last_auto_backup_date', today);
+      console.log('[AutoBackup] Daily automated snapshot & backup downloaded for ' + today);
+    }
+  }, [isUnlocked, products.length, sales.length]);
+
   const handleNavigateTab = (tab: any) => {
     if (tab === 'billing') {
       setActiveTab('invoicing');
@@ -712,9 +744,7 @@ export default function App() {
     return (
       <PinModal
         isOpen={true}
-        appPin={appPin}
         onSuccess={() => setIsUnlocked(true)}
-        onUpdatePin={handleUpdatePin}
       />
     );
   }
