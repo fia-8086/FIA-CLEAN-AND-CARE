@@ -13,6 +13,7 @@ import { CustomerManager } from './components/CustomerManager';
 import { OperationsManager } from './components/OperationsManager';
 import { DayBook } from './components/DayBook';
 import { BillInvoiceModal } from './components/BillInvoiceModal';
+import { getTodayDateString } from './utils/formatters';
 import { PinModal } from './components/PinModal';
 import { SettingsModal } from './components/SettingsModal';
 import {
@@ -671,31 +672,31 @@ export default function App() {
   // Automatic Daily Cloud Backup & Local Snapshot
   useEffect(() => {
     if (!isUnlocked) return;
-    const today = getTodayDateString();
-    const lastBackupDate = localStorage.getItem('fia_last_auto_backup_date');
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const lastBackupDate = localStorage.getItem('fia_last_auto_backup_date');
 
-    if (lastBackupDate !== today && (products.length > 0 || sales.length > 0)) {
-      const payload: CloudPayload = {
-        products,
-        cosProducts,
-        customers,
-        suppliers,
-        sales,
-        purchases,
-        expenses,
-        stockReturns,
-        clearedDayBookIds,
-        appPin,
-      };
+      if (lastBackupDate !== today && (products.length > 0 || sales.length > 0)) {
+        const payload: CloudPayload = {
+          products,
+          cosProducts,
+          customers,
+          suppliers,
+          sales,
+          purchases,
+          expenses,
+          stockReturns,
+          clearedDayBookIds,
+          appPin,
+        };
 
-      // 1. Archive daily snapshot in Firebase cloud
-      saveDailySnapshot(payload);
-
-      // 2. Automatically download daily offline JSON backup file
-      handleDownloadBackup();
-
-      localStorage.setItem('fia_last_auto_backup_date', today);
-      console.log('[AutoBackup] Daily automated snapshot & backup downloaded for ' + today);
+        saveDailySnapshot(payload);
+        handleDownloadBackup();
+        localStorage.setItem('fia_last_auto_backup_date', today);
+        console.log('[AutoBackup] Daily automated snapshot & backup downloaded for ' + today);
+      }
+    } catch (err) {
+      console.warn('[AutoBackup] Background daily backup skipped:', err);
     }
   }, [isUnlocked, products.length, sales.length]);
 
