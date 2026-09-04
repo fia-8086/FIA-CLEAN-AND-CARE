@@ -47,6 +47,7 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
   const [departmentFilter, setDepartmentFilter] = useState<'all' | 'cleaning' | 'cosmetics'>('all');
   const [saleTypeFilter, setSaleTypeFilter] = useState<'all' | 'Retail' | 'Wholesale'>('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'paid' | 'pending' | 'excess'>('all');
+  const [paymentModeFilter, setPaymentModeFilter] = useState<'all' | 'Cash' | 'Online'>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -94,6 +95,10 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
         if (paymentStatusFilter === 'paid' && sale.pendingAmount > 0) return false;
         if (paymentStatusFilter === 'excess' && (sale.excessAmount || 0) <= 0) return false;
 
+        // Payment Mode Filter (Cash / Online)
+        if (paymentModeFilter === 'Cash' && (sale.paymentMode || 'Cash') !== 'Cash') return false;
+        if (paymentModeFilter === 'Online' && sale.paymentMode !== 'Online') return false;
+
         // Date Range Filter
         if (startDate && sale.date < startDate) return false;
         if (endDate && sale.date > endDate) return false;
@@ -122,6 +127,7 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
     departmentFilter,
     saleTypeFilter,
     paymentStatusFilter,
+    paymentModeFilter,
     startDate,
     endDate,
     searchQuery,
@@ -131,6 +137,12 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
   // Aggregate Stats
   const totalAmount = filteredSales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
   const totalPaid = filteredSales.reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+  const totalCashPaid = filteredSales
+    .filter((s) => (s.paymentMode || 'Cash') === 'Cash')
+    .reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+  const totalOnlinePaid = filteredSales
+    .filter((s) => s.paymentMode === 'Online')
+    .reduce((sum, s) => sum + (s.paidAmount || 0), 0);
   const totalPending = filteredSales.reduce((sum, s) => sum + (s.pendingAmount || 0), 0);
   const cleaningCount = filteredSales.filter((s) => s.type === 'cleaning').length;
   const cosmeticsCount = filteredSales.filter((s) => s.type === 'cosmetics').length;
@@ -275,7 +287,7 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Collected Amount
+              Total Collected
             </span>
             <span className="p-2 rounded bg-emerald-50 text-emerald-600">
               <CheckCircle2 className="w-4 h-4" />
@@ -285,7 +297,11 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
             <div className="text-2xl font-black font-mono text-emerald-600">
               {formatCurrency(totalPaid)}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Paid via Cash & UPI</p>
+            <div className="text-[11px] text-slate-600 mt-1 flex items-center gap-1.5 font-mono font-bold">
+              <span className="text-emerald-700">💵 {formatCurrency(totalCashPaid)}</span>
+              <span>•</span>
+              <span className="text-sky-700">🌐 {formatCurrency(totalOnlinePaid)}</span>
+            </div>
           </div>
         </div>
 
@@ -303,6 +319,57 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
               {formatCurrency(totalPending)}
             </div>
             <p className="text-[11px] text-slate-500 mt-1">Outstanding customer balance</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Collection Breakdown (Cash in Hand vs Online / UPI) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-emerald-50/90 border-2 border-emerald-300 p-4 rounded-xl flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xl font-bold shrink-0 shadow-xs">
+              💵
+            </div>
+            <div>
+              <div className="text-xs font-black uppercase tracking-wider text-emerald-950">
+                ബൈ ഹാൻഡ് ക്യാഷ് (Cash in Hand)
+              </div>
+              <div className="text-[11px] text-emerald-700 font-medium">
+                നേരിട്ട് പണമായി ലഭിച്ചത് ({filteredSales.filter((s) => (s.paymentMode || 'Cash') === 'Cash' && s.paidAmount > 0).length} bills)
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-black font-mono text-emerald-800">
+              {formatCurrency(totalCashPaid)}
+            </div>
+            <div className="text-[10px] text-emerald-600 font-bold uppercase">
+              Cash Inflow
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-sky-50/90 border-2 border-sky-300 p-4 rounded-xl flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-lg bg-sky-600 text-white flex items-center justify-center text-xl font-bold shrink-0 shadow-xs">
+              🌐
+            </div>
+            <div>
+              <div className="text-xs font-black uppercase tracking-wider text-sky-950">
+                ഓൺലൈൻ / യുപിഐ (Online / UPI)
+              </div>
+              <div className="text-[11px] text-sky-700 font-medium">
+                GPay / ബാങ്ക് വഴി ലഭിച്ചത് ({filteredSales.filter((s) => s.paymentMode === 'Online' && s.paidAmount > 0).length} bills)
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-black font-mono text-sky-800">
+              {formatCurrency(totalOnlinePaid)}
+            </div>
+            <div className="text-[10px] text-sky-600 font-bold uppercase">
+              Bank / UPI Inflow
+            </div>
           </div>
         </div>
       </div>
@@ -364,7 +431,7 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
         </div>
 
         {/* Filter Dropdowns */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t border-slate-100">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 pt-3 border-t border-slate-100">
           <div>
             <label className="block text-[11px] font-bold text-slate-600 mb-1">Department</label>
             <select
@@ -388,6 +455,19 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
               <option value="all">All Tiers (Retail & Wholesale)</option>
               <option value="Retail">Retail</option>
               <option value="Wholesale">Wholesale</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-slate-600 mb-1">Payment Mode</label>
+            <select
+              value={paymentModeFilter}
+              onChange={(e) => setPaymentModeFilter(e.target.value as any)}
+              className="w-full bg-slate-50 border border-slate-200 rounded p-2 text-xs font-medium outline-none focus:border-indigo-500"
+            >
+              <option value="all">All Modes (Cash & Online)</option>
+              <option value="Cash">💵 Cash Only (ബൈ ഹാൻഡ്)</option>
+              <option value="Online">🌐 Online / UPI Only</option>
             </select>
           </div>
 
@@ -533,11 +613,21 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
                           .join(', ')}
                       </p>
                     </td>
-                    <td className="p-3 text-right font-mono font-bold text-slate-900 text-sm">
-                      {formatCurrency(sale.grandTotal)}
-                    </td>
-                    <td className="p-3 text-right font-mono font-semibold text-emerald-600">
-                      {formatCurrency(sale.paidAmount)}
+                    <td className="p-3 text-right">
+                      <div className="font-mono font-bold text-emerald-600">
+                        {formatCurrency(sale.paidAmount)}
+                      </div>
+                      <div className="mt-0.5">
+                        {sale.paymentMode === 'Online' ? (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 px-1.5 py-0.2 rounded font-mono">
+                            🌐 Online/UPI
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.2 rounded font-mono">
+                            💵 Cash
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3 text-right font-mono">
                       {sale.pendingAmount > 0 ? (
@@ -643,11 +733,22 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
                       {sale.items.map((i) => i.productName).join(', ')}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-slate-500">Payment:</span>
-                    <span className="font-mono font-medium text-slate-700">
-                      {sale.paymentMode} • Paid: {formatCurrency(sale.paidAmount)}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {sale.paymentMode === 'Online' ? (
+                        <span className="text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-300 px-1.5 py-0.5 rounded font-mono">
+                          🌐 Online
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 py-0.5 rounded font-mono">
+                          💵 Cash
+                        </span>
+                      )}
+                      <span className="font-mono font-bold text-slate-800">
+                        Paid: {formatCurrency(sale.paidAmount)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

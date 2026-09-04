@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { subscribeToCloud, syncToCloud, saveDailySnapshot, CloudPayload } from './firebase';
+import { subscribeToCloud, syncToCloud, forceSyncToCloud, saveDailySnapshot, CloudPayload } from './firebase';
 import { Header } from './components/Header';
 import { Navbar, TabType } from './components/Navbar';
 import { Dashboard } from './components/Dashboard';
@@ -169,15 +169,82 @@ export default function App() {
     return false;
   };
 
-  // Application Data States (Loaded clean from localStorage or initial seed)
+  // Automatic rolling backup vault: preserves snapshots across updates and sync events
+  const saveToRollingVault = (allData: any) => {
+    try {
+      const VAULT_KEY = 'fia_backup_vault_history';
+      const raw = localStorage.getItem(VAULT_KEY);
+      let history: any[] = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(history)) history = [];
+
+      const custCount = (allData.customers || []).length;
+      const prodCount = (allData.products || []).length + (allData.cosProducts || []).length;
+      const saleCount = (allData.sales || []).length;
+
+      if (custCount === 0 && prodCount === 0 && saleCount === 0) return;
+
+      const last = history[0];
+      if (
+        last &&
+        last.custCount === custCount &&
+        last.prodCount === prodCount &&
+        last.saleCount === saleCount &&
+        Date.now() - last.timestamp < 120000
+      ) {
+        return;
+      }
+
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateString = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+
+      const snapshot = {
+        id: 'vault_' + Date.now(),
+        timestamp: Date.now(),
+        displayLabel: `${dateString} at ${timeString}`,
+        custCount,
+        prodCount,
+        saleCount,
+        data: {
+          products: allData.products,
+          cosProducts: allData.cosProducts,
+          customers: allData.customers,
+          suppliers: allData.suppliers,
+          sales: allData.sales,
+          purchases: allData.purchases,
+          expenses: allData.expenses,
+          stockReturns: allData.stockReturns,
+          clearedDayBookIds: allData.clearedDayBookIds,
+          appPin: allData.appPin,
+        }
+      };
+
+      history.unshift(snapshot);
+      if (history.length > 20) {
+        history = history.slice(0, 20);
+      }
+      localStorage.setItem(VAULT_KEY, JSON.stringify(history));
+    } catch (err) {
+      console.warn('Vault auto-save error:', err);
+    }
+  };
+
+  // Application Data States (Loaded with Deep Legacy Migration & Fallback protection)
   const [products, setProducts] = useState<Product[]>(() => {
     try {
+      const map = new Map<string, Product>();
+      initialCleaningProducts.forEach(p => map.set(p.id, p));
+
       const saved = localStorage.getItem('fia_products');
       if (saved) {
         const parsed: Product[] = JSON.parse(saved);
-        return parsed.filter((p) => !isPreloadedCleaningProduct(p));
+        if (Array.isArray(parsed)) {
+          parsed.filter((p) => !isPreloadedCleaningProduct(p)).forEach(p => map.set(p.id, p));
+        }
       }
-      return initialCleaningProducts;
+      return Array.from(map.values()).sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      );
     } catch {
       return initialCleaningProducts;
     }
@@ -185,25 +252,110 @@ export default function App() {
 
   const [cosProducts, setCosProducts] = useState<CosmeticProduct[]>(() => {
     try {
+      const map = new Map<string, CosmeticProduct>();
+      initialCosmeticProducts.forEach(p => map.set(p.id, p));
+
       const saved = localStorage.getItem('fia_cosproducts');
       if (saved) {
         const parsed: CosmeticProduct[] = JSON.parse(saved);
-        return parsed.filter((p) => !isPreloadedCosmeticProduct(p));
+        if (Array.isArray(parsed)) {
+          parsed.filter((p) => !isPreloadedCosmeticProduct(p)).forEach(p => map.set(p.id, p));
+        }
       }
-      return initialCosmeticProducts;
+      return Array.from(map.values()).sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      );
     } catch {
       return initialCosmeticProducts;
     }
   });
 
+  // Load Customers with DEEP MIGRATION from fia_customers_profiles, legacy fia_customers, and backup vault
   const [customers, setCustomers] = useState<CustomerProfile[]>(() => {
     try {
+      const map = new Map<string, CustomerProfile>();
+
+      // 1. Initial baseline
+      initialCustomers.forEach((c) => {
+        if (!isPreloadedMockCustomer(c) && c && c.name) {
+          map.set(c.id, c);
+        }
+      });
+
+      // 2. Primary local storage key
       const saved = localStorage.getItem('fia_customers_profiles');
       if (saved) {
         const parsed: CustomerProfile[] = JSON.parse(saved);
-        return parsed.filter((c) => !isPreloadedMockCustomer(c));
+        if (Array.isArray(parsed)) {
+          parsed.forEach((c) => {
+            if (!isPreloadedMockCustomer(c) && c && c.name) {
+              const key = c.id || c.name.toLowerCase().trim();
+              map.set(key, c);
+            }
+          });
+        }
       }
-      return initialCustomers;
+
+      // 3. DEEP MIGRATION: Check legacy fia_customers (from standalone HTML app)
+      const legacyRaw = localStorage.getItem('fia_customers');
+      if (legacyRaw) {
+        try {
+          const legacy = JSON.parse(legacyRaw);
+          if (Array.isArray(legacy)) {
+            legacy.forEach((item: any, idx: number) => {
+              if (item && item.name && typeof item.name === 'string' && item.name.trim().length > 0) {
+                const normName = item.name.trim().toUpperCase();
+                const profile: CustomerProfile = {
+                  id: item.id || `cust_mig_${Date.now()}_${idx}`,
+                  name: normName,
+                  phone: (item.phone || '').trim(),
+                  createdAt: item.date || item.createdAt || new Date().toISOString().split('T')[0],
+                };
+                if (!isPreloadedMockCustomer(profile)) {
+                  const exists = Array.from(map.values()).some(
+                    (ex) => ex.name.toLowerCase().trim() === normName.toLowerCase()
+                  );
+                  if (!exists) {
+                    map.set(profile.id, profile);
+                  }
+                }
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('Legacy fia_customers migration error:', e);
+        }
+      }
+
+      // 4. DEEP MIGRATION: Check Rolling Vault for any historical customer profiles
+      const vaultRaw = localStorage.getItem('fia_backup_vault_history');
+      if (vaultRaw) {
+        try {
+          const vault = JSON.parse(vaultRaw);
+          if (Array.isArray(vault) && vault.length > 0) {
+            vault.forEach((snap: any) => {
+              const vaultCusts = snap?.data?.customers;
+              if (Array.isArray(vaultCusts)) {
+                vaultCusts.forEach((c: CustomerProfile) => {
+                  if (c && c.name && !isPreloadedMockCustomer(c)) {
+                    const normName = c.name.trim().toUpperCase();
+                    const exists = Array.from(map.values()).some(
+                      (ex) => ex.name.toLowerCase().trim() === normName.toLowerCase()
+                    );
+                    if (!exists) {
+                      map.set(c.id, { ...c, name: normName });
+                    }
+                  }
+                });
+              }
+            });
+          }
+        } catch {}
+      }
+
+      return Array.from(map.values()).sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      );
     } catch {
       return initialCustomers;
     }
@@ -211,12 +363,19 @@ export default function App() {
 
   const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
     try {
+      const map = new Map<string, Supplier>();
+      initialSuppliers.forEach(s => map.set(s.id, s));
+
       const saved = localStorage.getItem('fia_suppliers');
       if (saved) {
         const parsed: Supplier[] = JSON.parse(saved);
-        return parsed.filter((s) => !isPreloadedSupplier(s));
+        if (Array.isArray(parsed)) {
+          parsed.filter((s) => !isPreloadedSupplier(s)).forEach(s => map.set(s.id, s));
+        }
       }
-      return initialSuppliers;
+      return Array.from(map.values()).sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      );
     } catch {
       return initialSuppliers;
     }
@@ -224,12 +383,48 @@ export default function App() {
 
   const [sales, setSales] = useState<SaleRecord[]>(() => {
     try {
+      const map = new Map<string, SaleRecord>();
+      initialSales.forEach(s => map.set(s.id, s));
+
       const saved = localStorage.getItem('fia_sales_records');
       if (saved) {
         const parsed: SaleRecord[] = JSON.parse(saved);
-        return parsed.filter((s) => !isPreloadedSale(s));
+        if (Array.isArray(parsed)) {
+          parsed.filter((s) => !isPreloadedSale(s)).forEach(s => map.set(s.id, s));
+        }
       }
-      return initialSales;
+
+      // Check legacy fia_customers storage key for completed sales
+      const legacyCustomers = localStorage.getItem('fia_customers');
+      if (legacyCustomers) {
+        const legacy = JSON.parse(legacyCustomers);
+        if (Array.isArray(legacy) && legacy.length > 0) {
+          legacy
+            .filter((item: any) => item && Array.isArray(item.items) && item.items.length > 0)
+            .forEach((item: any, idx: number) => {
+              const id = item.id || `legacy_sale_${idx}`;
+              if (!map.has(id)) {
+                map.set(id, {
+                  id,
+                  billNo: item.billNo || `CLN-${String(idx + 1).padStart(4, '0')}`,
+                  type: 'cleaning' as const,
+                  name: item.name || 'Customer',
+                  phone: item.phone || '',
+                  saleType: item.saleType || 'Retail',
+                  paymentMode: item.paymentMode || 'Cash',
+                  items: item.items || [],
+                  grandTotal: Number(item.grandTotal || 0),
+                  paidAmount: Number(item.paidAmount !== undefined ? item.paidAmount : item.grandTotal || 0),
+                  pendingAmount: Number(item.pendingAmount || 0),
+                  excessAmount: Number(item.excessAmount || 0),
+                  date: item.date || new Date().toISOString().split('T')[0],
+                  createdAt: item.createdAt || Date.now()
+                });
+              }
+            });
+        }
+      }
+      return Array.from(map.values());
     } catch {
       return initialSales;
     }
@@ -237,12 +432,47 @@ export default function App() {
 
   const [purchases, setPurchases] = useState<PurchaseRecord[]>(() => {
     try {
+      const map = new Map<string, PurchaseRecord>();
+      initialPurchases.forEach(p => map.set(p.id, p));
+
       const saved = localStorage.getItem('fia_purchases_records');
       if (saved) {
         const parsed: PurchaseRecord[] = JSON.parse(saved);
-        return parsed.filter((p) => !isPreloadedPurchase(p));
+        if (Array.isArray(parsed)) {
+          parsed.filter((p) => !isPreloadedPurchase(p)).forEach(p => map.set(p.id, p));
+        }
       }
-      return initialPurchases;
+
+      // Deep migration: legacy fia_purchases key
+      const legacyPurchases = localStorage.getItem('fia_purchases');
+      if (legacyPurchases) {
+        const legacy = JSON.parse(legacyPurchases);
+        if (Array.isArray(legacy)) {
+          legacy.forEach((item: any, idx: number) => {
+            const id = item.id || `legacy_purch_${idx}`;
+            if (!map.has(id)) {
+              map.set(id, {
+                id,
+                supplierName: item.supplierName || item.supplier || 'Supplier',
+                supplierMobile: item.supplierMobile || '',
+                type: item.type || 'cleaning',
+                stockId: item.stockId || '',
+                rawMaterial: item.rawMaterial || item.item || 'Item',
+                rawBarcode: item.rawBarcode || '',
+                rawQty: Number(item.rawQty || item.qty || 0),
+                rawUnit: item.rawUnit || item.unit || 'Ltr',
+                rawUnitPrice: Number(item.rawUnitPrice || 0),
+                rawCost: Number(item.rawCost || item.totalCost || item.amount || 0),
+                paid: Number(item.paid || 0),
+                balance: Number(item.balance || 0),
+                date: item.date || new Date().toISOString().split('T')[0],
+              });
+            }
+          });
+        }
+      }
+
+      return Array.from(map.values());
     } catch {
       return initialPurchases;
     }
@@ -250,12 +480,39 @@ export default function App() {
 
   const [expenses, setExpenses] = useState<ExpenseRecord[]>(() => {
     try {
+      const map = new Map<string, ExpenseRecord>();
+      initialExpenses.forEach(e => map.set(e.id, e));
+
       const saved = localStorage.getItem('fia_expenses_records');
       if (saved) {
         const parsed: ExpenseRecord[] = JSON.parse(saved);
-        return parsed.filter((e) => !isPreloadedExpense(e));
+        if (Array.isArray(parsed)) {
+          parsed.filter((e) => !isPreloadedExpense(e)).forEach(e => map.set(e.id, e));
+        }
       }
-      return initialExpenses;
+
+      // Deep migration: legacy fia_expenses key
+      const legacyExpenses = localStorage.getItem('fia_expenses');
+      if (legacyExpenses) {
+        const legacy = JSON.parse(legacyExpenses);
+        if (Array.isArray(legacy)) {
+          legacy.forEach((item: any, idx: number) => {
+            const id = item.id || `legacy_exp_${idx}`;
+            if (!map.has(id)) {
+              map.set(id, {
+                id,
+                title: item.title || item.category || 'Expense',
+                amount: Number(item.amount || 0),
+                category: item.category || 'Shop Expense',
+                date: item.date || new Date().toISOString().split('T')[0],
+                notes: item.notes || '',
+              });
+            }
+          });
+        }
+      }
+
+      return Array.from(map.values());
     } catch {
       return initialExpenses;
     }
@@ -288,38 +545,114 @@ export default function App() {
     message: 'Connecting to Cloud...',
   });
 
-  // 1. Subscribe to Firebase Realtime Database for live multi-device sync
+  // 1. Subscribe to Firebase Realtime Database with NON-DESTRUCTIVE UNION MERGE
   useEffect(() => {
     const unsubscribe = subscribeToCloud(
       (cloudData) => {
         isRemoteUpdateRef.current = true;
 
-        if (Array.isArray(cloudData.products)) {
-          setProducts(cloudData.products.filter((p) => !isPreloadedCleaningProduct(p)));
+        if (Array.isArray(cloudData.products) && cloudData.products.length > 0) {
+          setProducts((prev) => {
+            const map = new Map<string, Product>();
+            prev.forEach((p) => map.set(p.id, p));
+            cloudData.products!
+              .filter((p) => !isPreloadedCleaningProduct(p))
+              .forEach((p) => map.set(p.id, p));
+            return Array.from(map.values()).sort((a, b) =>
+              (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+            );
+          });
         }
-        if (Array.isArray(cloudData.cosProducts)) {
-          setCosProducts(cloudData.cosProducts.filter((p) => !isPreloadedCosmeticProduct(p)));
+        if (Array.isArray(cloudData.cosProducts) && cloudData.cosProducts.length > 0) {
+          setCosProducts((prev) => {
+            const map = new Map<string, CosmeticProduct>();
+            prev.forEach((p) => map.set(p.id, p));
+            cloudData.cosProducts!
+              .filter((p) => !isPreloadedCosmeticProduct(p))
+              .forEach((p) => map.set(p.id, p));
+            return Array.from(map.values()).sort((a, b) =>
+              (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+            );
+          });
         }
-        if (Array.isArray(cloudData.customers)) {
-          setCustomers(cloudData.customers.filter((c) => !isPreloadedMockCustomer(c)));
+        if (Array.isArray(cloudData.customers) && cloudData.customers.length > 0) {
+          setCustomers((prev) => {
+            const map = new Map<string, CustomerProfile>();
+            prev.forEach((c) => {
+              if (c && c.name && !isPreloadedMockCustomer(c)) {
+                map.set(c.id, c);
+              }
+            });
+            cloudData.customers!.forEach((c) => {
+              if (c && c.name && !isPreloadedMockCustomer(c)) {
+                const norm = c.name.trim().toUpperCase();
+                const existingId = Array.from(map.values()).find(
+                  (ex) => ex.name.toLowerCase().trim() === norm.toLowerCase()
+                )?.id;
+                if (existingId) {
+                  map.set(existingId, { ...map.get(existingId)!, phone: c.phone || map.get(existingId)!.phone });
+                } else {
+                  map.set(c.id, { ...c, name: norm });
+                }
+              }
+            });
+            return Array.from(map.values()).sort((a, b) =>
+              (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+            );
+          });
         }
-        if (Array.isArray(cloudData.suppliers)) {
-          setSuppliers(cloudData.suppliers.filter((s) => !isPreloadedSupplier(s)));
+        if (Array.isArray(cloudData.suppliers) && cloudData.suppliers.length > 0) {
+          setSuppliers((prev) => {
+            const map = new Map<string, Supplier>();
+            prev.forEach((s) => map.set(s.id, s));
+            cloudData.suppliers!
+              .filter((s) => !isPreloadedSupplier(s))
+              .forEach((s) => map.set(s.id, s));
+            return Array.from(map.values()).sort((a, b) =>
+              (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+            );
+          });
         }
-        if (Array.isArray(cloudData.sales)) {
-          setSales(cloudData.sales.filter((s) => !isPreloadedSale(s)));
+        if (Array.isArray(cloudData.sales) && cloudData.sales.length > 0) {
+          setSales((prev) => {
+            const map = new Map<string, SaleRecord>();
+            prev.forEach((s) => map.set(s.id, s));
+            cloudData.sales!
+              .filter((s) => !isPreloadedSale(s))
+              .forEach((s) => map.set(s.id, s));
+            return Array.from(map.values());
+          });
         }
-        if (Array.isArray(cloudData.purchases)) {
-          setPurchases(cloudData.purchases.filter((p) => !isPreloadedPurchase(p)));
+        if (Array.isArray(cloudData.purchases) && cloudData.purchases.length > 0) {
+          setPurchases((prev) => {
+            const map = new Map<string, PurchaseRecord>();
+            prev.forEach((p) => map.set(p.id, p));
+            cloudData.purchases!
+              .filter((p) => !isPreloadedPurchase(p))
+              .forEach((p) => map.set(p.id, p));
+            return Array.from(map.values());
+          });
         }
-        if (Array.isArray(cloudData.expenses)) {
-          setExpenses(cloudData.expenses.filter((e) => !isPreloadedExpense(e)));
+        if (Array.isArray(cloudData.expenses) && cloudData.expenses.length > 0) {
+          setExpenses((prev) => {
+            const map = new Map<string, ExpenseRecord>();
+            prev.forEach((e) => map.set(e.id, e));
+            cloudData.expenses!
+              .filter((e) => !isPreloadedExpense(e))
+              .forEach((e) => map.set(e.id, e));
+            return Array.from(map.values());
+          });
         }
-        if (Array.isArray(cloudData.stockReturns)) {
-          setStockReturns(cloudData.stockReturns);
+        if (Array.isArray(cloudData.stockReturns) && cloudData.stockReturns.length > 0) {
+          setStockReturns((prev) => {
+            const map = new Map<string, StockReturnRecord>();
+            prev.forEach((r) => map.set(r.id, r));
+            cloudData.stockReturns!.forEach((r) => map.set(r.id, r));
+            return Array.from(map.values());
+          });
         }
-        if (Array.isArray(cloudData.clearedDayBookIds)) {
-          setClearedDayBookIds(cloudData.clearedDayBookIds);
+        if (Array.isArray(cloudData.clearedDayBookIds) && cloudData.clearedDayBookIds.length > 0) {
+          setClearedDayBookIds((prev) => Array.from(new Set([...prev, ...cloudData.clearedDayBookIds!])));
         }
         if (cloudData.appPin) {
           setAppPin(cloudData.appPin);
@@ -384,7 +717,7 @@ export default function App() {
       } else {
         setSyncStatus({ connected: false, message: 'Offline Mode' });
       }
-    }, 400);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [
@@ -402,10 +735,14 @@ export default function App() {
 
   // Handlers for Products
   const handleSaveProduct = (newProd: Product) => {
-    setProducts((prev) => [...prev, newProd]);
+    setProducts((prev) =>
+      [...prev, newProd].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+    );
   };
   const handleUpdateProduct = (updated: Product) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    setProducts((prev) =>
+      prev.map((p) => (p.id === updated.id ? updated : p)).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+    );
   };
   const handleDeleteProduct = (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -413,10 +750,14 @@ export default function App() {
 
   // Handlers for Cosmetics
   const handleSaveCosProduct = (newProd: CosmeticProduct) => {
-    setCosProducts((prev) => [...prev, newProd]);
+    setCosProducts((prev) =>
+      [...prev, newProd].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+    );
   };
   const handleUpdateCosProduct = (updated: CosmeticProduct) => {
-    setCosProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    setCosProducts((prev) =>
+      prev.map((p) => (p.id === updated.id ? updated : p)).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+    );
   };
   const handleDeleteCosProduct = (id: string) => {
     setCosProducts((prev) => prev.filter((p) => p.id !== id));
@@ -424,10 +765,37 @@ export default function App() {
 
   // Handlers for Customers
   const handleAddCustomer = (c: CustomerProfile) => {
-    setCustomers((prev) => [...prev, c]);
+    setCustomers((prev) =>
+      [...prev, c].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+    );
   };
   const handleUpdateCustomer = (updated: CustomerProfile) => {
-    setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setCustomers((prev) =>
+      prev.map((c) => (c.id === updated.id ? updated : c)).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+    );
+  };
+  const handleBatchAddCustomers = (newCusts: CustomerProfile[]) => {
+    setCustomers((prev) => {
+      const map = new Map<string, CustomerProfile>();
+      prev.forEach((c) => {
+        if (c && c.name) map.set(c.id, c);
+      });
+      newCusts.forEach((c) => {
+        if (!c || !c.name) return;
+        const norm = c.name.trim().toUpperCase();
+        const existing = Array.from(map.values()).find(
+          (ex) => ex.name.toLowerCase().trim() === norm.toLowerCase()
+        );
+        if (existing) {
+          map.set(existing.id, { ...existing, phone: c.phone || existing.phone });
+        } else {
+          map.set(c.id, { ...c, name: norm });
+        }
+      });
+      return Array.from(map.values()).sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      );
+    });
   };
   const handleDeleteCustomer = (id: string) => {
     setCustomers((prev) => prev.filter((c) => c.id !== id));
@@ -558,7 +926,9 @@ export default function App() {
     setPurchases((prev) => prev.filter((p) => p.id !== id));
   };
   const handleAddSupplier = (s: Supplier) => {
-    setSuppliers((prev) => [...prev, s]);
+    setSuppliers((prev) =>
+      [...prev, s].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+    );
   };
 
   const handleSaveExpense = (e: ExpenseRecord) => {
@@ -609,6 +979,13 @@ export default function App() {
       } catch (e) {
         console.warn('Failed to save PIN in localStorage', e);
       }
+    }
+    // Propagate restored data to Cloud and Local Vault immediately
+    try {
+      forceSyncToCloud(data);
+      saveToRollingVault(data);
+    } catch (e) {
+      console.warn('Failed to sync restored backup:', e);
     }
   };
 
@@ -792,6 +1169,7 @@ export default function App() {
             customers={customers}
             sales={sales}
             onAddCustomer={handleAddCustomer}
+            onBatchAddCustomers={handleBatchAddCustomers}
             onUpdateCustomer={handleUpdateCustomer}
             onDeleteCustomer={handleDeleteCustomer}
             onClearAllCustomers={handleClearAllCustomers}

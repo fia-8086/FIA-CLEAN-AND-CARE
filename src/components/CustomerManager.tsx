@@ -12,6 +12,12 @@ import {
   Check,
   UserCheck,
   Building,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  CheckCircle2,
+  ClipboardList,
 } from 'lucide-react';
 import { CustomerProfile, SaleRecord } from '../types';
 import { formatCurrency, formatDateDDMMYYYY } from '../utils/formatters';
@@ -20,6 +26,7 @@ interface CustomerManagerProps {
   customers: CustomerProfile[];
   sales: SaleRecord[];
   onAddCustomer: (customer: CustomerProfile) => void;
+  onBatchAddCustomers?: (customers: CustomerProfile[]) => void;
   onUpdateCustomer: (customer: CustomerProfile) => void;
   onDeleteCustomer: (customerId: string) => void;
   onClearAllCustomers?: () => void;
@@ -30,6 +37,7 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
   customers,
   sales,
   onAddCustomer,
+  onBatchAddCustomers,
   onUpdateCustomer,
   onDeleteCustomer,
   onClearAllCustomers,
@@ -47,6 +55,164 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
   // In-app Delete Confirmation Modal (Bypasses browser window.confirm iframe blocks)
   const [customerToDelete, setCustomerToDelete] = useState<CustomerProfile | null>(null);
   const [isConfirmingClearAll, setIsConfirmingClearAll] = useState(false);
+
+  // Bulk Import States
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importMode, setImportMode] = useState<'file' | 'text'>('file');
+  const [pastedText, setPastedText] = useState('');
+  const [parsedPreview, setParsedPreview] = useState<CustomerProfile[]>([]);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+
+  // Parse VCF contacts file (.vcf format)
+  const parseVcfContent = (content: string): CustomerProfile[] => {
+    const list: CustomerProfile[] = [];
+    const vcards = content.split(/BEGIN:VCARD/i);
+    for (const card of vcards) {
+      if (!card.trim()) continue;
+      let cName = '';
+      let cPhone = '';
+      const lines = card.split(/\r?\n/);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (/^FN:/i.test(trimmed)) {
+          cName = trimmed.replace(/^FN:/i, '').trim();
+        } else if (!cName && /^N:/i.test(trimmed)) {
+          const parts = trimmed.replace(/^N:/i, '').split(';').filter(Boolean);
+          cName = parts.reverse().join(' ').trim();
+        } else if (/^TEL[^:]*:/i.test(trimmed)) {
+          const num = trimmed.replace(/^TEL[^:]*:/i, '').trim();
+          if (num && !cPhone) cPhone = num;
+        }
+      }
+      if (cName && cName.length > 1) {
+        list.push({
+          id: 'cust_imp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          name: cName.toUpperCase(),
+          phone: cPhone.replace(/[^\d+]/g, ''),
+          createdAt: new Date().toISOString().split('T')[0],
+        });
+      }
+    }
+    return list;
+  };
+
+  // Parse CSV/Text content
+  const parseCsvContent = (content: string): CustomerProfile[] => {
+    const list: CustomerProfile[] = [];
+    const lines = content.split(/\r?\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (/^(name|customer|customer name|full name)/i.test(trimmed)) continue;
+      const parts = trimmed.split(/[,;\t]/);
+      const cName = parts[0]?.trim();
+      const cPhone = parts[1]?.trim() || '';
+      if (cName && cName.length > 1) {
+        list.push({
+          id: 'cust_imp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          name: cName.toUpperCase(),
+          phone: cPhone.replace(/[^\d+]/g, ''),
+          createdAt: new Date().toISOString().split('T')[0],
+        });
+      }
+    }
+    return list;
+  };
+
+  // Parse JSON content
+  const parseJsonContent = (content: string): CustomerProfile[] => {
+    try {
+      const parsed = JSON.parse(content);
+      const rawList = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed?.data?.customers)
+        ? parsed.data.customers
+        : Array.isArray(parsed?.customers)
+        ? parsed.customers
+        : [];
+      return rawList
+        .filter((c: any) => c && c.name)
+        .map((c: any) => ({
+          id: c.id || 'cust_imp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          name: String(c.name).toUpperCase().trim(),
+          phone: String(c.phone || '').trim(),
+          createdAt: c.createdAt || new Date().toISOString().split('T')[0],
+        }));
+    } catch {
+      return [];
+    }
+  };
+
+  // Handle file selection for import
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = String(event.target?.result || '');
+      let parsed: CustomerProfile[] = [];
+      const fileName = file.name.toLowerCase();
+      if (fileName.endsWith('.vcf')) {
+        parsed = parseVcfContent(text);
+      } else if (fileName.endsWith('.json')) {
+        parsed = parseJsonContent(text);
+      } else {
+        parsed = parseCsvContent(text);
+      }
+      setParsedPreview(parsed);
+      setImportStatus(`Found ${parsed.length} customers in ${file.name}`);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  // Handle text parsing from textarea
+  const handleParsePastedText = (text: string) => {
+    setPastedText(text);
+    const parsed = parseCsvContent(text);
+    setParsedPreview(parsed);
+    setImportStatus(parsed.length > 0 ? `Detected ${parsed.length} customers ready to import` : null);
+  };
+
+  // Execute bulk import
+  const handleExecuteBulkImport = () => {
+    if (parsedPreview.length === 0) {
+      alert('No valid customer records found to import.');
+      return;
+    }
+
+    if (onBatchAddCustomers) {
+      onBatchAddCustomers(parsedPreview);
+    } else {
+      parsedPreview.forEach((c) => onAddCustomer(c));
+    }
+
+    setFormSuccessMessage(`Successfully imported ${parsedPreview.length} customers!`);
+    setIsImportModalOpen(false);
+    setParsedPreview([]);
+    setPastedText('');
+    setImportStatus(null);
+    setTimeout(() => setFormSuccessMessage(null), 4000);
+  };
+
+  // Export customers to CSV
+  const handleExportCustomersCsv = () => {
+    if (customers.length === 0) {
+      alert('No customers to export.');
+      return;
+    }
+    const headers = 'Name,Phone,Created Date\n';
+    const rows = customers
+      .map((c) => `"${c.name.replace(/"/g, '""')}","${c.phone || ''}","${c.createdAt || ''}"`)
+      .join('\n');
+    const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(headers + rows);
+    const link = document.createElement('a');
+    link.setAttribute('href', csvContent);
+    link.setAttribute('download', `FIA_Customers_Directory_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleConfirmClearAll = () => {
     if (onClearAllCustomers) {
@@ -111,12 +277,14 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
     setCustomerToDelete(null);
   };
 
-  // Filtered customer directory
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.phone && c.phone.includes(searchQuery))
-  );
+  // Filtered customer directory (Sorted in Ascending Order A to Z)
+  const filteredCustomers = customers
+    .filter(
+      (c) =>
+        (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.phone && c.phone.includes(searchQuery))
+    )
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
 
   // Group sales by customer name for Consolidation
   const customerSummaryMap = new Map<
@@ -168,10 +336,10 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
   const consolidationList = Array.from(customerSummaryMap.values())
     .filter(
       (entry) =>
-        entry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (entry.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (entry.phone && entry.phone.includes(searchQuery))
     )
-    .sort((a, b) => b.totalPurchases - a.totalPurchases);
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
 
   // WhatsApp share statement
   const shareCustomerStatementWhatsApp = (customerData: typeof consolidationList[0]) => {
@@ -207,28 +375,49 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
-      {/* Sub Tabs Navigation */}
-      <div className="flex bg-slate-200 p-1 rounded-lg max-w-md">
-        <button
-          onClick={() => setActiveSubTab('directory')}
-          className={`flex-1 py-2 text-xs font-bold rounded-md transition ${
-            activeSubTab === 'directory'
-              ? 'bg-white text-indigo-700 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          👥 Customer Directory ({customers.length})
-        </button>
-        <button
-          onClick={() => setActiveSubTab('consolidation')}
-          className={`flex-1 py-2 text-xs font-bold rounded-md transition ${
-            activeSubTab === 'consolidation'
-              ? 'bg-white text-indigo-700 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          📊 Accounts Consolidation
-        </button>
+      {/* Sub Tabs Navigation & Bulk Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex bg-slate-200 p-1 rounded-lg w-full sm:w-auto">
+          <button
+            onClick={() => setActiveSubTab('directory')}
+            className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition ${
+              activeSubTab === 'directory'
+                ? 'bg-white text-indigo-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            👥 Customer Directory ({customers.length})
+          </button>
+          <button
+            onClick={() => setActiveSubTab('consolidation')}
+            className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-md transition ${
+              activeSubTab === 'consolidation'
+                ? 'bg-white text-indigo-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            📊 Accounts Consolidation
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Import Customers</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleExportCustomersCsv}
+            className="flex-1 sm:flex-none bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export CSV</span>
+          </button>
+        </div>
       </div>
 
       {activeSubTab === 'directory' ? (
@@ -616,6 +805,161 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
                 type="button"
                 onClick={() => setIsConfirmingClearAll(false)}
                 className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-lg text-xs font-bold border border-slate-200 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Bulk Customer Import Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+                    Bulk Import Customers
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Upload phone contacts (.vcf), CSV, or paste list
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setParsedPreview([]);
+                  setPastedText('');
+                  setImportStatus(null);
+                }}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-md cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Mode Switcher */}
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setImportMode('file')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${
+                  importMode === 'file'
+                    ? 'bg-white text-emerald-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                📁 Upload File (.vcf / .csv / .json)
+              </button>
+              <button
+                type="button"
+                onClick={() => setImportMode('text')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${
+                  importMode === 'text'
+                    ? 'bg-white text-emerald-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                📋 Quick Paste List
+              </button>
+            </div>
+
+            {importMode === 'file' ? (
+              <div className="space-y-3">
+                <label className="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition text-center">
+                  <FileSpreadsheet className="w-8 h-8 text-emerald-600" />
+                  <span className="text-xs font-bold text-slate-700">
+                    Choose Contact File (.vcf), Excel CSV (.csv), or JSON
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    Supports Google Contacts, Phone export (.vcf), or Spreadsheet
+                  </span>
+                  <input
+                    type="file"
+                    accept=".vcf,.csv,.txt,.json"
+                    onChange={handleImportFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700">
+                  Paste Name & Phone numbers (one per line):
+                </label>
+                <textarea
+                  rows={6}
+                  value={pastedText}
+                  onChange={(e) => handleParsePastedText(e.target.value)}
+                  placeholder="Ishaal, 9747731952&#10;Rahul K, 9847123456&#10;Shidu, 9847112233"
+                  className="w-full text-xs font-mono p-3 border border-slate-300 rounded-lg focus:border-emerald-500 outline-none"
+                />
+                <p className="text-[10px] text-slate-400">
+                  Format: <code>Name, Phone</code> or simply <code>Name</code> (one on each line)
+                </p>
+              </div>
+            )}
+
+            {/* Status & Preview */}
+            {importStatus && (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs p-3 rounded-lg flex items-center justify-between">
+                <span className="font-semibold">{importStatus}</span>
+                <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">
+                  {parsedPreview.length} items
+                </span>
+              </div>
+            )}
+
+            {parsedPreview.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-xs font-bold text-slate-700 flex justify-between">
+                  <span>Preview Records (First {Math.min(parsedPreview.length, 5)}):</span>
+                </div>
+                <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100 text-xs bg-slate-50 p-1">
+                  {parsedPreview.slice(0, 10).map((c, i) => (
+                    <div key={i} className="p-1.5 flex justify-between items-center">
+                      <span className="font-bold text-slate-800">{c.name}</span>
+                      <span className="text-slate-500 font-mono text-[11px]">{c.phone || 'No phone'}</span>
+                    </div>
+                  ))}
+                  {parsedPreview.length > 10 && (
+                    <div className="p-1.5 text-center text-slate-500 text-[11px] font-semibold">
+                      + {parsedPreview.length - 10} more customers
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={parsedPreview.length === 0}
+                onClick={handleExecuteBulkImport}
+                className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs ${
+                  parsedPreview.length > 0
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Import {parsedPreview.length > 0 ? `${parsedPreview.length} Customers` : 'Customers'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setParsedPreview([]);
+                  setPastedText('');
+                  setImportStatus(null);
+                }}
+                className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-lg text-xs font-bold border border-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>

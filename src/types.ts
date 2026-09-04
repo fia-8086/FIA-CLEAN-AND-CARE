@@ -129,4 +129,5 @@ export interface DayBookEntry {
   amount: number;
   date: string;
   timestamp: number;
+  paymentMode?: 'Cash' | 'Online';
 }

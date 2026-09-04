@@ -370,11 +370,13 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                 className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-md text-xs font-medium focus:border-pink-500 outline-none"
               >
                 <option value="">-- Choose Existing Customer --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name} {c.phone ? `(${c.phone})` : ''}
-                  </option>
-                ))}
+                {[...customers]
+                  .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                  .map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name} {c.phone ? `(${c.phone})` : ''}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -472,15 +474,17 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                   className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-md text-xs font-semibold focus:border-pink-500 outline-none"
                 >
                   <option value="">-- Choose Cosmetic Item from Stock --</option>
-                  {products.map((p) => {
-                    const isLow = p.stock <= 5 && p.stock > 0;
-                    const isZero = p.stock <= 0;
-                    return (
-                      <option key={p.id} value={p.id}>
-                        {p.name} — {isZero ? '⚠️ OUT OF STOCK' : isLow ? `⚠️ Low Stock: ${p.stock} ${p.unit || 'Units'}` : `Stock: ${p.stock} ${p.unit || 'Units'}`} | ₹{saleType === 'Wholesale' ? p.costPrice : p.salePrice}
-                      </option>
-                    );
-                  })}
+                  {[...products]
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                    .map((p) => {
+                      const isLow = p.stock <= 5 && p.stock > 0;
+                      const isZero = p.stock <= 0;
+                      return (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — {isZero ? '⚠️ OUT OF STOCK' : isLow ? `⚠️ Low Stock: ${p.stock} ${p.unit || 'Units'}` : `Stock: ${p.stock} ${p.unit || 'Units'}`} | ₹{saleType === 'Wholesale' ? p.costPrice : p.salePrice}
+                        </option>
+                      );
+                    })}
                 </select>
                 {products.length === 0 && (
                   <p className="text-[11px] text-pink-700 bg-pink-50 p-2 rounded border border-pink-200 mt-1">

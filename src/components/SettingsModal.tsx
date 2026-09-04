@@ -9,6 +9,9 @@ import {
   Trash2,
   AlertTriangle,
   ShieldCheck,
+  History,
+  Clock,
+  RotateCcw,
 } from 'lucide-react';
 import { exportJSONBackup } from '../utils/formatters';
 
@@ -32,6 +35,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     text: string;
   } | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [vaultList, setVaultList] = useState<any[]>(() => {
+    try {
+      const raw = localStorage.getItem('fia_backup_vault_history');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleRestoreVaultSnapshot = (snap: any) => {
+    if (!snap || !snap.data) return;
+    if (
+      window.confirm(
+        `Restore snapshot from ${snap.displayLabel || new Date(snap.timestamp).toLocaleString()}? This will rollback active data to this version.`
+      )
+    ) {
+      onRestoreBackup(snap.data);
+      setStatusMessage({
+        type: 'success',
+        text: `Restored snapshot from ${snap.displayLabel || 'selected time'} successfully!`,
+      });
+      setTimeout(() => {
+        setStatusMessage(null);
+        onClose();
+      }, 1500);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -94,7 +124,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-200 rounded-xl max-w-sm w-full p-6 shadow-2xl space-y-5">
+      <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2.5">
@@ -122,7 +152,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="text-xs">
             <p className="font-bold text-emerald-900">Automatic Backup Active</p>
             <p className="text-[11px] text-emerald-700">
-              Daily cloud snapshots & auto-downloads are enabled.
+              Rolling snapshots & multi-device merge protection enabled.
             </p>
           </div>
         </div>
@@ -145,6 +175,55 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         )}
 
+        {/* Rolling Backup Vault / History */}
+        <div className="space-y-2 border border-slate-200 bg-slate-50/70 p-3.5 rounded-xl">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+              <History className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Automatic Vault History</span>
+            </span>
+            <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-mono font-semibold">
+              {vaultList.length} Snapshots
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-500">
+            Rolling snapshots auto-saved before changes & updates. Click restore to rollback anytime.
+          </p>
+
+          {vaultList.length > 0 ? (
+            <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1 text-xs">
+              {vaultList.map((snap) => (
+                <div
+                  key={snap.id || snap.timestamp}
+                  className="bg-white hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between gap-2 shadow-2xs transition"
+                >
+                  <div>
+                    <div className="font-bold text-slate-800 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      <span>{snap.displayLabel || new Date(snap.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      👥 {snap.custCount || 0} Custs • 📦 {snap.prodCount || 0} Prods • 🧾 {snap.saleCount || 0} Bills
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRestoreVaultSnapshot(snap)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1 rounded transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Restore</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[11px] text-slate-400 italic bg-white p-2.5 rounded-lg border border-dashed border-slate-200 text-center">
+              Vault history records automatically on business transactions.
+            </div>
+          )}
+        </div>
+
         {/* Actions Container */}
         <div className="space-y-3">
           {/* Download JSON Backup */}
@@ -152,7 +231,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               type="button"
               onClick={handleDownloadBackup}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>Download JSON Backup</span>
@@ -172,7 +251,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="space-y-1.5">
             <label className="w-full bg-slate-900 hover:bg-slate-800 text-white py-2.5 px-4 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs">
               <Upload className="w-4 h-4" />
-              <span>Restore from File</span>
+              <span>Restore from JSON File</span>
               <input
                 type="file"
                 accept=".json,application/json"

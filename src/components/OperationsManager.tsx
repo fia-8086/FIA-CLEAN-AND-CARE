@@ -1003,11 +1003,13 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                       className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-md text-xs font-semibold focus:border-indigo-500 outline-none"
                     >
                       <option value="">-- Choose Product --</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} (Current: {p.stock} {p.unit})
-                        </option>
-                      ))}
+                      {[...products]
+                        .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (Current: {p.stock} {p.unit})
+                          </option>
+                        ))}
                     </select>
                   </div>
 
@@ -1046,9 +1048,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                     <span>View & Manage Stock</span>
                   </h3>
                   <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full">
-                    {stockCategory === 'cleaning'
-                      ? `${products.length} Cleaning Items`
-                      : `${cosProducts.length} Cosmetic Items`}
+                    {products.length + cosProducts.length} Products
                   </span>
                 </div>
 
@@ -1094,13 +1094,14 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {stockCategory === 'cleaning' ? (
-                  products.filter((p) => p.name.toLowerCase().includes(stockSearchQuery.toLowerCase())).length === 0 ? (
+                  products.filter((p) => (p.name || '').toLowerCase().includes(stockSearchQuery.toLowerCase())).length === 0 ? (
                     <div className="col-span-full py-12 text-center text-slate-400 text-xs">
                       No cleaning products found. Click <strong>"Add / Edit Product"</strong> to register your products.
                     </div>
                   ) : (
                     products
-                      .filter((p) => p.name.toLowerCase().includes(stockSearchQuery.toLowerCase()))
+                      .filter((p) => (p.name || '').toLowerCase().includes(stockSearchQuery.toLowerCase()))
+                      .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                       .map((p) => (
                         <div
                           key={p.id}
@@ -1174,13 +1175,14 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                       ))
                   )
                 ) : (
-                  cosProducts.filter((p) => p.name.toLowerCase().includes(stockSearchQuery.toLowerCase())).length === 0 ? (
+                  cosProducts.filter((p) => (p.name || '').toLowerCase().includes(stockSearchQuery.toLowerCase())).length === 0 ? (
                     <div className="col-span-full py-12 text-center text-slate-400 text-xs">
                       No cosmetic products found. Click <strong>"Add / Edit Product"</strong> to register your products.
                     </div>
                   ) : (
                     cosProducts
-                      .filter((p) => p.name.toLowerCase().includes(stockSearchQuery.toLowerCase()))
+                      .filter((p) => (p.name || '').toLowerCase().includes(stockSearchQuery.toLowerCase()))
+                      .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                       .map((p) => (
                         <div
                           key={p.id}
@@ -1275,11 +1277,13 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                       className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-md text-xs font-semibold focus:border-indigo-500 outline-none"
                     >
                       <option value="">-- Select Product to Return --</option>
-                      {(stockCategory === 'cleaning' ? products : cosProducts).map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} (Current: {p.stock} {p.unit})
-                        </option>
-                      ))}
+                      {[...(stockCategory === 'cleaning' ? products : cosProducts)]
+                        .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (Current: {p.stock} {p.unit})
+                          </option>
+                        ))}
                     </select>
                   </div>
 
@@ -1405,7 +1409,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                       ...products.map((p) => ({ ...p, category: 'Cleaning' })),
                       ...cosProducts.map((p) => ({ ...p, category: 'Cosmetics' })),
                     ]
-                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                       .map((p, idx) => (
                         <tr key={p.id} className="hover:bg-slate-50">
                           <td className="p-2.5 font-mono text-slate-400">{idx + 1}</td>
@@ -1598,11 +1602,13 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                         className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
                       >
                         <option value="">-- Choose Supplier / Or Type Custom Below --</option>
-                        {suppliers.map((s) => (
-                          <option key={s.id} value={s.name}>
-                            {s.name} {s.mobile ? `(${s.mobile})` : ''}
-                          </option>
-                        ))}
+                        {[...suppliers]
+                          .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                          .map((s) => (
+                            <option key={s.id} value={s.name}>
+                              {s.name} {s.mobile ? `(${s.mobile})` : ''}
+                            </option>
+                          ))}
                       </select>
                     </div>
 
@@ -1651,11 +1657,13 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                         className="w-full border-2 border-slate-200 bg-white p-2.5 rounded-lg text-xs focus:border-blue-500 outline-none"
                       >
                         <option value="">-- Choose Stock Product (Auto Adds Stock) --</option>
-                        {(purchaseCategory === 'cleaning' ? products : cosProducts).map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} (Current: {p.stock} {p.unit})
-                          </option>
-                        ))}
+                        {[...(purchaseCategory === 'cleaning' ? products : cosProducts)]
+                          .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} (Current: {p.stock} {p.unit})
+                            </option>
+                          ))}
                       </select>
                     </div>
                   </div>
@@ -1907,13 +1915,17 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                       if (!purchaseSearchQuery.trim()) return true;
                       const q = purchaseSearchQuery.toLowerCase();
                       return (
-                        p.supplierName.toLowerCase().includes(q) ||
-                        p.rawMaterial.toLowerCase().includes(q) ||
+                        (p.supplierName || '').toLowerCase().includes(q) ||
+                        (p.rawMaterial || '').toLowerCase().includes(q) ||
                         (p.supplierMobile && p.supplierMobile.includes(q)) ||
                         (p.rawBarcode && p.rawBarcode.toLowerCase().includes(q))
                       );
                     })
-                    .sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0))
+                    .sort((a, b) => {
+                      const itemComp = (a.rawMaterial || '').localeCompare(b.rawMaterial || '', undefined, { sensitivity: 'base' });
+                      if (itemComp !== 0) return itemComp;
+                      return (a.supplierName || '').localeCompare(b.supplierName || '', undefined, { sensitivity: 'base' });
+                    })
                     .map((p) => {
                       const alreadyReturned = Number(p.returnedQty || 0);
                       const canReturn = Math.max(0, Number(p.rawQty || 0) - alreadyReturned) > 0;
@@ -2089,6 +2101,11 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                       <option value="">-- Choose Purchase to Return Goods --</option>
                       {purchases
                         .filter((p) => p.type === purchaseCategory)
+                        .sort((a, b) => {
+                          const supComp = (a.supplierName || '').localeCompare(b.supplierName || '', undefined, { sensitivity: 'base' });
+                          if (supComp !== 0) return supComp;
+                          return (a.rawMaterial || '').localeCompare(b.rawMaterial || '', undefined, { sensitivity: 'base' });
+                        })
                         .map((p) => {
                           const avail = Math.max(0, Number(p.rawQty || 0) - Number(p.returnedQty || 0));
                           return (

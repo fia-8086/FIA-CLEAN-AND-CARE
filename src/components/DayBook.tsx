@@ -54,6 +54,7 @@ export const DayBook: React.FC<DayBookProps> = ({
         amount: s.paidAmount,
         date: s.date,
         timestamp: s.createdAt,
+        paymentMode: s.paymentMode || 'Cash',
       });
     }
   });
@@ -98,6 +99,14 @@ export const DayBook: React.FC<DayBookProps> = ({
 
   const totalIncome = filteredEntries
     .filter((e) => e.type === 'Income')
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  const totalCashIncome = filteredEntries
+    .filter((e) => e.type === 'Income' && (e.paymentMode || 'Cash') === 'Cash')
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  const totalOnlineIncome = filteredEntries
+    .filter((e) => e.type === 'Income' && e.paymentMode === 'Online')
     .reduce((sum, e) => sum + e.amount, 0);
 
   const totalExpense = filteredEntries
@@ -286,8 +295,13 @@ export const DayBook: React.FC<DayBookProps> = ({
               <div className="text-xl font-bold font-mono text-emerald-700 mt-1">
                 {formatCurrency(totalIncome)}
               </div>
+              <div className="text-[10px] text-emerald-800 mt-1 flex items-center gap-1.5 font-mono font-bold">
+                <span>💵 Cash: {formatCurrency(totalCashIncome)}</span>
+                <span>•</span>
+                <span>🌐 Online: {formatCurrency(totalOnlineIncome)}</span>
+              </div>
             </div>
-            <ArrowDownCircle className="w-6 h-6 text-emerald-500" />
+            <ArrowDownCircle className="w-6 h-6 text-emerald-500 shrink-0" />
           </div>
 
           <div className="p-3.5 rounded-lg border border-rose-200 bg-rose-50/50 flex items-center justify-between">
@@ -366,6 +380,17 @@ export const DayBook: React.FC<DayBookProps> = ({
                     >
                       [{entry.type}] {entry.category}
                     </span>
+                    {entry.paymentMode && (
+                      <span
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${
+                          entry.paymentMode === 'Online'
+                            ? 'bg-sky-50 text-sky-700 border-sky-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        }`}
+                      >
+                        {entry.paymentMode === 'Online' ? '🌐 Online' : '💵 Cash'}
+                      </span>
+                    )}
                     <span className="text-[10px] text-slate-400 font-mono">
                       {formatDateDDMMYYYY(entry.date)}
                     </span>
