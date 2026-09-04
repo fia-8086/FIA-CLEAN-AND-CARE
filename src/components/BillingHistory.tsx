@@ -332,10 +332,10 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
             </div>
             <div>
               <div className="text-xs font-black uppercase tracking-wider text-emerald-950">
-                ബൈ ഹാൻഡ് ക്യാഷ് (Cash in Hand)
+                Cash in Hand
               </div>
               <div className="text-[11px] text-emerald-700 font-medium">
-                നേരിട്ട് പണമായി ലഭിച്ചത് ({filteredSales.filter((s) => (s.paymentMode || 'Cash') === 'Cash' && s.paidAmount > 0).length} bills)
+                Direct Cash ({filteredSales.filter((s) => (s.paymentMode || 'Cash') === 'Cash' && s.paidAmount > 0).length} bills)
               </div>
             </div>
           </div>
@@ -356,10 +356,10 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
             </div>
             <div>
               <div className="text-xs font-black uppercase tracking-wider text-sky-950">
-                ഓൺലൈൻ / യുപിഐ (Online / UPI)
+                Online / UPI
               </div>
               <div className="text-[11px] text-sky-700 font-medium">
-                GPay / ബാങ്ക് വഴി ലഭിച്ചത് ({filteredSales.filter((s) => s.paymentMode === 'Online' && s.paidAmount > 0).length} bills)
+                GPay / Bank ({filteredSales.filter((s) => s.paymentMode === 'Online' && s.paidAmount > 0).length} bills)
               </div>
             </div>
           </div>
@@ -466,7 +466,7 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
               className="w-full bg-slate-50 border border-slate-200 rounded p-2 text-xs font-medium outline-none focus:border-indigo-500"
             >
               <option value="all">All Modes (Cash & Online)</option>
-              <option value="Cash">💵 Cash Only (ബൈ ഹാൻഡ്)</option>
+              <option value="Cash">💵 Cash Only</option>
               <option value="Online">🌐 Online / UPI Only</option>
             </select>
           </div>
@@ -570,7 +570,7 @@ export const BillingHistory: React.FC<BillingHistoryProps> = ({
                   <th className="p-3 text-right">Grand Total</th>
                   <th className="p-3 text-right">Paid</th>
                   <th className="p-3 text-right">Balance Due</th>
-                  <th className="p-3 text-center min-w-[180px]">Actions (വ്യൂ, ഷെയർ, എഡിറ്റ്, ഡിലീറ്റ്)</th>
+                  <th className="p-3 text-center min-w-[180px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

@@ -43,6 +43,7 @@ interface OperationsManagerProps {
   onDeletePurchase: (id: string) => void;
   onAddSupplier: (supplier: Supplier) => void;
   onSaveExpense: (expense: ExpenseRecord) => void;
+  onUpdateExpense?: (expense: ExpenseRecord) => void;
   onDeleteExpense: (id: string) => void;
   onSaveStockReturn: (stockReturn: StockReturnRecord) => void;
 }
@@ -65,6 +66,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
   onDeletePurchase,
   onAddSupplier,
   onSaveExpense,
+  onUpdateExpense,
   onDeleteExpense,
   onSaveStockReturn,
   initialSubTab = 'stock',
@@ -154,6 +156,7 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
   const [expTitle, setExpTitle] = useState('');
   const [expAmount, setExpAmount] = useState<number>(0);
   const [expDate, setExpDate] = useState(getTodayDateString());
+  const [editingExpId, setEditingExpId] = useState<string | null>(null);
 
   // Stock Return Form
   const [retProductId, setRetProductId] = useState('');
@@ -637,23 +640,53 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
     setNewSupMobile('');
   };
 
-  // Save Expense
+  // Save Expense (Create or Edit)
   const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
     if (!expTitle.trim() || expAmount <= 0) {
       alert('Please enter expense title and valid amount.');
       return;
     }
-    onSaveExpense({
-      id: 'exp_' + Date.now(),
-      title: expTitle.trim(),
-      amount: Number(expAmount),
-      date: expDate,
-      savedAt: Date.now(),
-    });
-    alert('Expense recorded!');
+
+    if (editingExpId) {
+      if (onUpdateExpense) {
+        onUpdateExpense({
+          id: editingExpId,
+          title: expTitle.trim(),
+          amount: Number(expAmount),
+          date: expDate,
+          savedAt: Date.now(),
+        });
+      }
+      alert('Expense record updated!');
+      handleCancelEditExpense();
+    } else {
+      onSaveExpense({
+        id: 'exp_' + Date.now(),
+        title: expTitle.trim(),
+        amount: Number(expAmount),
+        date: expDate,
+        savedAt: Date.now(),
+      });
+      alert('Expense recorded!');
+      setExpTitle('');
+      setExpAmount(0);
+    }
+  };
+
+  const handleEditExpense = (ex: ExpenseRecord) => {
+    setEditingExpId(ex.id);
+    setExpTitle(ex.title);
+    setExpAmount(ex.amount);
+    setExpDate(ex.date);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEditExpense = () => {
+    setEditingExpId(null);
     setExpTitle('');
     setExpAmount(0);
+    setExpDate(getTodayDateString());
   };
 
   // Save Stock Return
@@ -2261,9 +2294,16 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
       {mainTab === 'expenses' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
-              💸 Record Business Expense
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+                {editingExpId ? '✏️ Edit Business Expense' : '💸 Record Business Expense'}
+              </h3>
+              {editingExpId && (
+                <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">
+                  EDITING
+                </span>
+              )}
+            </div>
             <form onSubmit={handleSaveExpense} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700">Expense Title</label>
@@ -2301,12 +2341,23 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                 />
               </div>
 
-              <button
-                type="submit"
-                className="w-full bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded font-bold text-xs shadow transition"
-              >
-                SAVE EXPENSE
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded font-bold text-xs shadow transition cursor-pointer"
+                >
+                  {editingExpId ? 'UPDATE EXPENSE RECORD' : 'SAVE EXPENSE'}
+                </button>
+                {editingExpId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEditExpense}
+                    className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-bold text-xs transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -2333,15 +2384,26 @@ export const OperationsManager: React.FC<OperationsManagerProps> = ({
                           {formatDateDDMMYYYY(ex.date)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono font-bold text-rose-600 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-rose-600 text-sm mr-2">
                           {formatCurrency(ex.amount)}
                         </span>
                         <button
+                          type="button"
+                          onClick={() => handleEditExpense(ex)}
+                          className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                          title="Edit Expense"
+                        >
+                          <Edit2 className="w-3 h-3 text-indigo-600" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => {
                             if (confirm(`Delete expense "${ex.title}"?`)) onDeleteExpense(ex.id);
                           }}
-                          className="text-rose-400 hover:text-rose-700 p-1"
+                          className="text-rose-400 hover:text-rose-700 p-1 cursor-pointer"
+                          title="Delete Expense"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

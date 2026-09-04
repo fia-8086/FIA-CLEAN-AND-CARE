@@ -110,45 +110,25 @@ export async function syncToCloud(payload: CloudPayload): Promise<boolean> {
   try {
     const dataRef = ref(db, 'fia_data');
     
-    // Fast in-memory merge using cached remote state
-    let existing: any = cachedRemoteState;
-    if (!existing) {
-      try {
-        const snap = await get(dataRef);
-        if (snap.exists()) {
-          existing = snap.val() || {};
-          cachedRemoteState = existing;
-        }
-      } catch (readErr) {
-        console.warn('Could not read existing cloud data before sync, will merge safely:', readErr);
-        existing = {};
-      }
-    }
-
-    const mergedPayload: CloudPayload = {
-      products: mergeUniqueRecords(payload.products, existing.products, 'id'),
-      cosProducts: mergeUniqueRecords(payload.cosProducts, existing.cosProducts, 'id'),
-      customers: mergeUniqueRecords(payload.customers, existing.customers, 'id'),
-      suppliers: mergeUniqueRecords(payload.suppliers, existing.suppliers, 'id'),
-      sales: mergeUniqueRecords(payload.sales, existing.sales, 'id'),
-      purchases: mergeUniqueRecords(payload.purchases, existing.purchases, 'id'),
-      expenses: mergeUniqueRecords(payload.expenses, existing.expenses, 'id'),
-      stockReturns: mergeUniqueRecords(payload.stockReturns, existing.stockReturns, 'id'),
-      clearedDayBookIds: Array.from(
-        new Set([
-          ...(Array.isArray(existing.clearedDayBookIds) ? existing.clearedDayBookIds : []),
-          ...(Array.isArray(payload.clearedDayBookIds) ? payload.clearedDayBookIds : [])
-        ])
-      ),
-      appPin: payload.appPin || existing.appPin || '1234',
+    const enrichedPayload: CloudPayload = {
+      products: Array.isArray(payload.products) ? payload.products : [],
+      cosProducts: Array.isArray(payload.cosProducts) ? payload.cosProducts : [],
+      customers: Array.isArray(payload.customers) ? payload.customers : [],
+      suppliers: Array.isArray(payload.suppliers) ? payload.suppliers : [],
+      sales: Array.isArray(payload.sales) ? payload.sales : [],
+      purchases: Array.isArray(payload.purchases) ? payload.purchases : [],
+      expenses: Array.isArray(payload.expenses) ? payload.expenses : [],
+      stockReturns: Array.isArray(payload.stockReturns) ? payload.stockReturns : [],
+      clearedDayBookIds: Array.isArray(payload.clearedDayBookIds) ? payload.clearedDayBookIds : [],
+      appPin: payload.appPin || '1234',
       _meta: {
         updatedAt: Date.now(),
         clientId: myClientId,
       }
     };
 
-    cachedRemoteState = mergedPayload;
-    await set(dataRef, mergedPayload);
+    cachedRemoteState = enrichedPayload;
+    await set(dataRef, enrichedPayload);
     return true;
   } catch (error) {
     console.error('Failed to sync to Firebase cloud:', error);

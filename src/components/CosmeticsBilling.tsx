@@ -167,7 +167,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
     if (isStockDeficit) {
       setStockErrorModal({
         isOpen: true,
-        title: 'ഇൻസഫിഷ്യന്റ് സ്റ്റോക്ക് (Insufficient Stock)',
+        title: 'Insufficient Stock',
         message: '',
         productName: selectedProduct.name,
         available: availableStock,
@@ -178,7 +178,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
 
       setNotificationToast({
         type: 'error',
-        message: `ഇൻസഫിഷ്യന്റ് സ്റ്റോക്ക്! ലഭ്യമായത്: ${availableStock} ${selectedProduct.unit || 'Units'}`,
+        message: `Insufficient stock! Available: ${availableStock} ${selectedProduct.unit || 'Units'}`,
       });
       setTimeout(() => setNotificationToast(null), 3000);
       return;
@@ -531,7 +531,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                   {isStockDeficit ? (
                     <>
                       <AlertTriangle className="w-4 h-4 text-white" />
-                      <span>ഇൻസഫിഷ്യന്റ് സ്റ്റോക്ക് (Insufficient Stock)</span>
+                      <span>Insufficient Stock</span>
                     </>
                   ) : (
                     <>
@@ -549,12 +549,12 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 font-black text-rose-700 text-xs sm:text-sm">
                     <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>ഇൻസഫിഷ്യന്റ് സ്റ്റോക്ക് (Insufficient Stock)</span>
+                    <span>Insufficient Stock</span>
                   </div>
                   <div className="text-xs text-rose-900 font-semibold flex items-center gap-2">
-                    <span>ലഭ്യമായ സ്റ്റോക്ക്: <strong className="font-mono text-slate-900">{availableStock} {selectedProduct?.unit || 'Units'}</strong></span>
+                    <span>Available: <strong className="font-mono text-slate-900">{availableStock} {selectedProduct?.unit || 'Units'}</strong></span>
                     <span>•</span>
-                    <span>ആവശ്യപ്പെട്ടത്: <strong className="font-mono text-rose-700">{totalNeededStock} {selectedProduct?.unit || 'Units'}</strong></span>
+                    <span>Requested: <strong className="font-mono text-rose-700">{totalNeededStock} {selectedProduct?.unit || 'Units'}</strong></span>
                   </div>
                 </div>
                 {remainingStock > 0 && (
@@ -564,7 +564,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                     className="bg-rose-700 hover:bg-rose-800 text-white px-3.5 py-2 rounded-md text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer whitespace-nowrap"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>ലഭ്യമായ സ്റ്റോക്കിലേക്ക് ക്രമീകരിക്കുക</span>
+                    <span>Set to Available Stock</span>
                   </button>
                 )}
               </div>
@@ -698,7 +698,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-rose-100" />
                   <h3 className="font-bold text-sm sm:text-base tracking-wide">
-                    ഇൻസഫിഷ്യന്റ് സ്റ്റോക്ക്
+                    Insufficient Stock
                   </h3>
                 </div>
                 <button
@@ -712,19 +712,19 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
 
               <div className="p-5 space-y-4">
                 <div className="text-center">
-                  <p className="text-xs text-slate-500 font-medium">തിരഞ്ഞെടുത്ത ഉൽപ്പന്നം</p>
+                  <p className="text-xs text-slate-500 font-medium">Selected Product</p>
                   <p className="text-sm font-bold text-slate-900 mt-0.5">{selectedProduct?.name}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 bg-rose-50 border border-rose-200 rounded-lg p-3 text-center">
                   <div className="border-r border-rose-200 pr-2">
-                    <span className="text-[11px] text-slate-600 font-medium block">ലഭ്യമായ സ്റ്റോക്ക്</span>
+                    <span className="text-[11px] text-slate-600 font-medium block">Available Stock</span>
                     <span className="text-base font-mono font-bold text-slate-900">
                       {stockErrorModal.available} {stockErrorModal.unit}
                     </span>
                   </div>
                   <div className="pl-2">
-                    <span className="text-[11px] text-rose-700 font-medium block">ആവശ്യപ്പെട്ടത്</span>
+                    <span className="text-[11px] text-rose-700 font-medium block">Requested</span>
                     <span className="text-base font-mono font-bold text-rose-700">
                       {stockErrorModal.requested} {stockErrorModal.unit}
                     </span>
@@ -742,7 +742,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                       className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-3 rounded-lg text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>ലഭ്യമായ സ്റ്റോക്കിലേക്ക് ക്രമീകരിക്കുക ({remainingStock} {stockErrorModal.unit})</span>
+                      <span>Set to Available Stock ({remainingStock} {stockErrorModal.unit})</span>
                     </button>
                   )}
                   <button
@@ -750,7 +750,7 @@ export const CosmeticsBilling: React.FC<CosmeticsBillingProps> = ({
                     onClick={() => setStockErrorModal(null)}
                     className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-lg text-xs transition cursor-pointer text-center"
                   >
-                    ക്ലോസ്
+                    Close
                   </button>
                 </div>
               </div>

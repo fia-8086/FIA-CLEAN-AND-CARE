@@ -551,108 +551,40 @@ export default function App() {
       (cloudData) => {
         isRemoteUpdateRef.current = true;
 
-        if (Array.isArray(cloudData.products) && cloudData.products.length > 0) {
-          setProducts((prev) => {
-            const map = new Map<string, Product>();
-            prev.forEach((p) => map.set(p.id, p));
-            cloudData.products!
-              .filter((p) => !isPreloadedCleaningProduct(p))
-              .forEach((p) => map.set(p.id, p));
-            return Array.from(map.values()).sort((a, b) =>
-              (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
-            );
-          });
+        if (Array.isArray(cloudData.products)) {
+          setProducts(cloudData.products.filter((p) => !isPreloadedCleaningProduct(p)).sort((a, b) =>
+            (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+          ));
         }
-        if (Array.isArray(cloudData.cosProducts) && cloudData.cosProducts.length > 0) {
-          setCosProducts((prev) => {
-            const map = new Map<string, CosmeticProduct>();
-            prev.forEach((p) => map.set(p.id, p));
-            cloudData.cosProducts!
-              .filter((p) => !isPreloadedCosmeticProduct(p))
-              .forEach((p) => map.set(p.id, p));
-            return Array.from(map.values()).sort((a, b) =>
-              (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
-            );
-          });
+        if (Array.isArray(cloudData.cosProducts)) {
+          setCosProducts(cloudData.cosProducts.filter((p) => !isPreloadedCosmeticProduct(p)).sort((a, b) =>
+            (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+          ));
         }
-        if (Array.isArray(cloudData.customers) && cloudData.customers.length > 0) {
-          setCustomers((prev) => {
-            const map = new Map<string, CustomerProfile>();
-            prev.forEach((c) => {
-              if (c && c.name && !isPreloadedMockCustomer(c)) {
-                map.set(c.id, c);
-              }
-            });
-            cloudData.customers!.forEach((c) => {
-              if (c && c.name && !isPreloadedMockCustomer(c)) {
-                const norm = c.name.trim().toUpperCase();
-                const existingId = Array.from(map.values()).find(
-                  (ex) => ex.name.toLowerCase().trim() === norm.toLowerCase()
-                )?.id;
-                if (existingId) {
-                  map.set(existingId, { ...map.get(existingId)!, phone: c.phone || map.get(existingId)!.phone });
-                } else {
-                  map.set(c.id, { ...c, name: norm });
-                }
-              }
-            });
-            return Array.from(map.values()).sort((a, b) =>
-              (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
-            );
-          });
+        if (Array.isArray(cloudData.customers)) {
+          setCustomers(cloudData.customers.filter((c) => c && c.name && !isPreloadedMockCustomer(c)).sort((a, b) =>
+            (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+          ));
         }
-        if (Array.isArray(cloudData.suppliers) && cloudData.suppliers.length > 0) {
-          setSuppliers((prev) => {
-            const map = new Map<string, Supplier>();
-            prev.forEach((s) => map.set(s.id, s));
-            cloudData.suppliers!
-              .filter((s) => !isPreloadedSupplier(s))
-              .forEach((s) => map.set(s.id, s));
-            return Array.from(map.values()).sort((a, b) =>
-              (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
-            );
-          });
+        if (Array.isArray(cloudData.suppliers)) {
+          setSuppliers(cloudData.suppliers.filter((s) => !isPreloadedSupplier(s)).sort((a, b) =>
+            (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+          ));
         }
-        if (Array.isArray(cloudData.sales) && cloudData.sales.length > 0) {
-          setSales((prev) => {
-            const map = new Map<string, SaleRecord>();
-            prev.forEach((s) => map.set(s.id, s));
-            cloudData.sales!
-              .filter((s) => !isPreloadedSale(s))
-              .forEach((s) => map.set(s.id, s));
-            return Array.from(map.values());
-          });
+        if (Array.isArray(cloudData.sales)) {
+          setSales(cloudData.sales.filter((s) => !isPreloadedSale(s)));
         }
-        if (Array.isArray(cloudData.purchases) && cloudData.purchases.length > 0) {
-          setPurchases((prev) => {
-            const map = new Map<string, PurchaseRecord>();
-            prev.forEach((p) => map.set(p.id, p));
-            cloudData.purchases!
-              .filter((p) => !isPreloadedPurchase(p))
-              .forEach((p) => map.set(p.id, p));
-            return Array.from(map.values());
-          });
+        if (Array.isArray(cloudData.purchases)) {
+          setPurchases(cloudData.purchases.filter((p) => !isPreloadedPurchase(p)));
         }
-        if (Array.isArray(cloudData.expenses) && cloudData.expenses.length > 0) {
-          setExpenses((prev) => {
-            const map = new Map<string, ExpenseRecord>();
-            prev.forEach((e) => map.set(e.id, e));
-            cloudData.expenses!
-              .filter((e) => !isPreloadedExpense(e))
-              .forEach((e) => map.set(e.id, e));
-            return Array.from(map.values());
-          });
+        if (Array.isArray(cloudData.expenses)) {
+          setExpenses(cloudData.expenses.filter((e) => !isPreloadedExpense(e)));
         }
-        if (Array.isArray(cloudData.stockReturns) && cloudData.stockReturns.length > 0) {
-          setStockReturns((prev) => {
-            const map = new Map<string, StockReturnRecord>();
-            prev.forEach((r) => map.set(r.id, r));
-            cloudData.stockReturns!.forEach((r) => map.set(r.id, r));
-            return Array.from(map.values());
-          });
+        if (Array.isArray(cloudData.stockReturns)) {
+          setStockReturns(cloudData.stockReturns);
         }
-        if (Array.isArray(cloudData.clearedDayBookIds) && cloudData.clearedDayBookIds.length > 0) {
-          setClearedDayBookIds((prev) => Array.from(new Set([...prev, ...cloudData.clearedDayBookIds!])));
+        if (Array.isArray(cloudData.clearedDayBookIds)) {
+          setClearedDayBookIds(cloudData.clearedDayBookIds);
         }
         if (cloudData.appPin) {
           setAppPin(cloudData.appPin);
@@ -797,8 +729,18 @@ export default function App() {
       );
     });
   };
-  const handleDeleteCustomer = (id: string) => {
+  const handleDeleteCustomer = (id: string, deleteAssociatedInvoices: boolean = false) => {
+    const customer = customers.find((c) => c.id === id);
     setCustomers((prev) => prev.filter((c) => c.id !== id));
+    if (deleteAssociatedInvoices && customer) {
+      setSales((prev) =>
+        prev.filter((s) => {
+          const matchName = (s.name || '').trim().toLowerCase() === (customer.name || '').trim().toLowerCase();
+          const matchPhone = customer.phone && s.phone && s.phone.trim() === customer.phone.trim();
+          return !(matchName || matchPhone);
+        })
+      );
+    }
   };
   const handleClearAllCustomers = () => {
     setCustomers([]);
@@ -933,6 +875,9 @@ export default function App() {
 
   const handleSaveExpense = (e: ExpenseRecord) => {
     setExpenses((prev) => [e, ...prev]);
+  };
+  const handleUpdateExpense = (e: ExpenseRecord) => {
+    setExpenses((prev) => prev.map((item) => (item.id === e.id ? e : item)));
   };
   const handleDeleteExpense = (id: string) => {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
@@ -1216,6 +1161,7 @@ export default function App() {
             onDeletePurchase={handleDeletePurchase}
             onAddSupplier={handleAddSupplier}
             onSaveExpense={handleSaveExpense}
+            onUpdateExpense={handleUpdateExpense}
             onDeleteExpense={handleDeleteExpense}
             onSaveStockReturn={handleSaveStockReturn}
           />

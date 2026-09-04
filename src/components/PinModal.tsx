@@ -51,7 +51,7 @@ export const PinModal: React.FC<PinModalProps> = ({
       setPinInput('');
       onSuccess();
     } else {
-      setErrorMsg('തെറ്റായ പാസ്‌വേർഡ്! നിലവിലെ സിസ്റ്റം പാസ്‌വേർഡ് നൽകുക.');
+      setErrorMsg('Incorrect Password! Please enter the valid system password.');
     }
   };
 

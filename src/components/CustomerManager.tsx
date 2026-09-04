@@ -28,7 +28,7 @@ interface CustomerManagerProps {
   onAddCustomer: (customer: CustomerProfile) => void;
   onBatchAddCustomers?: (customers: CustomerProfile[]) => void;
   onUpdateCustomer: (customer: CustomerProfile) => void;
-  onDeleteCustomer: (customerId: string) => void;
+  onDeleteCustomer: (customerId: string, deleteAssociatedInvoices?: boolean) => void;
   onClearAllCustomers?: () => void;
   onViewInvoice: (sale: SaleRecord) => void;
 }
@@ -54,6 +54,7 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
 
   // In-app Delete Confirmation Modal (Bypasses browser window.confirm iframe blocks)
   const [customerToDelete, setCustomerToDelete] = useState<CustomerProfile | null>(null);
+  const [deleteInvoicesOption, setDeleteInvoicesOption] = useState<boolean>(false);
   const [isConfirmingClearAll, setIsConfirmingClearAll] = useState(false);
 
   // Bulk Import States
@@ -268,13 +269,14 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
 
   const handleConfirmDelete = () => {
     if (!customerToDelete) return;
-    onDeleteCustomer(customerToDelete.id);
+    onDeleteCustomer(customerToDelete.id, deleteInvoicesOption);
     if (editingCustomerId === customerToDelete.id) {
       setEditingCustomerId(null);
       setName('');
       setPhone('');
     }
     setCustomerToDelete(null);
+    setDeleteInvoicesOption(false);
   };
 
   // Filtered customer directory (Sorted in Ascending Order A to Z)
@@ -748,9 +750,22 @@ export const CustomerManager: React.FC<CustomerManagerProps> = ({
               <div className="text-slate-500 font-mono">Phone: {customerToDelete.phone || 'None'}</div>
             </div>
 
-            <p className="text-[11px] text-slate-500">
-              Note: Existing invoices associated with this customer will remain safe in invoice history.
-            </p>
+            <div className="pt-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-100">
+                <input
+                  type="checkbox"
+                  checked={deleteInvoicesOption}
+                  onChange={(e) => setDeleteInvoicesOption(e.target.checked)}
+                  className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500"
+                />
+                <span className="font-semibold text-rose-700">Also delete associated invoices & account history</span>
+              </label>
+              <p className="text-[10px] text-slate-400 mt-1 pl-1">
+                {deleteInvoicesOption
+                  ? 'All past sales and dues for this customer will also be completely wiped from Accounts Consolidation.'
+                  : 'Customer profile will be deleted from directory. Past bills remain in invoice history.'}
+              </p>
+            </div>
 
             <div className="flex gap-2 pt-2">
               <button

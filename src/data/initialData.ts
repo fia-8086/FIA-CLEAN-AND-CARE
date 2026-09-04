@@ -39,30 +39,6 @@ export const initialCustomers: CustomerProfile[] = [
     name: "SHIDU",
     phone: "1323231",
     createdAt: "2026-09-02"
-  },
-  {
-    id: "cust_1788364417306",
-    name: "TEST 1",
-    phone: "3134124",
-    createdAt: "2026-09-02"
-  },
-  {
-    id: "cust_1788406725895",
-    name: "tets 1",
-    phone: "4323534634",
-    createdAt: "2026-09-03"
-  },
-  {
-    id: "cust_1788417754365",
-    name: "TEST 2",
-    phone: "12889",
-    createdAt: "2026-09-03"
-  },
-  {
-    id: "cust_1788420695973",
-    name: "TEST 3",
-    phone: "4545464",
-    createdAt: "2026-09-03"
   }
 ];
 
@@ -161,36 +137,6 @@ export const initialSales: SaleRecord[] = [
     excessAmount: 0,
     date: "2026-09-02",
     createdAt: 1788366223332
-  },
-  {
-    id: "sale_1788364417306",
-    billNo: "CLN-0001",
-    type: "cleaning",
-    name: "TEST 1",
-    phone: "3134124",
-    saleType: "Retail",
-    paymentMode: "Cash",
-    items: [
-      {
-        id: "item_1788364405379_blhm",
-        productName: "Dish Wash Liquid (Concentrate)",
-        stockId: "prod_1",
-        barcode: "8901234001",
-        packageSizeMl: 300,
-        qty: 3,
-        unitType: "Bottle (300 ml)",
-        rate: 36,
-        baseRate: 120,
-        total: 108,
-        stockDeductionQty: 0.9
-      }
-    ],
-    grandTotal: 108,
-    paidAmount: 99,
-    pendingAmount: 9,
-    excessAmount: 0,
-    date: "2026-09-02",
-    createdAt: 1788364417306
   }
 ];
 
