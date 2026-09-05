@@ -146,10 +146,8 @@
             <h2 class="text-lg font-bold text-emerald-400">FIA CLEAN & CARE</h2>
             
             <div class="relative">
-                <input type="password" id="loginPinInput" placeholder="Enter PIN" class="w-full p-3 pr-12 bg-slate-950 border border-slate-700 rounded-xl text-center tracking-widest text-lg text-white focus:outline-none focus:border-emerald-500" maxlength="6" autocomplete="current-password">
-                <button type="button" id="toggleLoginPin" onclick="toggleLoginPinVisibility()" aria-label="Show PIN" title="Show PIN" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800/70 transition flex items-center justify-center">
-                    <span id="loginPinEyeIcon" class="text-lg">👁️</span>
-                </button>
+                <input type="password" id="loginPinInput" placeholder="Enter PIN" class="w-full p-3 pr-12 bg-slate-950 border border-slate-700 rounded-xl text-center tracking-widest text-lg text-white focus:outline-none focus:border-emerald-500" maxlength="6">
+                <button type="button" onclick="togglePinVisibility('loginPinInput','loginPinEye')" id="loginPinEye" aria-label="Show PIN" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-400 text-lg">👁️</button>
             </div>
             <button onclick="verifyLoginPin()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/30">Login</button>
             
@@ -229,12 +227,17 @@
                     <div class="text-[10px] text-slate-400">Low stock products</div>
                 </button>
             </div>
-
             <!-- Alerts -->
-            <div id="lowStockAlertBanner" class="hidden bg-rose-950/80 border border-rose-700/60 p-3.5 rounded-2xl space-y-1.5 text-xs">
+            <div id="lowStockAlertBanner" class="hidden bg-rose-950/80 border border-rose-700/60 p-3.5 rounded-2xl space-y-2 text-xs">
                 <div class="flex items-center justify-between gap-2 font-bold text-rose-300">
-                    <span>⚠️ Low Stock Warning</span>
-                    <button onclick="openLowStockList()" class="text-[10px] underline text-rose-200">View Low Stock</button>
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-base leading-none">⚠️</span>
+                        <div class="min-w-0">
+                            <div>Low Stock Warning</div>
+                            <div class="text-[9px] font-semibold text-rose-200/80 uppercase tracking-wide mt-0.5">Cleaning • Cosmetics • Packaging</div>
+                        </div>
+                    </div>
+                    <button onclick="openLowStockList()" class="shrink-0 text-[10px] underline text-rose-200">View Low Stock</button>
                 </div>
                 <div id="lowStockListPreview" class="text-slate-300 text-[11px]"></div>
             </div>
@@ -634,9 +637,8 @@
 
                     <div class="p-3.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between gap-2">
-                            <label class="font-bold text-xs text-amber-300">Select Product from Stock:</label>
+                            <label class="font-bold text-xs text-amber-300">Select Product:</label>
                             <div class="flex gap-1">
-                                <button type="button" onclick="switchTab('stock'); setTimeout(()=>switchStockSubTab('cleaning'),0)" class="text-[10px] bg-slate-800 text-emerald-300 border border-slate-700 px-2 py-0.5 rounded font-bold">👁️ View Stock</button>
                                 <button type="button" onclick="openBarcodeScannerForBilling()" class="text-[10px] bg-slate-800 text-amber-300 border border-slate-700 px-2 py-0.5 rounded font-bold">📷 Scan</button>
                             </div>
                         </div>
@@ -998,7 +1000,6 @@
             </div>
 
             <div class="flex gap-2">
-                <button type="button" onclick="switchTab('stock'); setTimeout(()=>switchStockSubTab('cosmetics'),0)" class="flex-1 py-2.5 rounded-xl bg-pink-700 text-white text-xs font-bold">👁️ View Stock</button>
                 <button type="button" onclick="openCosmeticsSalesEntry()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-pink-300 border border-slate-700 text-xs font-bold">🧾 Sales Entry</button>
             </div>
 
@@ -1036,9 +1037,8 @@
 
                         <div class="p-3.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2.5">
                             <div class="flex items-center justify-between gap-2">
-                                <label class="font-bold text-xs text-pink-300">Select Cosmetic Product from Stock:</label>
+                                <label class="font-bold text-xs text-pink-300">Select Cosmetic Product:</label>
                                 <div class="flex gap-1">
-                                    <button type="button" onclick="switchTab('stock'); setTimeout(()=>switchStockSubTab('cosmetics'),0)" class="text-[10px] bg-slate-800 text-emerald-300 border border-slate-700 px-2 py-0.5 rounded font-bold">👁️ View Stock</button>
                                     <button type="button" onclick="openBarcodeScannerForCosmeticsSales()" class="text-[10px] bg-slate-800 text-pink-300 border border-slate-700 px-2 py-0.5 rounded font-bold">📷 Scan</button>
                                 </div>
                             </div>
@@ -1468,25 +1468,19 @@
             const overlay = document.getElementById('loginOverlay');
             if (overlay) overlay.classList.remove('hidden');
             const pin = document.getElementById('loginPinInput');
-            if (pin) { pin.value=''; pin.type='password'; pin.focus(); }
-            const eye = document.getElementById('loginPinEyeIcon');
-            const eyeBtn = document.getElementById('toggleLoginPin');
-            if (eye) eye.textContent='👁️';
-            if (eyeBtn) { eyeBtn.setAttribute('aria-label','Show PIN'); eyeBtn.setAttribute('title','Show PIN'); }
+            if (pin) { pin.value=''; pin.focus(); }
             history.replaceState({ loggedIn:false, tab:'home' }, '', '#login');
         }
 
-        function toggleLoginPinVisibility() {
-            const input = document.getElementById('loginPinInput');
-            const button = document.getElementById('toggleLoginPin');
-            const icon = document.getElementById('loginPinEyeIcon');
+        function togglePinVisibility(inputId, buttonId) {
+            const input = document.getElementById(inputId);
+            const button = document.getElementById(buttonId);
             if (!input) return;
-            const show = input.type === 'password';
-            input.type = show ? 'text' : 'password';
-            if (icon) icon.textContent = show ? '🙈' : '👁️';
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
             if (button) {
-                button.setAttribute('aria-label', show ? 'Hide PIN' : 'Show PIN');
-                button.setAttribute('title', show ? 'Hide PIN' : 'Show PIN');
+                button.textContent = showing ? '👁️' : '🙈';
+                button.setAttribute('aria-label', showing ? 'Show PIN' : 'Hide PIN');
             }
         }
 
@@ -1715,19 +1709,40 @@
             }
         }
 
+        // Hide only unintended standalone "Stock" menu items if they appear inside
+        // Customer, Billing, or Backup UI. The real Stock module and Operations->Stock
+        // controls are intentionally preserved.
+        function hideUnwantedStockMenus() {
+            // Remove ONLY Stock navigation/menu buttons that appear outside the real
+            // Operations -> Stock module. This does not alter Stock data or forms.
+            const activeCustomer = !document.getElementById('sectionCustomers')?.classList.contains('hidden');
+            const activeBilling = !document.getElementById('sectionBilling')?.classList.contains('hidden');
+            const backupOpen = !document.getElementById('backupModal')?.classList.contains('hidden');
+            const shouldHide = activeCustomer || activeBilling || backupOpen;
+            document.querySelectorAll('button, a, [role="button"]').forEach(el => {
+                if (el.closest('#sectionStock, #sectionOperations')) return;
+                const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                // Catch the actual Stock menu even if it has extra wording/icons.
+                const isStockMenu = /(?:^|\s)Stock(?:\s|$)/i.test(text) &&
+                                    !/View Stock|Add Stock|Return Stock|Low Stock/i.test(text);
+                const isPackageMenu = /(?:^|\s)(?:Package|Packaging)(?:\s|$)/i.test(text) &&
+                                      !/Package Used|Package Qty|Packaging item not found/i.test(text);
+                if (isStockMenu || isPackageMenu) {
+                    const hideThis = isPackageMenu ? true : shouldHide;
+                    if (hideThis) {
+                        el.style.setProperty('display', 'none', 'important');
+                        el.setAttribute('data-unwanted-stock-menu-hidden', '1');
+                    } else if (el.getAttribute('data-unwanted-stock-menu-hidden') === '1') {
+                        el.style.removeProperty('display');
+                        el.removeAttribute('data-unwanted-stock-menu-hidden');
+                    }
+                }
+            });
+        }
+
+
         function switchTab(tabName, pushToHistory = true) {
             const sections = ['home', 'customers', 'billing', 'operations', 'stock', 'purchase', 'expenses', 'cosmetics', 'accounts'];
-
-            // Force Stock's internal Product/Package panels closed whenever another main menu opens.
-            // This prevents the Stock Product list or Add Package panel from remaining visible over other screens.
-            if (tabName !== 'stock') {
-                const stockProductArea = document.getElementById('stockProductArea');
-                const stockPackageArea = document.getElementById('stockPackageArea');
-                const packageReportArea = document.getElementById('packageReportArea');
-                if (stockProductArea) { stockProductArea.classList.add('hidden'); stockProductArea.style.display = 'none'; }
-                if (stockPackageArea) { stockPackageArea.classList.add('hidden'); stockPackageArea.style.display = 'none'; }
-                if (packageReportArea) packageReportArea.classList.add('hidden');
-            }
 
             // Always force every main section closed before opening the requested one.
             // This prevents content from a previously opened sub-section (especially Stock)
@@ -1757,7 +1772,10 @@
                 history.pushState({ loggedIn: true, tab: tabName }, "", "#" + tabName);
             }
             renderAll();
+            hideUnwantedStockMenus();
         }
+
+        setInterval(hideUnwantedStockMenus, 500);
 
         function openOperationSection(section) {
             switchTab(section);
@@ -1843,8 +1861,8 @@
         function switchStockTopTab(tab) {
             const productArea=document.getElementById('stockProductArea'), packageArea=document.getElementById('stockPackageArea');
             const p=document.getElementById('stockTopProduct'), q=document.getElementById('stockTopPackage');
-            if(tab==='package'){ if(productArea){productArea.classList.add('hidden');productArea.style.display='none';} if(packageArea){packageArea.classList.remove('hidden');packageArea.style.display='';} p?.classList.remove('bg-emerald-700','text-white','shadow-md'); p?.classList.add('text-slate-400'); q?.classList.add('bg-cyan-700','text-white','shadow-md'); q?.classList.remove('text-slate-400'); renderPackages(); updatePackageSelectors(); }
-            else { if(packageArea){packageArea.classList.add('hidden');packageArea.style.display='none';} if(productArea){productArea.classList.remove('hidden');productArea.style.display='';} q?.classList.remove('bg-cyan-700','text-white','shadow-md'); q?.classList.add('text-slate-400'); p?.classList.add('bg-emerald-700','text-white','shadow-md'); p?.classList.remove('text-slate-400'); }
+            if(tab==='package'){ productArea?.classList.add('hidden'); packageArea?.classList.remove('hidden'); p?.classList.remove('bg-emerald-700','text-white','shadow-md'); p?.classList.add('text-slate-400'); q?.classList.add('bg-cyan-700','text-white','shadow-md'); q?.classList.remove('text-slate-400'); renderPackages(); updatePackageSelectors(); }
+            else { packageArea?.classList.add('hidden'); productArea?.classList.remove('hidden'); q?.classList.remove('bg-cyan-700','text-white','shadow-md'); q?.classList.add('text-slate-400'); p?.classList.add('bg-emerald-700','text-white','shadow-md'); p?.classList.remove('text-slate-400'); }
         }
 
         function switchStockSubTab(tab) {
@@ -2314,7 +2332,8 @@
             if (!container) return;
             const rows = [
                 ...products.filter(p => Number(p.stock || 0) <= 5).map(p => ({...p, category:'Cleaning'})),
-                ...cosProducts.filter(p => Number(p.stock || 0) <= 5).map(p => ({...p, category:'Cosmetics'}))
+                ...cosProducts.filter(p => Number(p.stock || 0) <= 5).map(p => ({...p, category:'Cosmetics'})),
+                ...packages.filter(p => Number(p.stock || 0) <= 5).map(p => ({...p, category:'Packaging'}))
             ].sort((a,b) => Number(a.stock||0) - Number(b.stock||0));
             container.innerHTML = rows.length ? rows.map(p => `<div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-xs"><div class="flex justify-between gap-3"><div><div class="font-bold ${p.category==='Cosmetics'?'text-pink-300':'text-emerald-300'}">${p.name || 'Product'}</div><div class="text-slate-500 mt-1">${p.category}</div></div><div class="text-right"><div class="text-rose-300 font-extrabold">${p.stock || 0} ${p.unit || ''}</div><div class="text-[10px] text-slate-500">Current Stock</div></div></div></div>`).join('') : '<p class="text-xs text-slate-500 text-center py-8">No low stock products.</p>';
             document.getElementById('lowStockListModal').classList.remove('hidden');
@@ -2326,13 +2345,15 @@
             const preview = document.getElementById('lowStockListPreview');
             const mainLow = products.filter(p => Number(p.stock || 0) <= 5);
             const cosLow = cosProducts.filter(p => Number(p.stock || 0) <= 5);
-            const totalLow = mainLow.length + cosLow.length;
+            const packageLow = packages.filter(p => Number(p.stock || 0) <= 5);
+            const totalLow = mainLow.length + cosLow.length + packageLow.length;
             if (!banner || !preview) return;
             if (totalLow > 0) {
                 banner.classList.remove('hidden');
                 const mainText = mainLow.length ? `<div class="mb-1"><span class="text-rose-300 font-semibold">Cleaning Products:</span> ${mainLow.map(i => `${i.name} (${i.stock} ${i.unit || ''})`).join(', ')}</div>` : '';
                 const cosText = cosLow.length ? `<div><span class="text-pink-300 font-semibold">Cosmetics:</span> ${cosLow.map(i => `${i.name} (${i.stock} ${i.unit || ''})`).join(', ')}</div>` : '';
-                preview.innerHTML = mainText + cosText;
+                const packageText = packageLow.length ? `<div><span class="text-cyan-300 font-semibold">Packaging:</span> ${packageLow.map(i => `${i.name} (${i.stock} ${i.unit || ''})`).join(', ')}</div>` : '';
+                preview.innerHTML = mainText + cosText + packageText;
             } else {
                 banner.classList.add('hidden');
                 preview.innerHTML = '';
@@ -2477,7 +2498,7 @@
         function editPackage(id){const x=packages.find(p=>p.id===id);if(!x)return;switchTab('stock',false);switchStockTopTab('package');document.getElementById('packageId').value=x.id;document.getElementById('packageName').value=x.name||'';document.getElementById('packageSize').value=x.size||'';document.getElementById('packageUnit').value=x.unit||'Pcs';document.getElementById('packageStock').value=x.stock??0;document.getElementById('packageSubmitBtn').textContent='Update Package';}
         function deletePackage(id){if(!confirm('Delete this package item?'))return;packages=packages.filter(x=>x.id!==id);products.forEach(p=>{if(p.packageId===id){p.packageId='';p.packageQty=0;}});cosProducts.forEach(p=>{if(p.packageId===id){p.packageId='';p.packageQty=0;}});syncToFirebase();renderPackages();updatePackageSelectors();renderProducts();renderCosProductStock();}
         function addPackageStock(id,qty){const x=packages.find(p=>p.id===id);if(!x||!(qty>0))return;x.stock=(Number(x.stock)||0)+qty;syncToFirebase();renderPackages();updatePackageSelectors();}
-        function renderPackages(){const c=document.getElementById('packageListContainer');if(!c)return;c.innerHTML=sortByNameAsc(packages).map(x=>`<div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3 flex justify-between gap-3 items-center"><div><div class="font-bold text-cyan-300 text-xs">${x.name}</div><div class="text-[10px] text-slate-500">${x.size||'—'} • ${x.unit||'Pcs'}</div></div><div class="text-right"><div class="font-extrabold ${(Number(x.stock)||0)<=5?'text-rose-300':'text-white'}">${Number(x.stock)||0}</div><div class="flex gap-1 justify-end mt-1 items-center"><input id="pkgAdd_${x.id}" type="number" min="0" step="any" placeholder="+Stock" class="w-16 px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-[10px] text-white"><button type="button" onclick="addPackageStock('${x.id}',parseFloat(document.getElementById('pkgAdd_${x.id}').value)||0);document.getElementById('pkgAdd_${x.id}').value=''" class="bg-cyan-900 text-cyan-200 px-2 py-1 rounded-lg text-[10px]">Add</button><button type="button" onclick="editPackage('${x.id}')" class="bg-slate-800 text-amber-300 px-2 py-1 rounded-lg text-[10px]">Edit</button><button type="button" onclick="deletePackage('${x.id}')" class="bg-slate-800 text-red-300 px-2 py-1 rounded-lg text-[10px]">Delete</button></div></div></div>`).join('')||'<p class="text-xs text-slate-500 text-center py-6">No package items added yet.</p>';renderPackageConsolidationReport();}
+        function renderPackages(){const c=document.getElementById('packageListContainer');if(!c)return;c.innerHTML=sortByNameAsc(packages).map(x=>`<div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3 flex justify-between gap-3 items-center"><div><div class="font-bold text-cyan-300 text-xs">${x.name}</div><div class="text-[10px] text-slate-500">${x.size||'—'} • ${x.unit||'Pcs'}</div></div><div class="text-right"><div class="font-extrabold ${(Number(x.stock)||0)<=5?'text-rose-300':'text-white'}">${Number(x.stock)||0}</div><div class="flex gap-1 justify-end mt-1 items-center"><input id="pkgAdd_${x.id}" type="number" min="0" step="any" placeholder="+Stock" class="w-16 px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-[10px] text-white"><button type="button" onclick="addPackageStock('${x.id}',parseFloat(document.getElementById('pkgAdd_${x.id}').value)||0);document.getElementById('pkgAdd_${x.id}').value=''" class="bg-cyan-900 text-cyan-200 px-2 py-1 rounded-lg text-[10px]">Add</button><button type="button" onclick="editPackage('${x.id}')" class="bg-slate-800 text-amber-300 px-2 py-1 rounded-lg text-[10px]">Edit</button><button type="button" onclick="deletePackage('${x.id}')" class="bg-slate-800 text-red-300 px-2 py-1 rounded-lg text-[10px]">Delete</button></div></div></div>`).join('')||'<p class="text-xs text-slate-500 text-center py-6">No package items added yet.</p>';renderPackageConsolidationReport();};checkLowStockAlerts();updateDashboard();
         function switchPackageView(view){const list=document.getElementById('packageListArea'),report=document.getElementById('packageReportArea');if(!list||!report)return;if(view==='report'){list.classList.add('hidden');report.classList.remove('hidden');renderPackageConsolidationReport();}else{report.classList.add('hidden');list.classList.remove('hidden');}}
         function renderPackageConsolidationReport(){const rows=sortByNameAsc(packages||[]).map(p=>({name:p.name||'',size:p.size||'',stock:Number(p.stock)||0,unit:p.unit||'Pcs'}));const summary=[['Total Items',rows.length],['Total Stock',rows.reduce((s,r)=>s+r.stock,0)],['Low Stock',rows.filter(r=>r.stock<=5).length],['Units Used',new Set(rows.map(r=>r.unit).filter(Boolean)).size]];const sh=document.getElementById('packageReportSummary');if(sh)sh.innerHTML=summary.map(([l,v])=>`<div class="bg-slate-900 rounded-lg p-3"><div class="text-[10px] text-slate-400">${l}</div><b class="text-sm text-white">${v}</b></div>`).join('');const tb=document.getElementById('packageReportTableBody');if(tb)tb.innerHTML=rows.length?rows.map((r,i)=>`<tr class="border-t border-slate-800"><td class="p-2 text-slate-500">${i+1}</td><td class="p-2 text-cyan-300 font-semibold">${r.name||'—'}</td><td class="p-2 text-slate-400">${r.size||'—'}</td><td class="p-2 text-right font-bold ${r.stock<=5?'text-rose-300':'text-white'}">${r.stock}</td><td class="p-2 text-slate-300">${r.unit}</td><td class="p-2 ${r.stock<=5?'text-rose-300':'text-emerald-300'}">${r.stock<=5?'LOW STOCK':'OK'}</td></tr>`).join(''):'<tr><td colspan="6" class="p-5 text-center text-slate-500">No package items found.</td></tr>';const um={};rows.forEach(r=>um[r.unit]=(um[r.unit]||0)+r.stock);const uh=document.getElementById('packageReportUnitTotals');if(uh)uh.innerHTML=Object.entries(um).sort((a,b)=>a[0].localeCompare(b[0])).map(([u,t])=>`<div class="flex justify-between bg-slate-900/70 border border-slate-800 rounded-lg px-3 py-2 text-[11px]"><span class="text-slate-400">Total ${u}</span><b class="text-slate-200">${t}</b></div>`).join('')||'<div class="text-[10px] text-slate-500">No stock data.</div>';}
         function getProductPackageInfo(product){
@@ -3738,6 +3759,7 @@
                         <div style="margin:1px 0; font-size: 11px; color: #000000 !important;">Mob:80864 52106</div>
                     </div>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Bill No:</strong> ${c.billNo || '—'} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}</p><p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Customer:</strong> ${c.name}</p>
+                    <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Mobile:</strong> ${c.phone || '—'}</p>
                     <div style="border-top:1px solid #000; padding-top:6px; margin-top:8px; margin-bottom:6px; font-size:14px; font-weight:700; letter-spacing:0.3px; color:#000 !important;text-align:center;">PARTICULARS</div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin: 10px 0; color: #000000 !important;">
                         <thead><tr style="background:#f3f4f6"><th style="padding:6px; color:#000;">Product</th><th style="padding:6px; color:#000;">Quantity</th><th style="padding:6px; color:#000;">Unit</th><th style="padding:6px; color:#000;">Price</th><th style="padding:6px; color:#000;">Total</th></tr></thead>
@@ -3783,7 +3805,7 @@
             const excessVal = Number(c.excessAmount || 0);
             const dueLine = Number(pendingVal) > 0 ? `*Balance Due:* ₹${Number(pendingVal).toFixed(2)}\n` : '';
             const returnLine = excessVal > 0 ? `*Balance Return:* ₹${excessVal.toFixed(2)}\n` : '';
-            let msg = `*FIA CLEAN AND CARE*\n*Wholesale and Retail*\n*Edathanattukara*\n*Mob:80864 52106*\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n${dueLine}${returnLine}\n_Thank you for your business!_`;
+            let msg = `*FIA CLEAN AND CARE*\n*Wholesale and Retail*\n*Edathanattukara*\n*Mob:80864 52106*\n\n*Bill No:* ${c.billNo || '—'}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n*Customer:* ${c.name}\n*Mobile:* ${c.phone || '—'}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n${dueLine}${returnLine}\n_Thank you for your business!_`;
             
             history.pushState({ loggedIn: true, tab: 'billing' }, "", "#billing");
             
@@ -4091,6 +4113,7 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
                     </div>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Bill No:</strong> ${sale.billNo || 'COS-0001'} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(sale.date)}</p>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Customer:</strong> ${sale.customer || ''}</p>
+                    <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Mobile:</strong> ${sale.phone || '—'}</p>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Bill Type:</strong> ${norm.saleType} | <strong>Payment:</strong> ${norm.paymentMode}</p>
                     <div style="border-top:1px solid #000; padding-top:6px; margin-top:8px; margin-bottom:6px; font-size:14px; font-weight:700; letter-spacing:0.3px; color:#000 !important;text-align:center;">PARTICULARS</div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin: 10px 0; color: #000000 !important;">
@@ -4283,12 +4306,12 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             ensureStableTransactionIds();
             let entries = [];
             customers.forEach((c, i) => { 
-                let paidVal = c.paidAmount !== undefined ? c.paidAmount : c.grandTotal;
-                if(paidVal > 0) entries.push({ id: `c_${i}`, type: 'Income', desc: `Customer Payment (${c.name})`, amount: paidVal, date: c.date }); 
+                let incomeVal = Number(c.grandTotal || 0);
+                if(incomeVal > 0) entries.push({ id: `c_${i}`, type: 'Income', desc: `Customer Sale (${c.name})`, amount: incomeVal, date: c.date }); 
             });
             cosSales.forEach((s, i) => {
-                let paidVal = cosSalePaid(s);
-                if(paidVal > 0) entries.push({ id: `cs_${i}`, type: 'Income', desc: `Cosmetics Sale (${s.customer})`, amount: paidVal, date: s.date });
+                let incomeVal = Number((normalizeCosSale(s) || {}).grandTotal || 0);
+                if(incomeVal > 0) entries.push({ id: `cs_${i}`, type: 'Income', desc: `Cosmetics Sale (${s.customer})`, amount: incomeVal, date: s.date });
             });
             purchases.forEach((p, i) => {
                 const amount = Number(p.rawCost || 0);
@@ -4319,7 +4342,7 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
         function renderAccounts() {
             let fromDate = parseDateDDMMYYYY(document.getElementById('filterFromDate').value);
             let toDate = parseDateDDMMYYYY(document.getElementById('filterToDate').value);
-            let filtered = getAllMasterEntries().filter(e => !clearedDayBookEntries.includes(e.id) && (!fromDate || e.date >= fromDate) && (!toDate || e.date <= toDate));
+            let filtered = getAllMasterEntries().filter(e => (!fromDate || dashboardDateKey(e.date) >= fromDate) && (!toDate || dashboardDateKey(e.date) <= toDate));
             filtered.sort((a, b) => dateSortValue(b.date) - dateSortValue(a.date));
 
             let inc = filtered.filter(e => e.type === 'Income').reduce((s, e) => s + e.amount, 0);
@@ -4426,11 +4449,15 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             const totalDue = customers.reduce((sum, c) => sum + Math.max(0, Number(c.pendingAmount || 0)), 0);
             const mainLow = products.filter(p => Number(p.stock || 0) <= 5);
             const cosLow = cosProducts.filter(p => Number(p.stock || 0) <= 5);
-            const today = new Date().toISOString().split('T')[0];
-            const salesToday = customers.filter(c => dashboardDateKey(c.date) === today).reduce((s,c) => s + Number(c.grandTotal || 0), 0) + cosSales.filter(c => dashboardDateKey(c.date) === today).reduce((s,c) => s + cosSaleTotal(c), 0);
+            const packageLow = packages.filter(p => Number(p.stock || 0) <= 5);
+            const now = new Date();
+            const today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            // Keep Today's Business exactly aligned with Day Book's master calculation.
+            const todayEntries = getAllMasterEntries().filter(e => dashboardDateKey(e.date) === today);
+            const salesToday = todayEntries.filter(e => e.type === 'Income').reduce((s,e) => s + Number(e.amount || 0), 0);
             const purchaseToday = purchases.filter(c => dashboardDateKey(c.date) === today).reduce((s,c) => s + Number(c.rawCost || 0), 0) + cosPurchases.filter(c => dashboardDateKey(c.date) === today).reduce((s,c) => s + Number(c.amount || 0), 0);
-            const expenseToday = expenses.filter(c => dashboardDateKey(c.date) === today).reduce((s,c) => s + Number(c.amount || 0), 0);
-            const collectionToday = customers.filter(c => dashboardDateKey(c.date) === today).reduce((s,c) => s + Number(c.paidAmount || 0), 0) + cosSales.filter(c => dashboardDateKey(c.date) === today).reduce((s,c) => s + cosSalePaid(c), 0);
+            const expenseToday = todayEntries.filter(e => e.type === 'Expense').reduce((s,e) => s + Number(e.amount || 0), 0);
+            const collectionToday = salesToday;
             
             let uniqueCustNames = [];
             customers.forEach(c => { if(c && c.name && !uniqueCustNames.includes(c.name.trim().toLowerCase())) uniqueCustNames.push(c.name.trim().toLowerCase()); });
