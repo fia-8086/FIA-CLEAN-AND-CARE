@@ -145,7 +145,12 @@
             <div class="text-3xl">🔐</div>
             <h2 class="text-lg font-bold text-emerald-400">FIA CLEAN & CARE</h2>
             
-            <input type="password" id="loginPinInput" placeholder="Enter PIN" class="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-center tracking-widest text-lg text-white focus:outline-none focus:border-emerald-500" maxlength="6">
+            <div class="relative">
+                <input type="password" id="loginPinInput" placeholder="Enter PIN" class="w-full p-3 pr-12 bg-slate-950 border border-slate-700 rounded-xl text-center tracking-widest text-lg text-white focus:outline-none focus:border-emerald-500" maxlength="6" autocomplete="current-password">
+                <button type="button" id="toggleLoginPin" onclick="toggleLoginPinVisibility()" aria-label="Show PIN" title="Show PIN" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800/70 transition flex items-center justify-center">
+                    <span id="loginPinEyeIcon" class="text-lg">👁️</span>
+                </button>
+            </div>
             <button onclick="verifyLoginPin()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/30">Login</button>
             
             <div class="flex justify-between text-xs pt-2 border-t border-slate-800">
@@ -218,7 +223,7 @@
                     <div id="dashDueAmount" class="text-lg font-extrabold text-rose-300 mt-2">₹0</div>
                     <div class="text-[10px] text-slate-400">Pending amount • Tap to view</div>
                 </button>
-                <button onclick="switchTab('stock')" class="text-left bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 hover:border-rose-700/70 transition">
+                <button onclick="openLowStockList()" class="text-left bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 hover:border-rose-700/70 transition">
                     <div class="flex items-center justify-between"><span class="text-xl">📦</span><span class="text-[9px] text-slate-500 uppercase">Low Stock</span></div>
                     <div id="dashLowStockMainCount" class="text-xl font-extrabold text-rose-300 mt-2">0</div>
                     <div class="text-[10px] text-slate-400">Low stock products</div>
@@ -229,7 +234,7 @@
             <div id="lowStockAlertBanner" class="hidden bg-rose-950/80 border border-rose-700/60 p-3.5 rounded-2xl space-y-1.5 text-xs">
                 <div class="flex items-center justify-between gap-2 font-bold text-rose-300">
                     <span>⚠️ Low Stock Warning</span>
-                    <button onclick="switchTab('stock')" class="text-[10px] underline text-rose-200">Open Stock</button>
+                    <button onclick="openLowStockList()" class="text-[10px] underline text-rose-200">View Low Stock</button>
                 </div>
                 <div id="lowStockListPreview" class="text-slate-300 text-[11px]"></div>
             </div>
@@ -316,6 +321,11 @@
 
         <!-- ================= SECTION 1: STOCK ================= -->
         <div id="sectionStock" class="space-y-4 hidden">
+            <div class="flex justify-between items-center bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1 mb-3">
+                <button type="button" onclick="switchStockTopTab('product')" id="stockTopProduct" class="flex-1 py-2 text-center text-xs font-bold bg-emerald-700 text-white rounded-xl shadow-md transition">📦 Product</button>
+                <button type="button" onclick="switchStockTopTab('package')" id="stockTopPackage" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">🧴 Package</button>
+            </div>
+            <div id="stockProductArea">
             <div class="flex justify-between items-center bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1">
                 <button type="button" onclick="switchStockSubTab('cleaning')" id="subTabStockCleaning" class="flex-1 py-2 text-center text-xs font-bold bg-emerald-700 text-white rounded-xl shadow-md transition">🧹 Cleaning</button>
                 <button type="button" onclick="switchStockSubTab('cosmetics')" id="subTabStockCosmetics" class="flex-1 py-2 text-center text-xs font-bold text-slate-400 rounded-xl transition">💄 Cosmetics</button>
@@ -345,6 +355,10 @@
                                 <select id="prodUnit" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-emerald-500">
                                     <option value="">Select Unit</option><option value="Ltr">Litre (Ltr)</option><option value="Kg">Kilogram (Kg)</option><option value="Gram">Gram (g)</option><option value="ml">Millilitre (ml)</option><option value="Pcs">Pieces (Pcs)</option><option value="Bottle">Bottle</option>
                                 </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="text-[10px] text-slate-400 block mb-1">Package Used per Selling Unit:</label><select id="prodPackageId" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="">No Package Mapping</option></select></div>
+                                <div><label class="text-[10px] text-slate-400 block mb-1">Package Qty:</label><input type="number" id="prodPackageQty" value="1" min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div><label class="text-[10px] text-slate-400 block mb-1">Wholesale Price (₹):</label><input type="number" id="prodWholesalePrice" placeholder="Wholesale Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div>
@@ -413,7 +427,7 @@
                 <div id="cosStockAddContent">
                     <div class="bg-slate-950/60 p-4 rounded-2xl border border-pink-800/40 shadow-inner">
                         <div class="flex justify-between items-center mb-3"><h2 id="cosStockFormTitle" class="font-bold text-pink-400 text-sm">Add Cosmetic Product</h2><button type="button" onclick="openBarcodeScannerForCosmeticStock()" class="bg-slate-800 text-pink-300 border border-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-bold">📷 Scan Barcode</button></div>
-                        <form id="cosProductForm" class="space-y-3" onsubmit="saveCosProduct(event)"><input type="hidden" id="cosProdId" value=""><input type="text" id="cosProdName" placeholder="Product Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><input type="text" id="cosProdBarcode" placeholder="Barcode / QR Number (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><div class="flex gap-2"><input type="number" id="cosProdStock" placeholder="Stock Qty" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"><select id="cosProdUnit" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="">Select Unit</option><option value="Ltr">Litre (Ltr)</option><option value="Kg">Kilogram (Kg)</option><option value="Gram">Gram (g)</option><option value="ml">Millilitre (ml)</option><option value="Pcs">Pieces (Pcs)</option><option value="Bottle">Bottle</option></select></div><div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] text-slate-400 block mb-1">Wholesale Price (₹):</label><input type="number" id="cosProdCostPrice" placeholder="Wholesale Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div><div><label class="text-[10px] text-slate-400 block mb-1">Retail Price (₹):</label><input type="number" id="cosProdSalePrice" placeholder="Retail Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div></div><div class="flex gap-2 pt-1"><button type="submit" id="cosProdSubmitBtn" class="flex-1 bg-pink-600 text-white py-3 rounded-xl font-bold text-sm">Add Product</button><button type="button" onclick="resetCosProductForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm">Clear</button></div></form>
+                        <form id="cosProductForm" class="space-y-3" onsubmit="saveCosProduct(event)"><input type="hidden" id="cosProdId" value=""><input type="text" id="cosProdName" placeholder="Product Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><input type="text" id="cosProdBarcode" placeholder="Barcode / QR Number (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><div class="flex gap-2"><input type="number" id="cosProdStock" placeholder="Stock Qty" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"><select id="cosProdUnit" required class="w-1/2 p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="">Select Unit</option><option value="Ltr">Litre (Ltr)</option><option value="Kg">Kilogram (Kg)</option><option value="Gram">Gram (g)</option><option value="ml">Millilitre (ml)</option><option value="Pcs">Pieces (Pcs)</option><option value="Bottle">Bottle</option></select></div><div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] text-slate-400 block mb-1">Package Used per Selling Unit:</label><select id="cosProdPackageId" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="">No Package Mapping</option></select></div><div><label class="text-[10px] text-slate-400 block mb-1">Package Qty:</label><input type="number" id="cosProdPackageQty" value="1" min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"></div></div><div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] text-slate-400 block mb-1">Wholesale Price (₹):</label><input type="number" id="cosProdCostPrice" placeholder="Wholesale Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div><div><label class="text-[10px] text-slate-400 block mb-1">Retail Price (₹):</label><input type="number" id="cosProdSalePrice" placeholder="Retail Rate" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100" min="0" step="any"></div></div><div class="flex gap-2 pt-1"><button type="submit" id="cosProdSubmitBtn" class="flex-1 bg-pink-600 text-white py-3 rounded-xl font-bold text-sm">Add Product</button><button type="button" onclick="resetCosProductForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm">Clear</button></div></form>
                     </div>
                     <div class="bg-slate-950/60 p-4 rounded-2xl border border-pink-800/40 shadow-inner mt-3"><h3 class="font-bold text-pink-300 text-sm mb-3">➕ Add Stock to Existing Product</h3><div class="space-y-2"><label class="text-[10px] text-slate-400 font-semibold">PRODUCT</label><select id="cosAddStockProduct" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></select><div class="grid grid-cols-[1fr_auto] gap-2"><div><label class="text-[10px] text-slate-400 font-semibold">QUANTITY</label><input type="number" id="cosAddStockQty" placeholder="Enter quantity" min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></div><div class="flex items-end"><button type="button" onclick="addCosmeticStock()" class="bg-pink-600 text-white px-5 py-3 rounded-xl text-sm font-bold min-h-[48px]">Add</button></div></div></div></div>
                 </div>
@@ -448,6 +462,42 @@
                         <form id="cosReturnStockForm" class="space-y-2.5" onsubmit="saveStockReturn(event,'cosmetics')"><select id="cosReturnProduct" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 min-h-[48px]"></select><div class="grid grid-cols-2 gap-2"><input type="text" id="cosReturnCustomer" placeholder="Customer / Party Name" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><input type="number" id="cosReturnQty" placeholder="Return Qty" required min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"></div><div class="grid grid-cols-2 gap-2"><select id="cosReturnCondition" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="">-- Select Condition --</option><option value="Usable">🟢 Usable Stock</option><option value="Damaged">🔴 Damaged / Not Usable</option></select><input type="text" id="cosReturnReason" placeholder="Reason (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"></div><input type="text" id="cosReturnRemarks" placeholder="Remarks (Optional)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><button type="submit" class="w-full bg-amber-600 text-white py-3 rounded-xl text-sm font-bold">↩️ Save Return Stock</button></form>
                         <div class="mt-4 pt-3 border-t border-slate-800"><div class="flex justify-between items-center mb-2"><h4 class="font-bold text-slate-300 text-xs">Return History</h4><span class="text-[9px] text-slate-500">Newest first</span></div><div id="cosReturnHistoryContainer" class="space-y-2"></div></div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+            </div>
+            <div id="stockPackageArea" class="hidden space-y-4">
+                <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                    <div class="flex justify-between items-center mb-3 gap-2">
+                        <div><h2 class="font-bold text-cyan-300 text-sm">🧴 Package / Packaging Stock</h2><p class="text-[10px] text-slate-500">Bottles, caps, labels, boxes and other packaging items</p></div>
+                        <button type="button" onclick="switchPackageView('report')" class="shrink-0 bg-slate-800 text-cyan-300 border border-cyan-800/50 px-2.5 py-1.5 rounded-lg text-[10px] font-bold">📊 Consolidated</button>
+                    </div>
+                    <form id="packageForm" class="space-y-3" onsubmit="savePackage(event)">
+                        <input type="hidden" id="packageId" value="">
+                        <input type="text" id="packageName" placeholder="Package Item Name (e.g. Dishwash Bottle)" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="packageSize" placeholder="Size (e.g. 300 ml)" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100">
+                            <select id="packageUnit" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100"><option value="Pcs">Pieces (Pcs)</option><option value="Bottle">Bottle</option><option value="Box">Box</option><option value="Roll">Roll</option><option value="Other">Other</option></select>
+                        </div>
+                        <input type="number" id="packageStock" placeholder="Current Stock" required min="0" step="any" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100">
+                        <div class="flex gap-2"><button type="submit" id="packageSubmitBtn" class="flex-1 bg-cyan-600 text-white py-3 rounded-xl font-bold text-sm">Add Package</button><button type="button" onclick="resetPackageForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm">Clear</button></div>
+                    </form>
+                </div>
+                <div id="packageListArea" class="bg-slate-950/60 p-4 rounded-2xl border border-cyan-800/40 shadow-inner">
+                    <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-cyan-300 text-sm">Package Stock List</h3><span class="text-[10px] text-slate-500">Edit / Delete available</span></div>
+                    <div id="packageListContainer" class="space-y-2.5"></div>
+                </div>
+                <div id="packageReportArea" class="hidden bg-slate-950/60 p-4 rounded-2xl border border-cyan-800/40 shadow-inner">
+                    <div class="flex justify-between items-center mb-3 gap-2"><h3 class="font-bold text-cyan-300 text-sm">📊 Package Consolidated Report</h3><button type="button" onclick="switchPackageView('list')" class="bg-slate-800 text-slate-300 px-2.5 py-1.5 rounded-lg text-[10px] font-bold">← Package Stock</button></div>
+                    <div id="packageReportSummary" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3"></div>
+                    <div class="overflow-x-auto border border-slate-800 rounded-xl">
+                        <table class="w-full text-[10px]">
+                            <thead class="bg-slate-900 text-slate-400"><tr><th class="p-2 text-left">#</th><th class="p-2 text-left">Package Item</th><th class="p-2 text-left">Size</th><th class="p-2 text-right">Stock</th><th class="p-2 text-left">Unit</th><th class="p-2 text-left">Status</th></tr></thead>
+                            <tbody id="packageReportTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="packageReportUnitTotals" class="mt-3 space-y-1"></div>
                 </div>
             </div>
         </div>
@@ -524,9 +574,10 @@
         <div id="sectionBilling" class="space-y-4 hidden">
             <div class="bg-slate-950/60 p-3 rounded-2xl border border-amber-800/40 shadow-inner">
                 <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-2 font-bold">BILLING</div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-4 gap-2">
                     <button type="button" onclick="openBillingSection('cleaning')" class="py-3 rounded-xl bg-amber-600 text-white text-xs font-bold shadow-md">🧹 Cleaning</button>
                     <button type="button" onclick="openBillingSection('cosmetics')" class="py-3 rounded-xl bg-slate-800 text-pink-300 border border-pink-800/50 text-xs font-bold">💄 Cosmetics</button>
+                    <button type="button" onclick="openBillingSection('combined')" class="py-3 rounded-xl bg-slate-800 text-cyan-300 border border-cyan-800/50 text-xs font-bold">🧾 Combined</button>
                     <button type="button" onclick="openBillingSection('history')" class="py-3 rounded-xl bg-slate-800 text-emerald-300 border border-emerald-800/50 text-xs font-bold">📋 History</button>
                 </div>
             </div>
@@ -601,9 +652,13 @@
                                 <option value="Gram">Gram (g)</option>
                                 <option value="Pcs">Pieces (Pcs)</option>
                                 <option value="Bottle">Bottle</option>
+                                <option value="General">General</option>
                             </select>
                         </div>
-                        <input type="number" id="billNumberOfUnits" placeholder="Number of Units" value="1" oninput="calculateItemTotal()" class="w-full p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500" min="1" step="1">
+                        <div class="flex gap-2">
+                            <input type="number" id="billNumberOfUnits" placeholder="Number of Bottles / Packs" value="1" oninput="calculateItemTotal()" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500" min="1" step="any">
+                            <select id="billQuantityType" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500"><option value="Bottle">Bottle</option><option value="Pack">Pack</option><option value="Box">Box</option><option value="Roll">Roll</option><option value="Other">Other</option></select>
+                        </div>
                         <div class="flex gap-2">
                             <input type="number" id="billRate" placeholder="Price per Unit (₹)" oninput="calculateItemTotal()" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-amber-500" min="0" step="any">
                             <input type="number" id="billCalculatedTotal" placeholder="Total (₹)" readonly class="w-1/2 p-2.5 border border-slate-800 rounded-xl text-xs bg-slate-900 text-emerald-400 font-bold cursor-not-allowed">
@@ -644,6 +699,65 @@
                     </div>
                 </form>
             </div>
+            </div>
+        </div>
+
+        <!-- ================= COMBINED BILLING ================= -->
+        <div id="billingCombinedContent" class="hidden space-y-4">
+            <div class="bg-slate-950/60 p-4 rounded-2xl border border-cyan-800/50 shadow-inner">
+                <div class="flex justify-between items-center gap-2 mb-3">
+                    <h2 class="font-bold text-cyan-300 text-sm">🧾 Combined Billing (Cleaning + Cosmetics)</h2>
+                    <span id="combinedBillNumberDisplay" class="text-sm font-extrabold text-cyan-300">COM-0001</span>
+                </div>
+                <form id="combinedBillingForm" class="space-y-3" onsubmit="saveCombinedBill(event)">
+                    <input type="hidden" id="combinedBillIndex" value="-1">
+                    <div class="space-y-1">
+                        <label class="text-[11px] text-slate-400">Select Customer from Directory (A-Z):</label>
+                        <select id="combinedCustomerSelect" onchange="fillCombinedCustomer()" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-900 text-slate-100 focus:outline-none focus:border-cyan-500">
+                            <option value="">-- Select Customer / Enter Manually Below --</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2 bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+                        <label class="text-[11px] text-cyan-300 font-bold">Customer Details</label>
+                        <input type="text" id="combinedCustomerName" placeholder="Customer Name" required class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-950 text-slate-100 focus:outline-none focus:border-cyan-500">
+                        <input type="text" id="combinedCustomerPhone" placeholder="Mobile Number" class="w-full p-3 border border-slate-700 rounded-xl text-sm bg-slate-950 text-slate-100 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-1.5">
+                        <label class="text-[11px] text-cyan-300 font-bold block">Bill Type / Price</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 text-xs cursor-pointer"><input type="radio" name="combinedSaleType" value="Retail" checked onchange="onCombinedSaleTypeChange()" class="accent-cyan-500"> Retail Price</label>
+                            <label class="flex items-center gap-2 text-xs cursor-pointer"><input type="radio" name="combinedSaleType" value="Wholesale" onchange="onCombinedSaleTypeChange()" class="accent-cyan-500"> Wholesale Price</label>
+                        </div>
+                    </div>
+                    <div class="p-3.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="font-bold text-xs text-cyan-300">Select Product</label>
+                            <span class="text-[10px] text-slate-500">Cleaning + Cosmetics</span>
+                        </div>
+                        <select id="combinedProductSelect" onchange="fillCombinedProductPrice()" class="w-full p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200 focus:outline-none focus:border-cyan-500">
+                            <option value="">-- Select Product --</option>
+                        </select>
+                        <div class="flex gap-2">
+                            <input type="number" id="combinedQty" placeholder="Enter Quantity" oninput="calculateCombinedItemTotal()" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200" min="0" step="any">
+                            <select id="combinedUnitType" onchange="calculateCombinedItemTotal()" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200">
+                                <option value="Litre">Litre (L)</option><option value="ml">Millilitre (ml)</option><option value="Kg">Kilogram (Kg)</option><option value="Gram">Gram (g)</option><option value="Pcs">Pieces (Pcs)</option><option value="Bottle">Bottle</option><option value="General">General</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="number" id="combinedNumberOfUnits" placeholder="Number of Units" value="1" oninput="calculateCombinedItemTotal()" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200" min="1" step="1">
+                            <input type="number" id="combinedRate" placeholder="Price per Unit (₹)" oninput="calculateCombinedItemTotal()" class="w-1/2 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200" min="0" step="any">
+                        </div>
+                        <input type="number" id="combinedCalculatedTotal" placeholder="Total (₹)" readonly class="w-full p-2.5 border border-slate-800 rounded-xl text-xs bg-slate-900 text-emerald-400 font-bold">
+                        <button type="button" onclick="addToCombinedBill()" class="w-full bg-cyan-700 text-white py-2 rounded-xl text-xs font-bold">Add to Combined Bill</button>
+                    </div>
+                    <div class="grid grid-cols-[1.5fr_0.7fr_0.7fr_0.8fr_0.9fr_auto_auto] gap-1 px-2 text-[10px] text-slate-400 font-bold uppercase"><span>Product</span><span>Qty</span><span>Units</span><span>Price</span><span>Total</span><span></span><span></span></div>
+                    <div id="combinedBillItemsPreview" class="space-y-1.5 text-xs"></div>
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                        <div><label class="text-[10px] text-slate-400 block mb-1">Paid Amount (₹)</label><input type="number" id="combinedPaidAmt" placeholder="Paid Amount" oninput="calculateCombinedBalance()" class="w-full p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200" min="0" step="any"><select id="combinedPaymentMode" class="w-full mt-1.5 p-2.5 border border-slate-700 rounded-xl text-xs bg-slate-950 text-slate-200"><option value="Cash">💵 Cash</option><option value="Online">🌐 Online</option></select></div>
+                        <div><label class="text-[10px] text-slate-400 block mb-1">Balance / Due (₹)</label><input type="number" id="combinedPendingAmt" placeholder="Balance" readonly class="w-full p-2.5 border border-slate-800 rounded-xl text-xs bg-slate-900 text-slate-400"><div id="combinedBalanceStatus" class="text-[10px] font-bold mt-1 text-right"></div></div>
+                    </div>
+                    <div class="flex gap-2 pt-1"><button type="submit" id="combinedSubmitBtn" class="flex-1 bg-cyan-700 text-white py-3 rounded-xl font-bold text-sm">Save Combined Bill</button><button type="button" onclick="resetCombinedBillForm()" class="bg-slate-800 text-slate-300 px-4 py-3 rounded-xl font-bold text-sm border border-slate-700">Clear</button></div>
+                </form>
             </div>
         </div>
 
@@ -1172,6 +1286,14 @@
         </div>
     </div>
 
+
+    <!-- Low Stock Products Modal -->
+    <div id="lowStockListModal" class="fixed inset-0 bg-black/70 z-[70] hidden p-4 overflow-y-auto">
+      <div class="max-w-md mx-auto mt-8 bg-slate-900 border border-rose-800 rounded-2xl shadow-2xl p-4">
+        <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-rose-300">⚠️ Low Stock Products</h3><button type="button" onclick="closeLowStockList()" class="text-slate-300 text-xl">×</button></div>
+        <div id="lowStockListContainer" class="space-y-2"></div>
+      </div>
+    </div>
     <div id="printSection" class="hidden"></div>
 
     <!-- JavaScript Application Logic -->
@@ -1184,6 +1306,7 @@
         let cosProducts = [];
         let cosPurchases = [];
         let cosSales = [];
+        let packages = [];
         let stockReturns = [];
         let clearedDayBookEntries = [];
         let appPin = "1234";
@@ -1240,7 +1363,7 @@
                 backupVersion: 1,
                 app: 'FIA CLEAN & CARE',
                 createdAt: new Date().toISOString(),
-                data: { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, clearedDayBookEntries, appPin }
+                data: { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, packages, clearedDayBookEntries, appPin }
             };
             const dbData = JSON.stringify(backupData, null, 2);
             
@@ -1271,6 +1394,26 @@
             }
         }
 
+        function createAutomaticLocalBackup() {
+            try {
+                const backupData = { backupVersion: 1, app: 'FIA CLEAN & CARE', createdAt: new Date().toISOString(), data: { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, stockReturns, clearedDayBookEntries, appPin } };
+                localStorage.setItem('fia_auto_backup_latest', JSON.stringify(backupData));
+                localStorage.setItem('fia_auto_backup_time', backupData.createdAt);
+            } catch(e) { console.warn('Automatic local backup failed:', e); }
+        }
+        function runAutomaticBackup() {
+            createAutomaticLocalBackup();
+            const today = new Date().toISOString().slice(0,10);
+            if (accessToken && localStorage.getItem('fia_drive_auto_backup_date') !== today) {
+                localStorage.setItem('fia_drive_auto_backup_date', today);
+                uploadDatabaseToDrive();
+            }
+        }
+        function startAutomaticBackup() {
+            runAutomaticBackup();
+            setInterval(runAutomaticBackup, 30 * 60 * 1000);
+        }
+
         function startRealtimeSync() {
             if (!window.FB_DB) {
                 updateSyncStatus(false, 'Local Offline Mode');
@@ -1281,13 +1424,14 @@
             window.FB_DB.ref('fia_data').on('value', function(snapshot) {
                 const data = snapshot.val();
                 if (data) {
-                    products = Array.isArray(data.products) ? data.products : Object.values(data.products || {});
-                    cosProducts = Array.isArray(data.cosProducts) ? data.cosProducts : Object.values(data.cosProducts || {});
+                    products = Array.isArray(data.products) ? data.products : Object.entries(data.products || {}).map(([key, value]) => ({ ...(value || {}), id: String((value && value.id) || key) }));
+                    cosProducts = Array.isArray(data.cosProducts) ? data.cosProducts : Object.entries(data.cosProducts || {}).map(([key, value]) => ({ ...(value || {}), id: String((value && value.id) || key) }));
                     customers = Array.isArray(data.customers) ? data.customers : Object.values(data.customers || {});
                     purchases = Array.isArray(data.purchases) ? data.purchases : Object.values(data.purchases || {});
                     expenses = Array.isArray(data.expenses) ? data.expenses : Object.values(data.expenses || {});
                     cosPurchases = Array.isArray(data.cosPurchases) ? data.cosPurchases : Object.values(data.cosPurchases || {});
                     cosSales = Array.isArray(data.cosSales) ? data.cosSales : Object.values(data.cosSales || {});
+                    packages = Array.isArray(data.packages) ? data.packages : Object.entries(data.packages || {}).map(([key, value]) => ({ ...(value || {}), id: String((value && value.id) || key) }));
                     stockReturns = Array.isArray(data.stockReturns) ? data.stockReturns : Object.values(data.stockReturns || {});
                     clearedDayBookEntries = Array.isArray(data.clearedDayBookEntries) ? data.clearedDayBookEntries : Object.values(data.clearedDayBookEntries || {});
                     appPin = data.appPin || "1234";
@@ -1324,8 +1468,26 @@
             const overlay = document.getElementById('loginOverlay');
             if (overlay) overlay.classList.remove('hidden');
             const pin = document.getElementById('loginPinInput');
-            if (pin) { pin.value=''; pin.focus(); }
+            if (pin) { pin.value=''; pin.type='password'; pin.focus(); }
+            const eye = document.getElementById('loginPinEyeIcon');
+            const eyeBtn = document.getElementById('toggleLoginPin');
+            if (eye) eye.textContent='👁️';
+            if (eyeBtn) { eyeBtn.setAttribute('aria-label','Show PIN'); eyeBtn.setAttribute('title','Show PIN'); }
             history.replaceState({ loggedIn:false, tab:'home' }, '', '#login');
+        }
+
+        function toggleLoginPinVisibility() {
+            const input = document.getElementById('loginPinInput');
+            const button = document.getElementById('toggleLoginPin');
+            const icon = document.getElementById('loginPinEyeIcon');
+            if (!input) return;
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            if (icon) icon.textContent = show ? '🙈' : '👁️';
+            if (button) {
+                button.setAttribute('aria-label', show ? 'Hide PIN' : 'Show PIN');
+                button.setAttribute('title', show ? 'Hide PIN' : 'Show PIN');
+            }
         }
 
         function verifyLoginPin() {
@@ -1411,6 +1573,7 @@
             expenses = JSON.parse(localStorage.getItem('fia_expenses')) || [];
             cosPurchases = JSON.parse(localStorage.getItem('fia_cospurchases')) || [];
             cosSales = JSON.parse(localStorage.getItem('fia_cossales')) || [];
+            packages = JSON.parse(localStorage.getItem('fia_packages')) || [];
             stockReturns = JSON.parse(localStorage.getItem('fia_stock_returns')) || [];
             clearedDayBookEntries = JSON.parse(localStorage.getItem('fia_cleared_daybook')) || [];
             appPin = localStorage.getItem('fia_app_pin') || "1234";
@@ -1425,6 +1588,7 @@
                 localStorage.setItem('fia_expenses', JSON.stringify(expenses));
                 localStorage.setItem('fia_cospurchases', JSON.stringify(cosPurchases));
                 localStorage.setItem('fia_cossales', JSON.stringify(cosSales));
+                localStorage.setItem('fia_packages', JSON.stringify(packages));
                 localStorage.setItem('fia_stock_returns', JSON.stringify(stockReturns));
                 localStorage.setItem('fia_cleared_daybook', JSON.stringify(clearedDayBookEntries));
                 localStorage.setItem('fia_app_pin', appPin);
@@ -1433,12 +1597,13 @@
 
         function syncToFirebase() {
             saveLocalStateSafely();
+            createAutomaticLocalBackup();
             if (!window.FB_DB) {
                 updateSyncStatus(false, 'Local Offline Mode');
                 return Promise.resolve(false);
             }
 
-            const payload = { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, stockReturns, clearedDayBookEntries, appPin };
+            const payload = { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, packages, stockReturns, clearedDayBookEntries, appPin };
             
             return window.FB_DB.ref('fia_data').update(payload)
                 .then(() => {
@@ -1465,7 +1630,7 @@
         }
 
         function downloadFullBackup() {
-            const backup = { backupVersion: 1, app: 'FIA CLEAN & CARE', createdAt: new Date().toISOString(), data: { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, clearedDayBookEntries, appPin } };
+            const backup = { backupVersion: 1, app: 'FIA CLEAN & CARE', createdAt: new Date().toISOString(), data: { products, cosProducts, customers, purchases, expenses, cosPurchases, cosSales, packages, clearedDayBookEntries, appPin } };
             const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1509,6 +1674,7 @@
                     expenses = Array.isArray(d.expenses) ? d.expenses : [];
                     cosPurchases = Array.isArray(d.cosPurchases) ? d.cosPurchases : [];
                     cosSales = Array.isArray(d.cosSales) ? d.cosSales : [];
+                    packages = Array.isArray(d.packages) ? d.packages : [];
                     stockReturns = Array.isArray(d.stockReturns) ? d.stockReturns : [];
                     clearedDayBookEntries = Array.isArray(d.clearedDayBookEntries) ? d.clearedDayBookEntries : [];
                     if (typeof d.appPin === 'string' && d.appPin) appPin = d.appPin;
@@ -1551,10 +1717,28 @@
 
         function switchTab(tabName, pushToHistory = true) {
             const sections = ['home', 'customers', 'billing', 'operations', 'stock', 'purchase', 'expenses', 'cosmetics', 'accounts'];
+
+            // Force Stock's internal Product/Package panels closed whenever another main menu opens.
+            // This prevents the Stock Product list or Add Package panel from remaining visible over other screens.
+            if (tabName !== 'stock') {
+                const stockProductArea = document.getElementById('stockProductArea');
+                const stockPackageArea = document.getElementById('stockPackageArea');
+                const packageReportArea = document.getElementById('packageReportArea');
+                if (stockProductArea) { stockProductArea.classList.add('hidden'); stockProductArea.style.display = 'none'; }
+                if (stockPackageArea) { stockPackageArea.classList.add('hidden'); stockPackageArea.style.display = 'none'; }
+                if (packageReportArea) packageReportArea.classList.add('hidden');
+            }
+
+            // Always force every main section closed before opening the requested one.
+            // This prevents content from a previously opened sub-section (especially Stock)
+            // from remaining visible when another main menu is selected.
             sections.forEach(sec => {
                 const secEl = document.getElementById('section' + sec.charAt(0).toUpperCase() + sec.slice(1));
                 const tabEl = document.getElementById('tab' + sec.charAt(0).toUpperCase() + sec.slice(1));
-                if (secEl) secEl.classList.add('hidden');
+                if (secEl) {
+                    secEl.classList.add('hidden');
+                    secEl.style.display = 'none';
+                }
                 if (tabEl) tabEl.className = "px-3 py-2 text-center font-medium text-slate-400 hover:text-slate-200 whitespace-nowrap transition";
             });
 
@@ -1563,7 +1747,10 @@
             if (['stock','purchase','expenses'].includes(tabName)) activeTabName = 'operations';
             const activeTab = document.getElementById('tab' + activeTabName.charAt(0).toUpperCase() + activeTabName.slice(1));
 
-            if (activeSec) activeSec.classList.remove('hidden');
+            if (activeSec) {
+                activeSec.classList.remove('hidden');
+                activeSec.style.display = '';
+            }
             if (activeTab) activeTab.className = "px-3 py-2 text-center font-bold text-emerald-400 border-b-2 border-emerald-400 whitespace-nowrap transition";
 
             if (pushToHistory && isLoggedIn) {
@@ -1586,27 +1773,26 @@
             if (billingTab) billingTab.classList.add('active');
             const std = document.getElementById('billingStandardContent');
             const hist = document.getElementById('billingSalesHistoryPanel');
+            const combined = document.getElementById('billingCombinedContent');
+            const cosmetics = document.getElementById('sectionCosmetics');
             if (type === 'history') {
-                if (std) std.classList.add('hidden');
-                if (hist) hist.classList.remove('hidden');
+                if (std) std.classList.add('hidden'); if (combined) combined.classList.add('hidden'); if (hist) hist.classList.remove('hidden');
                 try { window.__fiaSalesHistoryFilter = window.__fiaSalesHistoryFilter || 'all'; } catch(e) {}
                 if (typeof window.setSalesHistoryFilter === 'function') window.setSalesHistoryFilter(window.__fiaSalesHistoryFilter);
-                setTimeout(() => { if (hist) hist.scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
                 return;
             }
-            if (std) std.classList.remove('hidden');
-            if (hist) hist.classList.add('hidden');
-            const idxEl = document.getElementById('custIndex');
-            const billNoEl = document.getElementById('billNumberDisplay');
-            if (type === 'cleaning' && idxEl && billNoEl && String(idxEl.value) === '-1') {
-                billNoEl.textContent = getNextBillNumber();
+            if (cosmetics) cosmetics.classList.add('hidden');
+            if (type === 'combined') {
+                if (std) std.classList.add('hidden'); if (hist) hist.classList.add('hidden'); if (combined) combined.classList.remove('hidden');
+                updateCombinedProductSelect(); updateCombinedCustomerSelect(); resetCombinedBillForm(false);
+                return;
             }
-            if (type === 'cleaning') {
-                switchTab('billing', false);
-            }
-            else if (type === 'cosmetics') {
-                openCosmeticsSalesEntry();
-            }
+            if (combined) combined.classList.add('hidden');
+            if (std) std.classList.remove('hidden'); if (hist) hist.classList.add('hidden');
+            const idxEl = document.getElementById('custIndex'); const billNoEl = document.getElementById('billNumberDisplay');
+            if (type === 'cleaning' && idxEl && billNoEl && String(idxEl.value) === '-1') billNoEl.textContent = getNextBillNumber();
+            if (type === 'cleaning') switchTab('billing', false);
+            else if (type === 'cosmetics') openCosmeticsSalesEntry();
         }
 
         window.onpopstate = function(event) {
@@ -1648,10 +1834,18 @@
             
             const expDateEl = document.getElementById('expDate');
             if(expDateEl && !expDateEl.value) expDateEl.value = todayDDMMYYYY();
-            setTimeout(() => { switchStockSubTab('cleaning'); switchPurchaseSubTab('cleaning'); updateCleaningPurchaseDropdown(); updateCosProductDropdowns(); updateStockReturnDropdowns(); renderStockReturnHistory(); }, 0);
+            setTimeout(() => { switchStockTopTab('product'); switchStockSubTab('cleaning'); switchPurchaseSubTab('cleaning'); updateCleaningPurchaseDropdown(); updateCosProductDropdowns(); updateStockReturnDropdowns(); renderStockReturnHistory(); }, 0);
             renderAll();
             startRealtimeSync();
+            startAutomaticBackup();
         };
+
+        function switchStockTopTab(tab) {
+            const productArea=document.getElementById('stockProductArea'), packageArea=document.getElementById('stockPackageArea');
+            const p=document.getElementById('stockTopProduct'), q=document.getElementById('stockTopPackage');
+            if(tab==='package'){ if(productArea){productArea.classList.add('hidden');productArea.style.display='none';} if(packageArea){packageArea.classList.remove('hidden');packageArea.style.display='';} p?.classList.remove('bg-emerald-700','text-white','shadow-md'); p?.classList.add('text-slate-400'); q?.classList.add('bg-cyan-700','text-white','shadow-md'); q?.classList.remove('text-slate-400'); renderPackages(); updatePackageSelectors(); }
+            else { if(packageArea){packageArea.classList.add('hidden');packageArea.style.display='none';} if(productArea){productArea.classList.remove('hidden');productArea.style.display='';} q?.classList.remove('bg-cyan-700','text-white','shadow-md'); q?.classList.add('text-slate-400'); p?.classList.add('bg-emerald-700','text-white','shadow-md'); p?.classList.remove('text-slate-400'); }
+        }
 
         function switchStockSubTab(tab) {
             const cleaning = document.getElementById('stockCleaningContent');
@@ -2115,6 +2309,18 @@
             if (video && video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
         }
 
+        function openLowStockList() {
+            const container = document.getElementById('lowStockListContainer');
+            if (!container) return;
+            const rows = [
+                ...products.filter(p => Number(p.stock || 0) <= 5).map(p => ({...p, category:'Cleaning'})),
+                ...cosProducts.filter(p => Number(p.stock || 0) <= 5).map(p => ({...p, category:'Cosmetics'}))
+            ].sort((a,b) => Number(a.stock||0) - Number(b.stock||0));
+            container.innerHTML = rows.length ? rows.map(p => `<div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-xs"><div class="flex justify-between gap-3"><div><div class="font-bold ${p.category==='Cosmetics'?'text-pink-300':'text-emerald-300'}">${p.name || 'Product'}</div><div class="text-slate-500 mt-1">${p.category}</div></div><div class="text-right"><div class="text-rose-300 font-extrabold">${p.stock || 0} ${p.unit || ''}</div><div class="text-[10px] text-slate-500">Current Stock</div></div></div></div>`).join('') : '<p class="text-xs text-slate-500 text-center py-8">No low stock products.</p>';
+            document.getElementById('lowStockListModal').classList.remove('hidden');
+        }
+        function closeLowStockList() { document.getElementById('lowStockListModal')?.classList.add('hidden'); }
+
         function checkLowStockAlerts() {
             const banner = document.getElementById('lowStockAlertBanner');
             const preview = document.getElementById('lowStockListPreview');
@@ -2182,7 +2388,7 @@
             const rows = (c.items || []).map((item) => `<tr><td style="padding:6px;border:1px solid #ddd">${item.productName || ''}</td><td style="padding:6px;border:1px solid #ddd;text-align:center">${item.qty || 0} ${item.unitType !== 'Standard' ? (item.unitType || '') : ''}</td><td style="padding:6px;border:1px solid #ddd;text-align:center">${Number(item.numberOfUnits || 1)} Units</td><td style="padding:6px;border:1px solid #ddd;text-align:right">₹${Number(item.rate || 0).toFixed(2)}</td><td style="padding:6px;border:1px solid #ddd;text-align:right">₹${Number(item.total || 0).toFixed(2)}</td></tr>`).join('');
             const grand = Number(c.grandTotal || 0), paid = Number(c.paidAmount ?? grand), due = Number(c.pendingAmount ?? Math.max(0, grand-paid)), ret = Number(c.excessAmount ?? Math.max(0, paid-grand));
             const wrapper = document.createElement('div');
-            wrapper.innerHTML = `<div style="font-family:Arial,sans-serif;background:#fff!important;color:#000!important;padding:8px;width:100%;max-width:none;margin:0;border:3px solid #000!important;border-radius:4px;box-sizing:border-box;font-size:11px;line-height:1.35"><div style="text-align:center;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:12px"><div style="font-size:20px;font-weight:bold;color:#065f46">FIA CLEAN & CARE</div><div style="font-size:11px;color:#333">Fia Clean & Care, Edathanattukara | Mob: 8086452106</div></div><div style="font-size:12px;margin-bottom:10px"><strong>Bill No:</strong> ${c.billNo || '—'} &nbsp;|&nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}<br><strong>Customer:</strong> ${c.name || ''}</div><div style="border-top:1px solid #000;padding-top:6px;margin-top:6px;margin-bottom:6px;font-size:14px;font-weight:700;letter-spacing:0.3px;color:#000;text-align:center;">PARTICULARS</div><table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px"><thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #ddd">Product</th><th style="padding:6px;border:1px solid #ddd">Quantity</th><th style="padding:6px;border:1px solid #ddd">Unit</th><th style="padding:6px;border:1px solid #ddd">Price</th><th style="padding:6px;border:1px solid #ddd">Total</th></tr></thead><tbody>${rows}</tbody></table><div style="text-align:right;font-size:12px;line-height:1.6"><div><strong>Grand Total: ₹${grand.toFixed(2)}</strong></div><div style="color:#047857"><strong>Paid: ₹${paid.toFixed(2)}</strong></div>${due>0?`<div style="color:#b91c1c"><strong>Balance Due: ₹${due.toFixed(2)}</strong></div>`:''}${ret>0?`<div style="color:#b45309"><strong>Balance Return: ₹${ret.toFixed(2)}</strong></div>`:''}</div><div style="text-align:center;border-top:1px solid #ddd;margin-top:20px;padding-top:8px;font-size:10px;color:#555">Thank you for your business!</div></div>`;
+            wrapper.innerHTML = `<div style="font-family:Arial,sans-serif;background:#fff!important;color:#000!important;padding:8px;width:100%;max-width:none;margin:0;border:3px solid #000!important;border-radius:4px;box-sizing:border-box;font-size:11px;line-height:1.35"><div style="text-align:center;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:12px"><div style="font-size:20px;font-weight:bold;color:#065f46">FIA CLEAN AND CARE</div><div style="font-size:12px;font-weight:600;color:#333">Wholesale and Retail</div><div style="font-size:11px;color:#333">Edathanattukara</div><div style="font-size:11px;color:#333">Mob:80864 52106</div></div><div style="font-size:12px;margin-bottom:10px"><strong>Bill No:</strong> ${c.billNo || '—'} &nbsp;|&nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}<br><strong>Customer:</strong> ${c.name || ''}</div><div style="border-top:1px solid #000;padding-top:6px;margin-top:6px;margin-bottom:6px;font-size:14px;font-weight:700;letter-spacing:0.3px;color:#000;text-align:center;">PARTICULARS</div><table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px"><thead><tr style="background:#f3f4f6"><th style="padding:6px;border:1px solid #ddd">Product</th><th style="padding:6px;border:1px solid #ddd">Quantity</th><th style="padding:6px;border:1px solid #ddd">Unit</th><th style="padding:6px;border:1px solid #ddd">Price</th><th style="padding:6px;border:1px solid #ddd">Total</th></tr></thead><tbody>${rows}</tbody></table><div style="text-align:right;font-size:12px;line-height:1.6"><div><strong>Grand Total: ₹${grand.toFixed(2)}</strong></div><div style="color:#047857"><strong>Paid: ₹${paid.toFixed(2)}</strong></div>${due>0?`<div style="color:#b91c1c"><strong>Balance Due: ₹${due.toFixed(2)}</strong></div>`:''}${ret>0?`<div style="color:#b45309"><strong>Balance Return: ₹${ret.toFixed(2)}</strong></div>`:''}</div><div style="text-align:center;border-top:1px solid #ddd;margin-top:20px;padding-top:8px;font-size:10px;color:#555">Thank you for your business!</div></div>`;
             const filename = `FIA_BILL_${String(c.billNo || c.name || 'bill').replace(/[^a-z0-9_-]+/gi,'_')}.pdf`;
             await fiaDownloadPDFElement(wrapper.firstElementChild, filename, 'Bill');
         }
@@ -2244,6 +2450,163 @@
             document.body.removeChild(link);
         }
 
+        function updatePackageSelectors(){
+            const opts='<option value="">No Package Mapping</option>'+sortByNameAsc(packages).map(x=>`<option value="${String(x.id)}">${x.name}${x.size?' — '+x.size:''} (Stock: ${x.stock} ${x.unit||'Pcs'})</option>`).join('');
+            ['prodPackageId','cosProdPackageId'].forEach(id=>{
+                const el=document.getElementById(id); if(!el)return;
+                const old=String(el.value||'');
+                el.innerHTML=opts;
+                el.value=(old && [...el.options].some(o=>String(o.value)===old))?old:'';
+            });
+        }
+        function normalizePackageMapping(packageId, packageQty, packageName){
+            const id=String(packageId||'').trim(), qty=Number(packageQty)||0;
+            let pkg=id?packages.find(x=>String(x.id)===id):null;
+            if(!pkg && packageName){
+                const nm=String(packageName).trim().toLowerCase();
+                pkg=packages.find(x=>String(x.name||'').trim().toLowerCase()===nm)||null;
+            }
+            return pkg&&qty>0?{packageId:String(pkg.id),packageQty:qty,packageName:String(pkg.name||'')}:{packageId:'',packageQty:0,packageName:''};
+        }
+        function savePackage(e){
+            e.preventDefault(); const id=document.getElementById('packageId').value, name=document.getElementById('packageName').value.trim(), size=document.getElementById('packageSize').value.trim(), unit=document.getElementById('packageUnit').value, stock=parseFloat(document.getElementById('packageStock').value)||0;
+            if(!name)return; const data={id:id||'pkg_'+Date.now(),name,size,unit,stock}; if(id){const i=packages.findIndex(x=>x.id===id);if(i>=0)packages[i]={...packages[i],...data};else packages.push(data);}else packages.push(data);
+            syncToFirebase(); resetPackageForm(); renderPackages(); updatePackageSelectors();
+        }
+        function resetPackageForm(){const f=document.getElementById('packageForm');if(f)f.reset();document.getElementById('packageId').value='';document.getElementById('packageSubmitBtn').textContent='Add Package';document.getElementById('packageUnit').value='Pcs';}
+        function editPackage(id){const x=packages.find(p=>p.id===id);if(!x)return;switchTab('stock',false);switchStockTopTab('package');document.getElementById('packageId').value=x.id;document.getElementById('packageName').value=x.name||'';document.getElementById('packageSize').value=x.size||'';document.getElementById('packageUnit').value=x.unit||'Pcs';document.getElementById('packageStock').value=x.stock??0;document.getElementById('packageSubmitBtn').textContent='Update Package';}
+        function deletePackage(id){if(!confirm('Delete this package item?'))return;packages=packages.filter(x=>x.id!==id);products.forEach(p=>{if(p.packageId===id){p.packageId='';p.packageQty=0;}});cosProducts.forEach(p=>{if(p.packageId===id){p.packageId='';p.packageQty=0;}});syncToFirebase();renderPackages();updatePackageSelectors();renderProducts();renderCosProductStock();}
+        function addPackageStock(id,qty){const x=packages.find(p=>p.id===id);if(!x||!(qty>0))return;x.stock=(Number(x.stock)||0)+qty;syncToFirebase();renderPackages();updatePackageSelectors();}
+        function renderPackages(){const c=document.getElementById('packageListContainer');if(!c)return;c.innerHTML=sortByNameAsc(packages).map(x=>`<div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3 flex justify-between gap-3 items-center"><div><div class="font-bold text-cyan-300 text-xs">${x.name}</div><div class="text-[10px] text-slate-500">${x.size||'—'} • ${x.unit||'Pcs'}</div></div><div class="text-right"><div class="font-extrabold ${(Number(x.stock)||0)<=5?'text-rose-300':'text-white'}">${Number(x.stock)||0}</div><div class="flex gap-1 justify-end mt-1 items-center"><input id="pkgAdd_${x.id}" type="number" min="0" step="any" placeholder="+Stock" class="w-16 px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-[10px] text-white"><button type="button" onclick="addPackageStock('${x.id}',parseFloat(document.getElementById('pkgAdd_${x.id}').value)||0);document.getElementById('pkgAdd_${x.id}').value=''" class="bg-cyan-900 text-cyan-200 px-2 py-1 rounded-lg text-[10px]">Add</button><button type="button" onclick="editPackage('${x.id}')" class="bg-slate-800 text-amber-300 px-2 py-1 rounded-lg text-[10px]">Edit</button><button type="button" onclick="deletePackage('${x.id}')" class="bg-slate-800 text-red-300 px-2 py-1 rounded-lg text-[10px]">Delete</button></div></div></div>`).join('')||'<p class="text-xs text-slate-500 text-center py-6">No package items added yet.</p>';renderPackageConsolidationReport();}
+        function switchPackageView(view){const list=document.getElementById('packageListArea'),report=document.getElementById('packageReportArea');if(!list||!report)return;if(view==='report'){list.classList.add('hidden');report.classList.remove('hidden');renderPackageConsolidationReport();}else{report.classList.add('hidden');list.classList.remove('hidden');}}
+        function renderPackageConsolidationReport(){const rows=sortByNameAsc(packages||[]).map(p=>({name:p.name||'',size:p.size||'',stock:Number(p.stock)||0,unit:p.unit||'Pcs'}));const summary=[['Total Items',rows.length],['Total Stock',rows.reduce((s,r)=>s+r.stock,0)],['Low Stock',rows.filter(r=>r.stock<=5).length],['Units Used',new Set(rows.map(r=>r.unit).filter(Boolean)).size]];const sh=document.getElementById('packageReportSummary');if(sh)sh.innerHTML=summary.map(([l,v])=>`<div class="bg-slate-900 rounded-lg p-3"><div class="text-[10px] text-slate-400">${l}</div><b class="text-sm text-white">${v}</b></div>`).join('');const tb=document.getElementById('packageReportTableBody');if(tb)tb.innerHTML=rows.length?rows.map((r,i)=>`<tr class="border-t border-slate-800"><td class="p-2 text-slate-500">${i+1}</td><td class="p-2 text-cyan-300 font-semibold">${r.name||'—'}</td><td class="p-2 text-slate-400">${r.size||'—'}</td><td class="p-2 text-right font-bold ${r.stock<=5?'text-rose-300':'text-white'}">${r.stock}</td><td class="p-2 text-slate-300">${r.unit}</td><td class="p-2 ${r.stock<=5?'text-rose-300':'text-emerald-300'}">${r.stock<=5?'LOW STOCK':'OK'}</td></tr>`).join(''):'<tr><td colspan="6" class="p-5 text-center text-slate-500">No package items found.</td></tr>';const um={};rows.forEach(r=>um[r.unit]=(um[r.unit]||0)+r.stock);const uh=document.getElementById('packageReportUnitTotals');if(uh)uh.innerHTML=Object.entries(um).sort((a,b)=>a[0].localeCompare(b[0])).map(([u,t])=>`<div class="flex justify-between bg-slate-900/70 border border-slate-800 rounded-lg px-3 py-2 text-[11px]"><span class="text-slate-400">Total ${u}</span><b class="text-slate-200">${t}</b></div>`).join('')||'<div class="text-[10px] text-slate-500">No stock data.</div>';}
+        function getProductPackageInfo(product){
+            if(!product) return null;
+            const packageId=String(product.packageId||'');
+            const pkg=packageId?packages.find(x=>String(x.id)===packageId):null;
+            const qty=Number(product.packageQty)||0;
+            return pkg&&qty>0?{id:pkg.id,qty,pkg}:null;
+        }
+        // One selling unit means one bottle/pack/container. The measurement (500 ml, 1 L, etc.)
+        // is the product quantity inside that container and must NOT multiply the package count.
+        function getPackageSellingUnits(item){
+            return Math.max(1,Number(item?.numberOfUnits)||1);
+        }
+        function resolvePackageInfoForItem(item){
+            if(!item) return null;
+            let product=null;
+            const category=String(item.combinedCategory||item.category||'Cleaning');
+            if(item.stockId){
+                product=(category==='Cosmetics'?cosProducts.find(x=>String(x.id)===String(item.stockId)):products.find(x=>String(x.id)===String(item.stockId)))||null;
+                if(!product) product=cosProducts.find(x=>String(x.id)===String(item.stockId))||products.find(x=>String(x.id)===String(item.stockId))||null;
+            }
+            if(!product && item.productName){
+                const nm=String(item.productName).trim().toLowerCase();
+                const list=category==='Cosmetics'?[...cosProducts,...products]:[...products,...cosProducts];
+                product=list.find(x=>String(x.name||'').trim().toLowerCase()===nm)||null;
+            }
+
+            // Existing Product Master mapping is accepted, but is NOT required.
+            let packageId=String(item.packageId||product?.packageId||'');
+            let packageQty=Number(item.packageQty)>0?Number(item.packageQty):Number(product?.packageQty)||0;
+            const packageName=String(item.packageName||product?.packageName||'').trim().toLowerCase();
+            let pkg=packageId?packages.find(x=>String(x.id)===packageId):null;
+            if(!pkg && packageName) pkg=packages.find(x=>String(x.name||'').trim().toLowerCase()===packageName)||null;
+            if(pkg && packageQty>0) return {id:pkg.id,qty:packageQty,pkg,product};
+
+            // Automatic matching from the BILL. Package section remains unchanged.
+            const sellingType=String(item.quantityType||'').trim().toLowerCase();
+            const qty=Number(item.qty)||0;
+            const unitType=String(item.unitType||'').trim().toLowerCase();
+            const productName=String(item.productName||product?.name||'').trim().toLowerCase();
+            if(!sellingType || !packages.length) return null;
+
+            function normalizeUnit(u){
+                u=String(u||'').toLowerCase().trim();
+                if(['millilitre','millilitres','milliliter','milliliters','ml'].includes(u)) return 'ml';
+                if(['litre','litres','liter','liters','ltr','l'].includes(u)) return 'l';
+                if(['kilogram','kilograms','kilogramme','kg'].includes(u)) return 'kg';
+                if(['gram','grams','g'].includes(u)) return 'g';
+                return u;
+            }
+            function extractSize(v){
+                const m=String(v||'').toLowerCase().replace(/,/g,'').match(/(\d+(?:\.\d+)?)\s*(ml|millilitres?|l|ltr|litres?|liters?|kg|kilograms?|g|grams?)/i);
+                return m ? {n:Number(m[1]),u:normalizeUnit(m[2])} : null;
+            }
+            const billSize={n:qty,u:normalizeUnit(unitType)};
+            const typeWord=sellingType==='bottle'?'bottle':sellingType==='pack'?'pack':sellingType;
+
+            const candidates=packages.map(x=>{
+                const pu=String(x.unit||'Pcs').trim().toLowerCase();
+                const pn=String(x.name||'').trim().toLowerCase();
+                const ps=extractSize(x.size);
+                const pnSize=extractSize(x.name);
+                let score=-1;
+
+                // Package type can be stored either in the Unit field or in the item name.
+                const typeOk = sellingType==='bottle'
+                    ? (pu==='bottle'||pu==='bottles'||pn.includes('bottle'))
+                    : sellingType==='pack'
+                        ? (pu==='pack'||pu==='packs'||pn.includes('pack'))
+                        : (pu===sellingType || pn.includes(typeWord));
+                // Pcs is commonly used for individual bottles/packs, so allow it when
+                // the name clearly identifies the package type.
+                const pcsFallback=(pu==='pcs'||pu==='piece'||pu==='pieces') && (pn.includes(typeWord));
+                if(typeOk || pcsFallback) score=40;
+                else return {...x,score:-1};
+
+                // Exact fill-size match, from either Package Size or Package Item Name.
+                if(ps && ps.n===billSize.n && ps.u===billSize.u) score+=300;
+                if(pnSize && pnSize.n===billSize.n && pnSize.u===billSize.u) score+=260;
+
+                // Product name match is useful when the package is named e.g. "Dishwash Bottle".
+                if(productName && pn.includes(productName)) score+=120;
+                const productWords=productName.split(/\s+/).filter(w=>w.length>=3);
+                productWords.forEach(w=>{if(pn.includes(w)) score+=8;});
+
+                // If the package size/name contains the requested size as text, accept it.
+                const billSizeText=(qty+' '+billSize.u).replace(/\s+/g,'').toLowerCase();
+                if(String(x.size||'').toLowerCase().replace(/\s+/g,'').includes(billSizeText)) score+=180;
+                if(pn.replace(/\s+/g,'').includes(billSizeText)) score+=160;
+
+                return {...x,score};
+            }).filter(x=>x.score>40).sort((a,b)=>b.score-a.score);
+
+            if(!candidates.length) return null;
+            const best=candidates[0];
+            return {id:best.id,qty:1,pkg:packages.find(x=>String(x.id)===String(best.id))||best,product};
+        }
+        function restorePackageStock(items){
+            (items||[]).forEach(item=>{
+                const info=resolvePackageInfoForItem(item);
+                if(info&&info.pkg) info.pkg.stock=(Number(info.pkg.stock)||0)+info.qty*getPackageSellingUnits(item);
+            });
+        }
+        function checkAndDeductPackageStock(items){
+            const need={};
+            const missing=[];
+            (items||[]).forEach(item=>{
+                const info=resolvePackageInfoForItem(item);
+                if(info) need[info.id]=(need[info.id]||0)+info.qty*getPackageSellingUnits(item);
+                else missing.push(item?.productName||'Unknown Product');
+            });
+            // If a product is mapped to a package, deduction is mandatory. Do not silently skip it.
+            if(missing.length){
+                return {ok:false,missing:true,products:[...new Set(missing)]};
+            }
+            for(const id in need){
+                const pkg=packages.find(x=>String(x.id)===String(id));
+                if(!pkg) return {ok:false,missing:true,products:['Package mapping not found']};
+                if(need[id]>Number(pkg.stock||0)) return {ok:false,pkg,need:need[id]};
+            }
+            for(const id in need){
+                const pkg=packages.find(x=>String(x.id)===String(id));
+                if(pkg) pkg.stock=(Number(pkg.stock)||0)-need[id];
+            }
+            saveLocalStateSafely();
+            return {ok:true,need};
+        }
+
         function saveProduct(e) {
             e.preventDefault();
             const id = document.getElementById('prodId').value;
@@ -2253,13 +2616,14 @@
             const unit = document.getElementById('prodUnit').value;
             const wholesalePrice = parseFloat(document.getElementById('prodWholesalePrice').value);
             const retailPrice = parseFloat(document.getElementById('prodRetailPrice').value);
-
-            if(id === "") {
-                products.push({ id: Date.now().toString(), name, barcode, stock, unit, wholesalePrice, retailPrice });
-            } else {
-                const idx = products.findIndex(p => p.id === id);
-                if(idx !== -1) products[idx] = { id, name, barcode, stock, unit, wholesalePrice, retailPrice };
-            }
+            const rawPackageId=document.getElementById('prodPackageId')?.value||'';
+            const rawPackageQty=parseFloat(document.getElementById('prodPackageQty')?.value)||0;
+            const selectedText=document.getElementById('prodPackageId')?.selectedOptions?.[0]?.textContent||'';
+            const mapped=normalizePackageMapping(rawPackageId,rawPackageQty,selectedText.split(' (Stock:')[0]);
+            const packageId=mapped.packageId, packageQty=mapped.packageQty, packageName=mapped.packageName;
+            if(rawPackageId && !packageId){ alert('Selected package was not found. Please refresh the package list and select the package again.'); return; }
+            if(id === "") { products.push({ id: Date.now().toString(), name, barcode, stock, unit, wholesalePrice, retailPrice, packageId, packageQty, packageName }); }
+            else { const idx = products.findIndex(p => String(p.id) === String(id)); if(idx !== -1) products[idx] = { ...products[idx], id, name, barcode, stock, unit, wholesalePrice, retailPrice, packageId, packageQty, packageName }; }
             syncToFirebase();
             resetProductForm();
             renderProducts();
@@ -2426,6 +2790,7 @@
                 document.getElementById('prodUnit').value = p.unit || '';
                 document.getElementById('prodWholesalePrice').value = p.wholesalePrice ?? 0;
                 document.getElementById('prodRetailPrice').value = p.retailPrice ?? 0;
+                updatePackageSelectors(); document.getElementById('prodPackageId').value = p.packageId || ''; document.getElementById('prodPackageQty').value = p.packageQty ?? 1;
                 document.getElementById('stockFormTitle').innerText = "Edit Product";
                 document.getElementById('prodSubmitBtn').innerText = "Update Product";
                 setTimeout(() => document.getElementById('stockFormTitle')?.scrollIntoView({behavior:'smooth', block:'start'}), 50);
@@ -2448,6 +2813,7 @@
             document.getElementById('prodId').value = "";
             document.getElementById('stockFormTitle').innerText = "Add New Product";
             document.getElementById('prodSubmitBtn').innerText = "Add Product";
+            if(document.getElementById('prodPackageId')) document.getElementById('prodPackageId').value=''; if(document.getElementById('prodPackageQty')) document.getElementById('prodPackageQty').value='1';
         }
 
         function saveDirectCustomer(e) {
@@ -2618,17 +2984,23 @@
             const unit = document.getElementById('cosProdUnit').value;
             const costPrice = parseFloat(document.getElementById('cosProdCostPrice').value) || 0;
             const salePrice = parseFloat(document.getElementById('cosProdSalePrice').value) || 0;
+            const rawPackageId=document.getElementById('cosProdPackageId')?.value||'';
+            const rawPackageQty=parseFloat(document.getElementById('cosProdPackageQty')?.value)||0;
+            const selectedText=document.getElementById('cosProdPackageId')?.selectedOptions?.[0]?.textContent||'';
+            const mapped=normalizePackageMapping(rawPackageId,rawPackageQty,selectedText.split(' (Stock:')[0]);
+            const packageId=mapped.packageId, packageQty=mapped.packageQty, packageName=mapped.packageName;
 
             if (!name || !unit) return;
+            if(rawPackageId && !packageId){ alert('Selected package was not found. Please refresh the package list and select the package again.'); return; }
             if (id === '') {
                 cosProducts.push({
                     id: 'cp_' + Date.now().toString(),
-                    name, barcode, stock, unit, costPrice, salePrice
+                    name, barcode, stock, unit, costPrice, salePrice, packageId, packageQty, packageName
                 });
             } else {
                 const idx = cosProducts.findIndex(p => p.id === id);
                 if (idx !== -1) {
-                    cosProducts[idx] = { ...cosProducts[idx], name, barcode, stock, unit, costPrice, salePrice };
+                    cosProducts[idx] = { ...cosProducts[idx], name, barcode, stock, unit, costPrice, salePrice, packageId, packageQty, packageName };
                 }
             }
             syncToFirebase();
@@ -2670,6 +3042,7 @@
             document.getElementById('cosProdUnit').value = p.unit || '';
             document.getElementById('cosProdCostPrice').value = p.costPrice ?? 0;
             document.getElementById('cosProdSalePrice').value = p.salePrice ?? 0;
+            updatePackageSelectors(); document.getElementById('cosProdPackageId').value=p.packageId||''; document.getElementById('cosProdPackageQty').value=p.packageQty??1;
             document.getElementById('cosStockFormTitle').innerText = 'Edit Cosmetic Product';
             document.getElementById('cosProdSubmitBtn').innerText = 'Update Product';
             setTimeout(() => document.getElementById('cosStockFormTitle')?.scrollIntoView({behavior:'smooth', block:'start'}), 50);
@@ -2719,6 +3092,7 @@
             document.getElementById('cosProdId').value = '';
             document.getElementById('cosStockFormTitle').innerText = 'Add Cosmetic Product';
             document.getElementById('cosProdSubmitBtn').innerText = 'Add Product';
+            if(document.getElementById('cosProdPackageId')) document.getElementById('cosProdPackageId').value=''; if(document.getElementById('cosProdPackageQty')) document.getElementById('cosProdPackageQty').value='1';
         }
 
         function showCosmeticStockList() {
@@ -2815,7 +3189,7 @@
             const productId = document.getElementById('cosSalesStockSelect').value;
             const product = cosProducts.find(p => p.id === productId);
             const factor = getBillingUnitFactor(unitType, product?.unit);
-            const total = numberOfUnits * rate;
+            const total = qty * factor * numberOfUnits * rate;
             document.getElementById('cosSAmount').value = total ? total.toFixed(2) : '';
             calculateCosSalesBalance();
         }
@@ -2833,13 +3207,17 @@
             }
             const factor = getBillingUnitFactor(unitType, product.unit);
             const stockDeductionQty = qty * factor * numberOfUnits;
-            const total = numberOfUnits * rate;
+            // billRate is the price of one complete bottle/pack, whether it was preset
+            // or manually corrected by the user.
+            const total = rate * numberOfUnits;
+            const packageInfo=getProductPackageInfo(product);
             const already = currentCosBillItems.filter(i => i.stockId === productId).reduce((s, i) => s + Number(i.stockDeductionQty || 0), 0);
             if (stockDeductionQty + already > Number(product.stock || 0)) {
                 alert(`Insufficient stock. Available: ${product.stock} ${product.unit}`);
                 return;
             }
-            currentCosBillItems.push({ productName: product.name, stockId: product.id, barcode: product.barcode || '', qty, unitType, numberOfUnits, rate, total, stockDeductionQty });
+            const quantityType = (product.unit||'').toLowerCase()==='pack' ? 'Pack' : 'Bottle'; currentCosBillItems.push({ productName: product.name, stockId: product.id, barcode: product.barcode || '', qty, unitType, quantityType, numberOfUnits, rate, total, stockDeductionQty, packageId:packageInfo?.id||'', packageQty:packageInfo?.qty||0 });
+            currentCosBillItems = sortBillItemsAlphabetically(currentCosBillItems);
             document.getElementById('cosSQty').value = '';
             document.getElementById('cosSUnitPrice').value = '';
             document.getElementById('cosSAmount').value = '';
@@ -2854,12 +3232,14 @@
             if (!container) return;
             container.innerHTML = '';
             let grandTotal = 0;
+            currentCosBillItems = sortBillItemsAlphabetically(currentCosBillItems);
             currentCosBillItems.forEach((item, index) => {
                 grandTotal += Number(item.total || 0);
                 container.innerHTML += `
-                    <div class="grid grid-cols-[1.4fr_0.9fr_0.9fr_0.9fr_0.9fr_auto] gap-1 items-center bg-slate-900 p-2 rounded-lg border border-slate-800">
+                    <div class="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.9fr_auto_auto] gap-1 items-center bg-slate-900 p-2 rounded-lg border border-slate-800">
                         <span class="font-semibold">${item.productName}</span><span>${item.qty} ${item.unitType || ''}</span><span>${item.numberOfUnits || 1} Pcs</span><span>₹${Number(item.rate).toFixed(2)}</span><strong class="text-emerald-400">₹${Number(item.total).toFixed(2)}</strong>
-                        <button type="button" onclick="currentCosBillItems.splice(${index},1);renderCosBillPreviewInput();calculateCosSalesBalance();" class="text-red-400 font-bold px-1">✕</button>
+                        <button type="button" onclick="editCosBillItem(${index})" class="text-amber-300 font-bold px-1" title="Edit item">✎</button>
+                        <button type="button" onclick="currentCosBillItems.splice(${index},1);renderCosBillPreviewInput();calculateCosSalesBalance();" class="text-red-400 font-bold px-1" title="Delete item">✕</button>
                     </div>`;
             });
             if (currentCosBillItems.length > 0) {
@@ -2891,7 +3271,17 @@
             const opt = select.options[select.selectedIndex];
             if(!opt.value) return;
             const saleType = document.querySelector('input[name="saleType"]:checked').value;
-            document.getElementById('billRate').value = saleType === 'Wholesale' ? opt.getAttribute('data-wholesale') : opt.getAttribute('data-retail');
+            const rateEl = document.getElementById('billRate');
+            const baseRate = parseFloat(saleType === 'Wholesale' ? opt.getAttribute('data-wholesale') : opt.getAttribute('data-retail')) || 0;
+            const qty = parseFloat(document.getElementById('billQty')?.value) || 0;
+            const unitType = document.getElementById('billUnitType')?.value || '';
+            const product = products.find(p => p.name === opt.value);
+            const factor = getBillingUnitFactor(unitType, product?.unit);
+            // Product Master price is the price for the base quantity. Convert it to the
+            // selected selling quantity so the displayed rate is the price of ONE bottle/pack.
+            const sellingUnitRate = qty > 0 ? baseRate * factor : baseRate;
+            rateEl.value = sellingUnitRate ? sellingUnitRate.toFixed(2) : '';
+            rateEl.dataset.autoRate = rateEl.value;
             calculateItemTotal();
         }
 
@@ -2943,12 +3333,96 @@
             const qty = parseFloat(document.getElementById('billQty').value) || 0;
             const rate = parseFloat(document.getElementById('billRate').value) || 0;
             const unitType = document.getElementById('billUnitType').value;
+            const quantityType = document.getElementById('billQuantityType')?.value || 'Bottle';
             const numberOfUnits = Math.max(1, parseInt(document.getElementById('billNumberOfUnits')?.value, 10) || 1);
             const productName = document.getElementById('billProductSelect')?.value || '';
             const product = products.find(p => p.name === productName);
             const factor = getBillingUnitFactor(unitType, product?.unit);
-            const total = numberOfUnits * rate;
+
+            // If the rate is still the automatically supplied preset rate, keep it in sync
+            // with the selected bottle/pack size. Once the user manually changes the rate,
+            // that manual rate is treated as the price for ONE bottle/pack.
+            const autoRate = parseFloat(document.getElementById('billRate')?.dataset.autoRate);
+            if (qty > 0 && Number.isFinite(autoRate) && Math.abs(rate - autoRate) < 0.000001) {
+                const baseRate = product
+                    ? (document.querySelector('input[name="saleType"]:checked')?.value === 'Wholesale' ? Number(product.wholesalePrice || 0) : Number(product.retailPrice || 0))
+                    : 0;
+                const convertedRate = baseRate * factor;
+                if (Number.isFinite(convertedRate)) {
+                    rate = convertedRate;
+                    document.getElementById('billRate').value = rate ? rate.toFixed(2) : '';
+                    document.getElementById('billRate').dataset.autoRate = document.getElementById('billRate').value;
+                }
+            }
+
+            // Rate is the price for ONE complete selling unit.
+            // Manual example: 300 ml × 10 bottles at ₹45/bottle = ₹450.
+            const total = rate * numberOfUnits;
             document.getElementById('billCalculatedTotal').value = total ? total.toFixed(2) : '';
+        }
+
+        function sortBillItemsAlphabetically(items) {
+            return [...(items || [])].sort((a, b) => String(a.productName || '').localeCompare(String(b.productName || ''), undefined, { sensitivity: 'base', numeric: true }));
+        }
+
+        function editBillItem(index) {
+            const item = currentBillItems[index];
+            if (!item) return;
+            const newQtyRaw = prompt(`Edit quantity for ${item.productName}:`, String(item.qty ?? ''));
+            if (newQtyRaw === null) return;
+            const newQty = parseFloat(newQtyRaw);
+            if (!Number.isFinite(newQty) || newQty <= 0) { alert('Please enter a valid quantity.'); return; }
+            const newUnitsRaw = prompt(`Edit number of units for ${item.productName}:`, String(item.numberOfUnits || 1));
+            if (newUnitsRaw === null) return;
+            const newUnits = Math.max(1, parseInt(newUnitsRaw, 10) || 1);
+            const newRateRaw = prompt(`Edit rate for ${item.productName}:`, String(item.rate ?? ''));
+            if (newRateRaw === null) return;
+            const newRate = parseFloat(newRateRaw);
+            if (!Number.isFinite(newRate) || newRate < 0) { alert('Please enter a valid rate.'); return; }
+            const product = products.find(p => p.name === item.productName);
+            const factor = getBillingUnitFactor(item.unitType, product?.unit);
+            const newStockDeductionQty = newQty * factor * newUnits;
+            if (product) {
+                const others = currentBillItems.filter((_, i) => i !== index).reduce((sum, i) => sum + Number(i.stockDeductionQty || 0), 0);
+                if (newStockDeductionQty + others > Number(product.stock || 0)) {
+                    alert(`Insufficient stock. Available: ${product.stock} ${product.unit}`);
+                    return;
+                }
+            }
+            currentBillItems[index] = { ...item, qty: newQty, numberOfUnits: newUnits, rate: newRate, total: newRate * newUnits, stockDeductionQty: newStockDeductionQty };
+            currentBillItems = sortBillItemsAlphabetically(currentBillItems);
+            renderBillPreviewInput();
+            calculateBalance();
+        }
+
+        function editCosBillItem(index) {
+            const item = currentCosBillItems[index];
+            if (!item) return;
+            const newQtyRaw = prompt(`Edit quantity for ${item.productName}:`, String(item.qty ?? ''));
+            if (newQtyRaw === null) return;
+            const newQty = parseFloat(newQtyRaw);
+            if (!Number.isFinite(newQty) || newQty <= 0) { alert('Please enter a valid quantity.'); return; }
+            const newUnitsRaw = prompt(`Edit number of units for ${item.productName}:`, String(item.numberOfUnits || 1));
+            if (newUnitsRaw === null) return;
+            const newUnits = Math.max(1, parseInt(newUnitsRaw, 10) || 1);
+            const newRateRaw = prompt(`Edit rate for ${item.productName}:`, String(item.rate ?? ''));
+            if (newRateRaw === null) return;
+            const newRate = parseFloat(newRateRaw);
+            if (!Number.isFinite(newRate) || newRate < 0) { alert('Please enter a valid rate.'); return; }
+            const product = cosProducts.find(p => p.id === item.stockId);
+            const factor = getBillingUnitFactor(item.unitType, product?.unit);
+            const newStockDeductionQty = newQty * factor * newUnits;
+            if (product) {
+                const others = currentCosBillItems.filter((_, i) => i !== index).reduce((sum, i) => sum + Number(i.stockDeductionQty || 0), 0);
+                if (newStockDeductionQty + others > Number(product.stock || 0)) {
+                    alert(`Insufficient stock. Available: ${product.stock} ${product.unit}`);
+                    return;
+                }
+            }
+            currentCosBillItems[index] = { ...item, qty: newQty, numberOfUnits: newUnits, rate: newRate, total: newQty * factor * newUnits * newRate, stockDeductionQty: newStockDeductionQty };
+            currentCosBillItems = sortBillItemsAlphabetically(currentCosBillItems);
+            renderCosBillPreviewInput();
+            calculateCosSalesBalance();
         }
 
         function addToBillItems() {
@@ -2956,12 +3430,14 @@
             const qty = parseFloat(document.getElementById('billQty').value);
             const rate = parseFloat(document.getElementById('billRate').value);
             const unitType = document.getElementById('billUnitType').value;
+            const quantityType = document.getElementById('billQuantityType')?.value || 'Bottle';
             const numberOfUnits = Math.max(1, parseInt(document.getElementById('billNumberOfUnits')?.value, 10) || 1);
             if(!productName || isNaN(qty) || qty <= 0 || isNaN(rate)) { alert("Please select product, quantity, and rate."); return; }
             const product = products.find(p => p.name === productName);
             const factor = getBillingUnitFactor(unitType, product?.unit);
             const stockDeductionQty = qty * factor * numberOfUnits;
-            const total = numberOfUnits * rate;
+            const total = qty * factor * numberOfUnits * rate;
+            const packageInfo=getProductPackageInfo(product);
 
             if (product) {
                 const already = currentBillItems.filter(i => i.productName === productName).reduce((sum, i) => sum + Number(i.stockDeductionQty || 0), 0);
@@ -2971,7 +3447,8 @@
                 }
             }
 
-            currentBillItems.push({ productName, qty, unitType, numberOfUnits, rate, total, stockDeductionQty });
+            currentBillItems.push({ productName, qty, unitType, quantityType, numberOfUnits, rate, total, stockDeductionQty, packageId:packageInfo?.id||'', packageQty:packageInfo?.qty||0 });
+            currentBillItems = sortBillItemsAlphabetically(currentBillItems);
             document.getElementById('billQty').value = '';
             document.getElementById('billRate').value = '';
             document.getElementById('billCalculatedTotal').value = '';
@@ -2985,16 +3462,82 @@
             const container = document.getElementById('currentBillItemsPreview');
             container.innerHTML = "";
             let grandTotal = 0;
+            currentBillItems = sortBillItemsAlphabetically(currentBillItems);
             currentBillItems.forEach((item, index) => {
-                grandTotal += item.total;
+                grandTotal += Number(item.total || 0);
                 container.innerHTML += `
-                    <div class="grid grid-cols-[1.4fr_0.9fr_0.9fr_0.9fr_0.9fr_auto] gap-1 items-center bg-slate-900 p-2 rounded-lg border border-slate-800">
+                    <div class="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.9fr_auto_auto] gap-1 items-center bg-slate-900 p-2 rounded-lg border border-slate-800">
                         <span class="font-semibold">${item.productName}</span><span>${item.qty} ${item.unitType || ''}</span><span>${item.numberOfUnits || 1} Pcs</span><span>₹${Number(item.rate).toFixed(2)}</span><strong class="text-emerald-400">₹${Number(item.total).toFixed(2)}</strong>
-                        <button type="button" onclick="currentBillItems.splice(${index},1);renderBillPreviewInput();calculateBalance();" class="text-red-400 font-bold px-1">✕</button>
+                        <button type="button" onclick="editBillItem(${index})" class="text-amber-300 font-bold px-1" title="Edit item">✎</button>
+                        <button type="button" onclick="currentBillItems.splice(${index},1);renderBillPreviewInput();calculateBalance();" class="text-red-400 font-bold px-1" title="Delete item">✕</button>
                     </div>`;
             });
             if(currentBillItems.length > 0) container.innerHTML += `<div class="text-right font-bold text-amber-300 pt-1">Grand Total: ₹${grandTotal.toFixed(2)}</div>`;
             calculateBalance();
+        }
+
+        function updateCombinedCustomerSelect() {
+            const select = document.getElementById('combinedCustomerSelect'); if(!select) return;
+            const names = [];
+            [...customers, ...cosSales].forEach(c => { const n = String(c?.name || c?.customer || '').trim(); if(n && !names.some(x=>x.toLowerCase()===n.toLowerCase())) names.push(n); });
+            names.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
+            const current = select.value;
+            select.innerHTML = '<option value="">-- Select Customer / Enter Manually Below --</option>' + names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
+            if(current) select.value=current;
+        }
+        function fillCombinedCustomer(){
+            const name=document.getElementById('combinedCustomerSelect')?.value||''; if(!name)return;
+            const all=[...customers.map(c=>({name:c.name,phone:c.phone})),...cosSales.map(c=>({name:c.customer,phone:c.phone}))];
+            const found=all.find(c=>String(c.name||'').toLowerCase()===name.toLowerCase());
+            if(found){document.getElementById('combinedCustomerName').value=found.name||'';document.getElementById('combinedCustomerPhone').value=found.phone||'';}
+        }
+        function updateCombinedProductSelect(){
+            const select=document.getElementById('combinedProductSelect'); if(!select)return;
+            const rows=[...products.map(p=>({category:'Cleaning',name:p.name||'',stock:Number(p.stock)||0,unit:p.unit||'',wholesale:Number(p.wholesalePrice)||0,retail:Number(p.retailPrice)||0})),...cosProducts.map(p=>({category:'Cosmetics',name:p.name||'',stock:Number(p.stock)||0,unit:p.unit||'',wholesale:Number(p.wholesalePrice||p.salePrice)||0,retail:Number(p.retailPrice||p.salePrice)||0}))].sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base',numeric:true}));
+            const current=select.value;
+            select.innerHTML='<option value="">-- Select Product --</option>'+rows.map((r,i)=>`<option value="${r.category}::${String(r.name).replace(/"/g,'&quot;')}" data-category="${r.category}" data-name="${String(r.name).replace(/"/g,'&quot;')}" data-stock="${r.stock}" data-unit="${r.unit}" data-wholesale="${r.wholesale}" data-retail="${r.retail}">${r.name} — ${r.category} (Stock: ${r.stock} ${r.unit})</option>`).join('');
+            if(current)select.value=current;
+        }
+        function getCombinedSelected(){
+            const v=document.getElementById('combinedProductSelect')?.value||''; const parts=v.split('::'); if(parts.length<2)return null;
+            return {category:parts[0],name:parts.slice(1).join('::')};
+        }
+        function fillCombinedProductPrice(){
+            const o=document.getElementById('combinedProductSelect')?.selectedOptions?.[0]; if(!o)return;
+            const type=document.querySelector('input[name="combinedSaleType"]:checked')?.value||'Retail';
+            document.getElementById('combinedUnitType').value=o.dataset.unit||'Pcs';
+            document.getElementById('combinedRate').value=Number(type==='Wholesale'?o.dataset.wholesale:o.dataset.retail||0).toFixed(2);
+            calculateCombinedItemTotal();
+        }
+        function onCombinedSaleTypeChange(){ fillCombinedProductPrice(); }
+        function calculateCombinedItemTotal(){ const qty=parseFloat(document.getElementById('combinedQty')?.value)||0, u=Math.max(1,parseInt(document.getElementById('combinedNumberOfUnits')?.value,10)||1), r=parseFloat(document.getElementById('combinedRate')?.value)||0, unitType=document.getElementById('combinedUnitType')?.value||'Pcs', selected=getCombinedSelected(), product=selected?combinedStockRecord({category:selected.category,productName:selected.name}):null, factor=getBillingUnitFactor(unitType,product?.unit); const el=document.getElementById('combinedCalculatedTotal'); if(el)el.value=(qty*factor*u*r).toFixed(2); }
+        function combinedStockRecord(item){ return item.category==='Cosmetics'?cosProducts.find(p=>p.name===item.productName):products.find(p=>p.name===item.productName); }
+        function addToCombinedBill(){
+            const selected=getCombinedSelected(), qty=parseFloat(document.getElementById('combinedQty')?.value), rate=parseFloat(document.getElementById('combinedRate')?.value), unitType=document.getElementById('combinedUnitType')?.value||'Pcs', numberOfUnits=Math.max(1,parseInt(document.getElementById('combinedNumberOfUnits')?.value,10)||1);
+            if(!selected||!Number.isFinite(qty)||qty<=0||!Number.isFinite(rate)){alert('Please select product, quantity, and rate.');return;}
+            const product=combinedStockRecord({category:selected.category,productName:selected.name}); const factor=getBillingUnitFactor(unitType,product?.unit); const stockDeductionQty=qty*factor*numberOfUnits; const packageInfo=getProductPackageInfo(product);
+            const already=currentBillItems.filter(i=>i.combinedCategory===selected.category&&i.productName===selected.name).reduce((s,i)=>s+Number(i.stockDeductionQty||0),0);
+            if(product&&stockDeductionQty+already>Number(product.stock||0)){alert(`Insufficient stock. Available: ${product.stock} ${product.unit}`);return;}
+            const quantityType=document.getElementById('combinedQuantityType')?.value || 'Bottle'; currentBillItems.push({productName:selected.name,qty,unitType,quantityType,numberOfUnits,rate,total:qty*factor*numberOfUnits*rate,stockDeductionQty,combinedCategory:selected.category, packageId:packageInfo?.id||'', packageQty:packageInfo?.qty||0}); currentBillItems=sortBillItemsAlphabetically(currentBillItems); renderCombinedBillItems();
+            ['combinedQty','combinedRate','combinedCalculatedTotal'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';}); document.getElementById('combinedProductSelect').value=''; document.getElementById('combinedNumberOfUnits').value='1'; calculateCombinedBalance();
+        }
+        function renderCombinedBillItems(){
+            const c=document.getElementById('combinedBillItemsPreview'); if(!c)return; currentBillItems=sortBillItemsAlphabetically(currentBillItems); let total=0;
+            c.innerHTML=currentBillItems.map((item,i)=>{total+=Number(item.total||0);return `<div class="grid grid-cols-[1.5fr_0.7fr_0.7fr_0.8fr_0.9fr_auto_auto] gap-1 items-center bg-slate-900 p-2 rounded-lg border border-slate-800"><span class="font-semibold">${item.productName} <small class="text-cyan-400">(${item.combinedCategory||''})</small></span><span>${item.qty} ${item.unitType||''}</span><span>${item.numberOfUnits||1}</span><span>₹${Number(item.rate||0).toFixed(2)}</span><strong class="text-emerald-400">₹${Number(item.total||0).toFixed(2)}</strong><button type="button" onclick="editCombinedBillItem(${i})" class="text-amber-300 font-bold px-1">✎</button><button type="button" onclick="currentBillItems.splice(${i},1);renderCombinedBillItems();calculateCombinedBalance();" class="text-red-400 font-bold px-1">✕</button></div>`}).join('')+(currentBillItems.length?`<div class="text-right font-bold text-cyan-300 pt-1">Grand Total: ₹${total.toFixed(2)}</div>`:''); calculateCombinedBalance();
+        }
+        function editCombinedBillItem(index){
+            const item=currentBillItems[index]; if(!item)return; const q=prompt(`Edit quantity for ${item.productName}:`,String(item.qty??'')); if(q===null)return; const qty=parseFloat(q); if(!Number.isFinite(qty)||qty<=0){alert('Invalid quantity.');return;} const u=prompt(`Edit number of units for ${item.productName}:`,String(item.numberOfUnits||1)); if(u===null)return; const units=Math.max(1,parseInt(u,10)||1); const r=prompt(`Edit rate for ${item.productName}:`,String(item.rate??'')); if(r===null)return; const rate=parseFloat(r); if(!Number.isFinite(rate)||rate<0){alert('Invalid rate.');return;} const product=combinedStockRecord(item), factor=getBillingUnitFactor(item.unitType,product?.unit), need=qty*factor*units, other=currentBillItems.reduce((s,x,i)=>i===index?s:s+Number(x.productName===item.productName&&x.combinedCategory===item.combinedCategory?x.stockDeductionQty||0:0),0); if(product&&need+other>Number(product.stock||0)){alert(`Insufficient stock. Available: ${product.stock} ${product.unit}`);return;} currentBillItems[index]={...item,qty,numberOfUnits:units,rate,total:qty*factor*units*rate,stockDeductionQty:need}; currentBillItems=sortBillItemsAlphabetically(currentBillItems); renderCombinedBillItems();
+        }
+        function calculateCombinedBalance(){ const total=currentBillItems.reduce((s,i)=>s+Number(i.total||0),0), paid=parseFloat(document.getElementById('combinedPaidAmt')?.value)||0, bal=total-paid, due=Math.max(0,bal), excess=Math.max(0,-bal); const f=document.getElementById('combinedPendingAmt'),st=document.getElementById('combinedBalanceStatus'); if(f)f.value=due.toFixed(2); if(st){st.textContent=bal>0?'BALANCE DUE: ₹'+due.toFixed(2):bal<0?'BALANCE RETURN: ₹'+excess.toFixed(2):'PAID IN FULL — BALANCE: ₹0.00';st.className='text-[10px] font-bold mt-1 text-right '+(bal>0?'text-rose-400':bal<0?'text-amber-300':'text-emerald-400');}}
+        function getNextCombinedBillNumber(){const max=customers.reduce((m,c)=>{if(c?.billType!=='Combined')return m;const n=parseInt(String(c.billNo||'').match(/(\d+)$/)?.[1]||0,10);return Math.max(m,n)},0);return 'COM-'+String(max+1).padStart(4,'0');}
+        function resetCombinedBillForm(focus=true){ const f=document.getElementById('combinedBillingForm'); if(!f)return; f.reset(); document.getElementById('combinedBillIndex').value='-1'; document.getElementById('combinedBillNumberDisplay').textContent=getNextCombinedBillNumber(); currentBillItems=[]; renderCombinedBillItems(); if(focus)setTimeout(()=>document.getElementById('combinedCustomerName')?.focus(),80); }
+        function saveCombinedBill(e){
+            e.preventDefault(); const idx=parseInt(document.getElementById('combinedBillIndex').value,10); const name=document.getElementById('combinedCustomerName').value.trim(),phone=document.getElementById('combinedCustomerPhone').value.trim(),saleType=document.querySelector('input[name="combinedSaleType"]:checked')?.value||'Retail'; if(!name||!currentBillItems.length){alert('Please enter customer and add at least one item.');return;}
+            if(idx>=0&&customers[idx]?.items){restorePackageStock(customers[idx].items);customers[idx].items.forEach(old=>{const p=combinedStockRecord(old);if(p)p.stock+=Number(old.stockDeductionQty||old.qty||0);});}
+            const packageDeduction=checkAndDeductPackageStock(currentBillItems); if(!packageDeduction.ok){if(idx>=0&&customers[idx]?.items){(customers[idx].items||[]).forEach(old=>{const p=combinedStockRecord(old);if(p)p.stock-=Number(old.stockDeductionQty||old.qty||0);});} alert(`Insufficient package stock for ${packageDeduction.pkg?.name||'packaging item'}. Available: ${packageDeduction.pkg?.stock||0}`);return;} currentBillItems.forEach(item=>{const p=combinedStockRecord(item);if(p)p.stock-=Number(item.stockDeductionQty||0);});
+            const total=currentBillItems.reduce((s,i)=>s+Number(i.total||0),0), paidRaw=parseFloat(document.getElementById('combinedPaidAmt').value), paid=Number.isFinite(paidRaw)?Math.max(0,paidRaw):total, due=Math.max(0,total-paid), excess=Math.max(0,paid-total), old=idx>=0?customers[idx]:null;
+            const bill={billNo:old?.billNo||getNextCombinedBillNumber(),billType:'Combined',name,phone,saleType,paymentMode:document.getElementById('combinedPaymentMode').value||'Cash',items:sortBillItemsAlphabetically(currentBillItems).map(i=>({...i})),grandTotal:total,paidAmount:paid,pendingAmount:due,excessAmount:excess,date:old?.date||new Date().toISOString().split('T')[0]};
+            if(idx>=0)customers[idx]=bill;else customers.push(bill); syncToFirebase(); renderAll(); previewBill(idx>=0?idx:customers.length-1); resetCombinedBillForm(false);
         }
 
         function getNextCosBillNumber() {
@@ -3042,6 +3585,7 @@
 
             if(index !== -1) {
                 const oldBill = customers[index];
+                restorePackageStock(oldBill.items || []);
                 if(oldBill && oldBill.items) {
                     oldBill.items.forEach(oldItem => {
                         const p = products.find(prod => prod.name === oldItem.productName);
@@ -3054,6 +3598,12 @@
                 const p = products.find(prod => prod.name === item.productName);
                 if(p) p.stock -= item.stockDeductionQty;
             });
+            const packageDeduction=checkAndDeductPackageStock(currentBillItems);
+            if(!packageDeduction.ok){
+                currentBillItems.forEach(item=>{const p=products.find(prod=>prod.name===item.productName);if(p)p.stock+=Number(item.stockDeductionQty||0);});
+                if(index!==-1){restorePackageStock(oldBill?.items||[]);(oldBill?.items||[]).forEach(item=>{const p=products.find(prod=>prod.name===item.productName);if(p)p.stock-=Number(item.stockDeductionQty||item.qty||0);});}
+                if(packageDeduction.missing){ alert(`Packaging item not found for: ${packageDeduction.products.join(', ')}. Please add the matching Bottle/Pack item in Stock → Package.`); } else { alert(`Insufficient package stock for ${packageDeduction.pkg?.name||'packaging item'}. Available: ${packageDeduction.pkg?.stock||0}`); } return;
+            }
 
             const grandTotal = currentBillItems.reduce((sum, i) => sum + Number(i.total || 0), 0);
             const paidAmount = parseFloat(document.getElementById('billPaidAmt').value);
@@ -3062,7 +3612,7 @@
             const excessAmount = Math.max(0, safePaidAmount - grandTotal);
             const paymentMode = document.getElementById('billPaymentMode')?.value || 'Cash';
             let billNo = (index >= 0 && customers[index]?.billNo) || getNextBillNumber();
-            const customerData = { billNo, name, phone, saleType, paymentMode, items: [...currentBillItems], grandTotal, paidAmount: safePaidAmount, pendingAmount, excessAmount, date: (index >= 0 && customers[index]?.date) || new Date().toISOString().split('T')[0] };
+            const customerData = { billNo, name, phone, saleType, paymentMode, items: sortBillItemsAlphabetically(currentBillItems).map(i => ({...i})), grandTotal, paidAmount: safePaidAmount, pendingAmount, excessAmount, date: (index >= 0 && customers[index]?.date) || new Date().toISOString().split('T')[0] };
 
             let savedIndex = index === -1 ? customers.push(customerData) - 1 : (customers[index] = customerData, index);
 
@@ -3098,7 +3648,7 @@
         function editCustomerBill(index) {
             const c = customers[index];
             if(!c) { alert('Bill not found.'); return; }
-            
+            if(c.billType === 'Combined') { editCombinedSavedBill(index); return; }
             switchTab('billing', false);
             openBillingSection('cleaning');
 
@@ -3108,7 +3658,7 @@
             document.getElementById('custPhone').value = c.phone || '';
             const saleRadio = document.querySelector(`input[name="saleType"][value="${c.saleType || 'Retail'}"]`);
             if(saleRadio) saleRadio.checked = true;
-            currentBillItems = (c.items || []).map(item => ({...item}));
+            currentBillItems = sortBillItemsAlphabetically((c.items || []).map(item => ({...item})));
             renderBillPreviewInput();
             document.getElementById('billPaidAmt').value = c.paidAmount !== undefined ? Number(c.paidAmount) : Number(c.grandTotal || 0);
             const paymentModeEl = document.getElementById('billPaymentMode');
@@ -3125,13 +3675,20 @@
             }, 100);
         }
 
+        function editCombinedSavedBill(index){
+            const c=customers[index]; if(!c)return; switchTab('billing',false); openBillingSection('combined');
+            document.getElementById('combinedBillIndex').value=index; document.getElementById('combinedBillNumberDisplay').textContent=c.billNo||'OLD BILL'; document.getElementById('combinedCustomerName').value=c.name||''; document.getElementById('combinedCustomerPhone').value=c.phone||'';
+            const radio=document.querySelector(`input[name="combinedSaleType"][value="${c.saleType||'Retail'}"]`); if(radio)radio.checked=true; document.getElementById('combinedPaidAmt').value=Number(c.paidAmount||0); document.getElementById('combinedPaymentMode').value=c.paymentMode||'Cash'; currentBillItems=sortBillItemsAlphabetically((c.items||[]).map(i=>({...i}))); renderCombinedBillItems(); document.getElementById('combinedSubmitBtn').textContent='Update Combined Bill';
+        }
+
         function deleteCustomerBill(index) {
             if(!customers[index]) return;
             if(confirm('Are you sure you want to delete this bill?')) {
                 const c = customers[index];
                 if(c.items) {
+                    restorePackageStock(c.items);
                     c.items.forEach(oldItem => {
-                        const p = products.find(prod => prod.name === oldItem.productName);
+                        const p = c.billType === 'Combined' ? combinedStockRecord(oldItem) : products.find(prod => prod.name === oldItem.productName);
                         if(p) p.stock += (oldItem.stockDeductionQty || oldItem.qty || 0);
                     });
                 }
@@ -3165,7 +3722,7 @@
         function previewBill(index) {
             const c = customers[index];
             activePreviewCustomer = c;
-            let itemsRows = (c.items || []).map((item) => `<tr><td style="padding:6px;border-bottom:1px solid #ddd">${item.productName}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:center">${item.qty} ${item.unitType !== 'Standard' ? item.unitType : ''}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:center">${Number(item.numberOfUnits || 1)} Units</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:right">₹${Number(item.rate || 0).toFixed(2)}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:right">₹${Number(item.total).toFixed(2)}</td></tr>`).join('');
+            let itemsRows = sortBillItemsAlphabetically(c.items || []).map((item) => `<tr><td style="padding:6px;border-bottom:1px solid #ddd">${item.productName}${c.billType==='Combined' ? ` <small style="color:#0891b2">(${item.combinedCategory||''})</small>` : ''}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:center">${item.qty} ${item.unitType !== 'Standard' ? item.unitType : ''}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:center">${Number(item.numberOfUnits || 1)} Units</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:right">₹${Number(item.rate || 0).toFixed(2)}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:right">₹${Number(item.total).toFixed(2)}</td></tr>`).join('');
 
             const grandVal = Number(c.grandTotal || 0);
             const paidVal = c.paidAmount !== undefined ? Number(c.paidAmount) : grandVal;
@@ -3175,8 +3732,10 @@
             const billHTML = `
                 <div style="font-family: Arial; color: #000000 !important; background-color: #ffffff !important; padding: 10px;">
                     <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px;">
-                        <h2 style="margin:0; color: #065f46; font-size: 16px;">FIA CLEAN & CARE</h2>
-                        <p style="margin:2px 0; font-size: 11px; color: #000000 !important;">Fia Clean & Care, Edathanattukara | Mob: 8086452106</p>
+                        <h2 style="margin:0; color: #065f46; font-size: 16px;">FIA CLEAN AND CARE</h2>
+                        <div style="margin:1px 0; font-size: 11px; font-weight:600; color: #000000 !important;">Wholesale and Retail</div>
+                        <div style="margin:1px 0; font-size: 11px; color: #000000 !important;">Edathanattukara</div>
+                        <div style="margin:1px 0; font-size: 11px; color: #000000 !important;">Mob:80864 52106</div>
                     </div>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Bill No:</strong> ${c.billNo || '—'} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(c.date)}</p><p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Customer:</strong> ${c.name}</p>
                     <div style="border-top:1px solid #000; padding-top:6px; margin-top:8px; margin-bottom:6px; font-size:14px; font-weight:700; letter-spacing:0.3px; color:#000 !important;text-align:center;">PARTICULARS</div>
@@ -3224,7 +3783,7 @@
             const excessVal = Number(c.excessAmount || 0);
             const dueLine = Number(pendingVal) > 0 ? `*Balance Due:* ₹${Number(pendingVal).toFixed(2)}\n` : '';
             const returnLine = excessVal > 0 ? `*Balance Return:* ₹${excessVal.toFixed(2)}\n` : '';
-            let msg = `*FIA CLEAN & CARE*\n*Fia Clean & Care, Edathanattukara | Mob: 8086452106*\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n${dueLine}${returnLine}\n_Thank you for your business!_`;
+            let msg = `*FIA CLEAN AND CARE*\n*Wholesale and Retail*\n*Edathanattukara*\n*Mob:80864 52106*\n\n*Bill No:* ${c.billNo || '—'}\n*Customer:* ${c.name}\n*Date:* ${formatDateDDMMYYYY(c.date)}\n\n*Items:*\n${itemsText}\n\n*Grand Total:* *₹${Number(c.grandTotal || 0).toFixed(2)}*\n*Paid:* ₹${Number(paidVal).toFixed(2)}\n${dueLine}${returnLine}\n_Thank you for your business!_`;
             
             history.pushState({ loggedIn: true, tab: 'billing' }, "", "#billing");
             
@@ -3306,7 +3865,7 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
         function findPurchaseSupplier(name){ const q=String(name||'').trim().toLowerCase(); const a=purchaseSuppliers.find(x=>String(x.name||'').toLowerCase()===q); if(a)return a; const p=purchases.find(x=>String(x.supplierName||'').toLowerCase()===q); return p?{name:p.supplierName,mobile:p.supplierMobile||''}:null; }
         function fillPurchaseSupplierMobile(){ const x=findPurchaseSupplier(document.getElementById('supplierName')?.value); if(x&&document.getElementById('supplierMobile'))document.getElementById('supplierMobile').value=x.mobile||''; }
         function fillCosPurchaseSupplierMobile(){ const x=findPurchaseSupplier(document.getElementById('cosPSupplier')?.value); if(x&&document.getElementById('cosPSupplierMobile'))document.getElementById('cosPSupplierMobile').value=x.mobile||''; }
-        function savePurchase(e) { e.preventDefault(); const idx=parseInt(document.getElementById('purchIndex').value), entryType=document.getElementById('purchaseEntryType').value, stockId=entryType==='stock'?document.getElementById('purchaseStockSelect').value:'', selectedProduct=stockId?products.find(p=>p.id===stockId):null, rawMaterial=selectedProduct?selectedProduct.name:document.getElementById('rawMaterial').value.trim(), rawQty=parseFloat(document.getElementById('rawQty').value)||0, rawUnit=document.getElementById('rawUnit').value, rawBarcode=document.getElementById('rawBarcode').value.trim()||(selectedProduct?.barcode||''), rawCost=parseFloat(document.getElementById('rawCost').value)||0, paid=parseFloat(document.getElementById('purchasePaid').value)||0, balance=Math.max(0,rawCost-paid), supplierName=document.getElementById('supplierName').value.trim(), supplierMobile=document.getElementById('supplierMobile').value.trim(), date=document.getElementById('purchaseDate').value||getTodayPurchaseDate(); const data={supplierName,supplierMobile,rawMaterial,rawBarcode,stockId,rawQty,rawUnit,rawUnitPrice:parseFloat(document.getElementById('rawUnitPrice').value)||0,rawCost,paid,balance,date,savedAt:Date.now()}; if(idx>=0&&purchases[idx]){const old=purchases[idx]; if(old.stockId){const op=products.find(p=>p.id===old.stockId);if(op)op.stock=Math.max(0,(parseFloat(op.stock)||0)-(parseFloat(old.rawQty)||0)+(Number(old.returnedQty)||0));} if(selectedProduct&&rawQty>0)selectedProduct.stock=(parseFloat(selectedProduct.stock)||0)+rawQty; purchases[idx]={...old,...data,returns:Array.isArray(old.returns)?old.returns:[]};}else{if(selectedProduct&&rawQty>0)selectedProduct.stock=(parseFloat(selectedProduct.stock)||0)+rawQty;purchases.push({...data,returns:[]});} syncToFirebase(); renderPurchaseSupplierList(); resetPurchaseForm(); renderPurchases(); renderProducts(); updateCleaningPurchaseDropdown(); renderAccounts(); }
+        function savePurchase(e) { e.preventDefault(); const idx=parseInt(document.getElementById('purchIndex').value), entryType=document.getElementById('purchaseEntryType').value, stockId=entryType==='stock'?document.getElementById('purchaseStockSelect').value:'', selectedProduct=stockId?products.find(p=>p.id===stockId):null, rawMaterial=selectedProduct?selectedProduct.name:document.getElementById('rawMaterial').value.trim(), rawQty=parseFloat(document.getElementById('rawQty').value)||0, rawUnit=document.getElementById('rawUnit').value, rawBarcode=document.getElementById('rawBarcode').value.trim()||(selectedProduct?.barcode||''), rawCost=parseFloat(document.getElementById('rawCost').value)||0, paid=parseFloat(document.getElementById('purchasePaid').value)||0, balance=Math.max(0,rawCost-paid), supplierName=document.getElementById('supplierName').value.trim(), supplierMobile=document.getElementById('supplierMobile').value.trim(), date=document.getElementById('purchaseDate').value||getTodayPurchaseDate(); const data={supplierName,supplierMobile,rawMaterial,rawBarcode,stockId,rawQty,rawUnit,rawUnitPrice:parseFloat(document.getElementById('rawUnitPrice').value)||0,rawCost,paid,balance,date,savedAt:(idx>=0&&purchases[idx]&&purchases[idx].savedAt)?purchases[idx].savedAt:Date.now()}; if(idx>=0&&purchases[idx]){const old=purchases[idx]; if(old.stockId){const op=products.find(p=>p.id===old.stockId);if(op)op.stock=Math.max(0,(parseFloat(op.stock)||0)-(parseFloat(old.rawQty)||0)+(Number(old.returnedQty)||0));} if(selectedProduct&&rawQty>0)selectedProduct.stock=(parseFloat(selectedProduct.stock)||0)+rawQty; purchases[idx]={...old,...data,returns:Array.isArray(old.returns)?old.returns:[]};}else{if(selectedProduct&&rawQty>0)selectedProduct.stock=(parseFloat(selectedProduct.stock)||0)+rawQty;purchases.push({...data,returns:[]});} syncToFirebase(); renderPurchaseSupplierList(); resetPurchaseForm(); renderPurchases(); renderProducts(); updateCleaningPurchaseDropdown(); renderAccounts(); }
         function editPurchase(index){const p=purchases[index];if(!p)return;document.getElementById('purchIndex').value=index;document.getElementById('supplierName').value=p.supplierName||'';document.getElementById('supplierMobile').value=p.supplierMobile||'';document.getElementById('purchaseDate').value=p.date||getTodayPurchaseDate();document.getElementById('purchaseEntryType').value=p.stockId?'stock':'manual';togglePurchaseInputs();if(p.stockId)document.getElementById('purchaseStockSelect').value=p.stockId;else document.getElementById('rawMaterial').value=p.rawMaterial||'';document.getElementById('rawBarcode').value=p.rawBarcode||'';document.getElementById('rawQty').value=p.rawQty??'';document.getElementById('rawUnit').value=p.rawUnit||'';document.getElementById('rawUnitPrice').value=p.rawUnitPrice??'';document.getElementById('rawCost').value=p.rawCost??'';document.getElementById('purchasePaid').value=p.paid??'';document.getElementById('purchaseBalance').value=p.balance??'';document.getElementById('purchaseFormTitle').innerText='Edit Cleaning Products Purchase';document.getElementById('purchSubmitBtn').innerText='Update Purchase';if(p.stockId)fillPurchaseStockDetails();switchTab('purchase',false);switchPurchaseSubTab('cleaning');window.scrollTo({top:0,behavior:'smooth'});}
         function deletePurchase(index){if(!purchases[index])return;if(!confirm('Delete this purchase?'))return;const old=purchases[index];if(old.stockId){const op=products.find(p=>p.id===old.stockId);if(op)op.stock=Math.max(0,(parseFloat(op.stock)||0)-(parseFloat(old.rawQty)||0)+(Number(old.returnedQty)||0));}purchases.splice(index,1);syncToFirebase();renderPurchases();renderProducts();updateCleaningPurchaseDropdown();renderAccounts();}
         function ensurePurchaseTimestamps(list){let max=0;list.forEach(p=>{const t=Number(p?.savedAt)||0;if(t>max)max=t;});list.forEach(p=>{if(!(Number(p?.savedAt)>0)){max+=1;p.savedAt=max;}});return list;}
@@ -3345,7 +3904,7 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             const idx = parseInt(document.getElementById('expIndex').value);
             const data = { title: document.getElementById('expTitle').value.trim(), amount: parseFloat(document.getElementById('expAmount').value) || 0, date: parseDateDDMMYYYY(document.getElementById('expDate').value) };
             if (idx >= 0 && expenses[idx]) expenses[idx] = { ...expenses[idx], ...data };
-            else expenses.push(data);
+            else expenses.push({...data, savedAt: Date.now()});
             syncToFirebase(); resetExpenseForm(); renderExpenses(); renderAccounts();
         }
         function editExpense(index) {
@@ -3455,12 +4014,16 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             if (!customer) { alert('Please enter customer name.'); return; }
             if (currentCosBillItems.length === 0) { alert('Please add at least one item.'); return; }
 
-            if (idx >= 0 && cosSales[idx]) restoreCosSaleStock(cosSales[idx]);
+            if (idx >= 0 && cosSales[idx]) { restoreCosSaleStock(cosSales[idx]); restorePackageStock(normalizeCosSale(cosSales[idx]).items); }
 
+            const packageDeduction=checkAndDeductPackageStock(currentCosBillItems); if(!packageDeduction.ok){if(idx>=0&&cosSales[idx]){const oldItems=normalizeCosSale(cosSales[idx]).items; restorePackageStock(oldItems); checkAndDeductPackageStock(oldItems);} if(packageDeduction.missing){ alert(`Packaging item not found for: ${packageDeduction.products.join(', ')}. Please add the matching Bottle/Pack item in Stock → Package.`); } else { alert(`Insufficient package stock for ${packageDeduction.pkg?.name||'packaging item'}. Available: ${packageDeduction.pkg?.stock||0}`); } return;}
             const deduction = deductCosSaleStock(currentCosBillItems);
             if (!deduction.ok) {
+                restorePackageStock(currentCosBillItems);
                 if (idx >= 0 && cosSales[idx]) {
-                    deductCosSaleStock(normalizeCosSale(cosSales[idx]).items);
+                    const oldItems=normalizeCosSale(cosSales[idx]).items;
+                    deductCosSaleStock(oldItems);
+                    checkAndDeductPackageStock(oldItems);
                 }
                 alert(`Insufficient stock for ${deduction.product.name}. Available: ${deduction.available} ${deduction.product.unit}`);
                 return;
@@ -3475,7 +4038,7 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
                 billNo,
                 name: 'Cosmetics',
                 customer, phone, saleType, paymentMode,
-                items: currentCosBillItems.map(i => ({...i})),
+                items: sortBillItemsAlphabetically(currentCosBillItems).map(i => ({...i})),
                 grandTotal, paidAmount, pendingAmount, excessAmount,
                 date: (idx >= 0 && cosSales[idx]?.date) || new Date().toISOString().split('T')[0]
             };
@@ -3514,15 +4077,17 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
                 paymentMode: norm.paymentMode
             };
 
-            const itemsRows = norm.items.map((item) =>
+            const itemsRows = sortBillItemsAlphabetically(norm.items).map((item) =>
                 `<tr><td style="padding:6px;border-bottom:1px solid #ddd">${item.productName}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:center">${item.qty} ${item.unitType !== 'Standard' ? item.unitType : ''}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:center">${Number(item.numberOfUnits || 1)} Units</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:right">₹${Number(item.rate||0).toFixed(2)}</td><td style="padding:6px;border-bottom:1px solid #ddd;text-align:right">₹${Number(item.total||0).toFixed(2)}</td></tr>`
             ).join('');
 
             const billHTML = `
                 <div style="font-family: Arial; color: #000000 !important; background-color: #ffffff !important; padding: 10px;">
                     <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px;">
-                        <h2 style="margin:0; color: #db2777; font-size: 16px;">FIA CLEAN & CARE (COSMETICS)</h2>
-                        <p style="margin:2px 0; font-size: 11px; color: #000000 !important;">Fia Clean & Care, Edathanattukara | Mob: 8086452106</p>
+                        <h2 style="margin:0; color: #db2777; font-size: 16px;">FIA CLEAN AND CARE</h2>
+                        <div style="margin:1px 0; font-size: 11px; font-weight:600; color: #000000 !important;">Wholesale and Retail</div>
+                        <div style="margin:1px 0; font-size: 11px; color: #000000 !important;">Edathanattukara</div>
+                        <div style="margin:1px 0; font-size: 11px; color: #000000 !important;">Mob:80864 52106</div>
                     </div>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Bill No:</strong> ${sale.billNo || 'COS-0001'} &nbsp; | &nbsp; <strong>Date:</strong> ${formatDateDDMMYYYY(sale.date)}</p>
                     <p style="font-size: 11px; margin:2px 0; color: #000000 !important;"><strong>Customer:</strong> ${sale.customer || ''}</p>
@@ -3600,7 +4165,7 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             if (radio) radio.checked = true;
             const payment = document.getElementById('cosSPaymentMode');
             if (payment) payment.value = n.paymentMode || 'Cash';
-            currentCosBillItems = n.items.map(i => ({...i}));
+            currentCosBillItems = sortBillItemsAlphabetically(n.items.map(i => ({...i})));
             document.getElementById('cosSPaid').value = n.paidAmount || '';
             renderCosBillPreviewInput();
             document.getElementById('cosSFormTitle').innerText = 'Edit Cosmetics Bill';
@@ -3646,7 +4211,7 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
         function deleteCosSale(index) {
             if(!cosSales[index]) return;
             if(!confirm('Delete this cosmetics sale?')) return;
-            restoreCosSaleStock(cosSales[index]);
+            restoreCosSaleStock(cosSales[index]); restorePackageStock(normalizeCosSale(cosSales[index]).items);
             cosSales.splice(index,1);
             syncToFirebase();
             renderCosSales();
@@ -3697,7 +4262,25 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             renderAccounts();
         }
 
+        function ensureStableTransactionIds() {
+            let changed = false;
+            const ensure = (arr, prefix) => {
+                arr.forEach((item, i) => {
+                    if (!item || typeof item !== 'object') return;
+                    if (!item.savedAt) {
+                        item.savedAt = Date.now() + i;
+                        changed = true;
+                    }
+                });
+            };
+            ensure(purchases, 'p');
+            ensure(expenses, 'e');
+            ensure(cosPurchases, 'cp');
+            if (changed) { try { saveLocalStateSafely(); } catch(e) {} }
+        }
+
         function getAllMasterEntries() {
+            ensureStableTransactionIds();
             let entries = [];
             customers.forEach((c, i) => { 
                 let paidVal = c.paidAmount !== undefined ? c.paidAmount : c.grandTotal;
@@ -3707,11 +4290,17 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
                 let paidVal = cosSalePaid(s);
                 if(paidVal > 0) entries.push({ id: `cs_${i}`, type: 'Income', desc: `Cosmetics Sale (${s.customer})`, amount: paidVal, date: s.date });
             });
-            purchases.forEach((p, i) => entries.push({ id: `p_${i}`, type: 'Expense', desc: `Purchase (${p.supplierName})`, amount: p.rawCost, date: p.date }));
-            expenses.forEach((ex, i) => entries.push({ id: `e_${i}`, type: 'Expense', desc: `Expense (${ex.title})`, amount: ex.amount, date: ex.date }));
+            purchases.forEach((p, i) => {
+                const amount = Number(p.rawCost || 0);
+                if(amount > 0) entries.push({ id: `p_${p.savedAt || i}`, type: 'Expense', desc: `Purchase (${p.supplierName || p.rawMaterial || 'Supplier'})`, amount, date: p.date });
+            });
+            expenses.forEach((ex, i) => {
+                const amount = Number(ex.amount || 0);
+                if(amount > 0) entries.push({ id: `e_${ex.savedAt || i}`, type: 'Expense', desc: `Expense (${ex.title || 'General Expense'})`, amount, date: ex.date });
+            });
             cosPurchases.forEach((cp, i) => {
-                let paidVal = cp.paid !== undefined ? cp.paid : cp.amount;
-                if(paidVal > 0) entries.push({ id: `cp_${i}`, type: 'Expense', desc: `Cosmetics Purchase (${cp.supplier})`, amount: paidVal, date: cp.date });
+                const amount = Number(cp.amount || 0);
+                if(amount > 0) entries.push({ id: `cp_${cp.savedAt || i}`, type: 'Expense', desc: `Cosmetics Purchase (${cp.supplier || cp.item || 'Supplier'})`, amount, date: cp.date });
             });
             return entries;
         }
@@ -3866,7 +4455,7 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             customers.forEach((c, i) => {
                 if (c && Array.isArray(c.items) && c.items.length) {
                     rows.push({
-                        type:'cleaning', index:i, date:c.date, name:c.name || 'Customer', phone:c.phone || '',
+                        type:(c.billType === 'Combined' ? 'combined' : 'cleaning'), index:i, date:c.date, name:c.name || 'Customer', phone:c.phone || '',
                         total:Number(c.grandTotal||0), paid:Number(c.paidAmount||0), due:Number(c.pendingAmount||0),
                         items:c.items || [], saleType:c.saleType || 'Retail', paymentMode:c.paymentMode || 'Cash'
                     });
@@ -3892,14 +4481,14 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             const allRows = getSalesHistoryRows();
             const filter = window.__fiaSalesHistoryFilter || 'all';
             const rows = filter === 'all' ? allRows : allRows.filter(r => r.type === filter);
-            const label = r => r.type === 'cleaning' ? '🧹 Cleaning' : '💄 Cosmetics';
+            const label = r => r.type === 'cleaning' ? '🧹 Cleaning' : r.type === 'combined' ? '🧾 Combined' : '💄 Cosmetics';
             
             container.innerHTML = rows.map(r => {
                 const safeItems = Array.isArray(r.items) ? r.items : [];
                 const itemText = safeItems.map(i => i && (i.productName || i.item || 'Item')).join(', ');
-                const viewFn = r.type === 'cleaning' ? `previewBill(${r.index})` : `previewCosSaleBill(cosSales[${r.index}])`;
+                const viewFn = (r.type === 'cleaning' || r.type === 'combined') ? `previewBill(${r.index})` : `previewCosSaleBill(cosSales[${r.index}])`;
                 const editFn = r.type === 'cleaning' ? `editCustomerBill(${r.index})` : `editCosSale(${r.index})`;
-                const deleteFn = r.type === 'cleaning' ? `deleteCustomerBill(${r.index})` : `deleteCosSale(${r.index})`;
+                const deleteFn = (r.type === 'cleaning' || r.type === 'combined') ? `deleteCustomerBill(${r.index})` : `deleteCosSale(${r.index})`;
                 return `<div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800 text-xs">
                     <div class="flex justify-between items-start gap-2">
                         <div class="min-w-0">
@@ -3971,6 +4560,9 @@ function renderPurchaseHistory(type){const isCos=type==='cosmetics',arr=isCos?co
             renderCustomers(); 
             updateCustomerDropdown(); 
             updateCosCustomerDropdown();
+            updateCombinedProductSelect();
+            updateCombinedCustomerSelect();
+            renderPackages(); updatePackageSelectors();
             renderPurchases(); 
             renderExpenses(); 
             renderCosPurchases(); 
